@@ -1,0 +1,65 @@
+name: Listings API
+description: >-
+  A local-marketing / local-SEO API providing white-label infrastructure: one write fans a business location out to
+  major publishers (Google Business Profile, Apple Maps, Bing Places, Yelp, Facebook, Tripadvisor, etc.), plus review
+  aggregation/response, multi-channel posting, and per-publisher analytics. Exposes a REST API, hosted MCP server, and
+  typed SDKs. The REST API is a facade over Synup's federated GraphQL services.
+url: https://listings-api.apievangelist.com/apis.yml
+created: '2026-07-12'
+modified: '2026-07-12'
+specificationVersion: '0.21'
+tags:
+  - business-listings
+  - local-seo
+  - local-marketing
+  - locations
+  - reviews
+  - google-business-profile
+  - citations
+  - analytics
+  - mcp
+  - openapi
+apis:
+  - name: Listings API v4
+    description: >-
+      REST API for local marketing — locations, listings, connected accounts, reviews, posts, analytics, and supporting
+      endpoints. 56 paths under /api/v4/. Auth via API key header (Authorization: API <key>). Also offers a hosted MCP
+      server and an llms.txt.
+    humanURL: https://docs.listingsapi.com
+    baseURL: https://listingsapi.com/api/v4
+    tags:
+      - business-listings
+      - local-seo
+      - local-marketing
+      - locations
+      - reviews
+      - google-business-profile
+      - citations
+      - analytics
+      - mcp
+      - openapi
+    properties:
+      - type: OpenAPI
+        url: https://listingsapi.com/openapi.yaml
+      - type: OpenAPI
+        url: https://listingsapi.com/openapi/spec.yaml
+      - type: OpenAPI
+        url: https://listingsapi.com/openapi/spec.json
+      - type: LLMSTxt
+        url: https://listingsapi.com/llms.txt
+      - type: LLMSTxt
+        url: https://listingsapi.com/llms-full.txt
+      - type: MCP
+        url: https://listingsapi.com/mcp
+      - type: Documentation
+        url: https://docs.listingsapi.com/docs/getting-started
+      - type: Documentation
+        url: https://docs.listingsapi.com/docs/authentication
+maintainers:
+  - FN: Listings API Support
+    url: https://www.listingsapi.com/contact
+generated:
+  by: apis.io/add
+  model: claude-opus-4-8
+  confidence: 97
+  at: '2026-07-12T04:14:51.760Z'
