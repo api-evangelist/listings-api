@@ -59,7 +59,7 @@ apis:
         url: https://listingsapi.com/llms.txt
       - type: LLMSTxt
         url: https://listingsapi.com/llms-full.txt
-      - type: MCP
+      - type: MCPServer
         url: https://listingsapi.com/mcp
       - type: Documentation
         url: https://docs.listingsapi.com/docs/getting-started
