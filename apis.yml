@@ -15,7 +15,7 @@ description: >-
   REST API and agent-native platform for managing business listings, citations, reviews, Google Business Profile posts,
   and local analytics across major publisher directories (Google, Facebook, Bing, Yelp, TripAdvisor). A facade over
   Synup's federated GraphQL backend, with first-party Python and Node SDKs, a hosted MCP server, and llms.txt.
-url: https://listings-api.apievangelist.com/apis.yml
+url: https://raw.githubusercontent.com/api-evangelist/listings-api/refs/heads/main/apis.yml
 created: '2026-07-12'
 modified: '2026-07-12'
 specificationVersion: '0.21'
