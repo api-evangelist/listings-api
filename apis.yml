@@ -20,6 +20,18 @@ created: '2026-07-12'
 modified: '2026-07-12'
 specificationVersion: '0.23'
 tags:
+  - Business Listings
+  - Local SEO
+  - Locations
+  - Reviews
+  - Google Business Profile
+  - Analytics
+  - citation-management
+  - Local Marketing
+  - social-publishing
+  - MCP
+  - agent-native
+tags_raw:
   - business-listings
   - local-seo
   - locations
@@ -39,6 +51,18 @@ apis:
     humanURL: https://docs.listingsapi.com
     baseURL: https://listingsapi.com/api/v4
     tags:
+      - Business Listings
+      - Local SEO
+      - Locations
+      - Reviews
+      - Google Business Profile
+      - Analytics
+      - citation-management
+      - Local Marketing
+      - social-publishing
+      - MCP
+      - agent-native
+    tags_raw:
       - business-listings
       - local-seo
       - locations
