@@ -31,14 +31,14 @@ created: '2026-07-12'
 modified: '2026-07-12'
 specificationVersion: '0.23'
 tags:
-  - business-listings
-  - local-seo
+  - Business Listings
+  - Local SEO
   - Locations
   - Reviews
-  - google-business-profile
+  - Google Business Profile
   - Analytics
   - citation-management
-  - local-marketing
+  - Local Marketing
   - social-publishing
   - MCP
   - agent-native
@@ -62,14 +62,14 @@ apis:
     humanURL: https://docs.listingsapi.com
     baseURL: https://listingsapi.com/api/v4
     tags:
-      - business-listings
-      - local-seo
+      - Business Listings
+      - Local SEO
       - Locations
       - Reviews
-      - google-business-profile
+      - Google Business Profile
       - Analytics
       - citation-management
-      - local-marketing
+      - Local Marketing
       - social-publishing
       - MCP
       - agent-native
