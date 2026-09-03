@@ -1,0 +1,40 @@
+# Listings API Developer Platform
+
+> Listings API is a local-marketing platform for managing business listings, reviews, social posts, rankings, and AI-search visibility across hundreds of publishers. The Listings API Developer Platform exposes that system as a versioned REST API, plus a typed Python SDK, a TypeScript/Node SDK, and an MCP server for LLM clients.
+
+The REST API is served from `https://listingsapi.com` under the `/api/v4/` prefix. Authenticate every request with an `Authorization: API <your-key>` header. The OpenAPI 3.1 document describes every operation across the service tags below.
+
+## Documentation
+- [Get started](https://docs.listingsapi.com/docs/getting-started): Sign up, add payment, issue an API key, and make your first listingsAPI call with curl.
+- [Authentication](https://docs.listingsapi.com/docs/authentication): API key headers and credential rotation for listingsAPI.
+- [API documentation home](https://docs.listingsapi.com/docs): Reference landing — authentication, the full endpoint catalog, and per-resource references.
+
+## REST API
+- [OpenAPI spec (YAML)](https://listingsapi.com/openapi/spec.yaml): OpenAPI 3.1.0, version 2026-08-27. Base URL `https://listingsapi.com`.
+- [OpenAPI spec (JSON)](https://listingsapi.com/openapi/spec.json): The same spec as JSON, for client generators, Postman, or Insomnia.
+- [Locations](https://docs.listingsapi.com/docs/locations): Create, update, archive, and inspect business locations. Click any row to open its reference.
+- [Listings](https://docs.listingsapi.com/docs/listings): Premium and additional directory listings, duplicates, and AI evaluation. Click any row to open its reference.
+- [Connected Accounts](https://docs.listingsapi.com/docs/connected-accounts): Bulk Google / Facebook / Yelp / TripAdvisor account connection flows. Click any row to open its reference.
+- [Reviews](https://docs.listingsapi.com/docs/reviews): Reviews and review-response endpoints, including analytics. Click any row to open its reference.
+- [Posts](https://docs.listingsapi.com/docs/posts): Create and manage Google Business Profile posts — announcements, events, and offers — across locations. Click any row to open its reference.
+- [Analytics](https://docs.listingsapi.com/docs/analytics): Per-publisher insights (Google / Facebook / Bing) and indexing rate. Click any row to open its reference.
+- [Supporting APIs](https://docs.listingsapi.com/docs/supporting-apis): Supporting reference data — countries, sub-categories, and publisher site categories — plus the publisher sites included in your plan.
+
+## Python SDK
+- [Python SDK](https://docs.listingsapi.com/sdks/python): Resource-based sync client with automatic pagination, retries, and typed errors. Install with `pip install listingsapi`.
+- [Installation](https://docs.listingsapi.com/sdks/python/installation): `pip install listingsapi` (Python 3.9+).
+- [Quickstart](https://docs.listingsapi.com/sdks/python/quickstart): ListingsAPI(api_key="...").locations.list(first=10). Resources: analytics, connected-accounts, listings, locations, photos, posts, reviews, workflows.
+- [Configuration](https://docs.listingsapi.com/sdks/python/configuration): Base URL, timeout, and retry/backoff options for the client.
+- [Error handling](https://docs.listingsapi.com/sdks/python/error-handling): Exception hierarchy, retries on 429/5xx, HTTP-200 payload errors, and client-side validation.
+
+## Node SDK
+- [Node SDK](https://docs.listingsapi.com/sdks/node): First-party TypeScript client over the same REST surface. Install with `npm install listingsapi-js`.
+- [Quickstart](https://docs.listingsapi.com/sdks/node/quickstart): Construct a client with your API key and call resource methods.
+- [Configuration](https://docs.listingsapi.com/sdks/node/configuration): Base URL override (default `https://listingsapi.com`) for proxies and staging.
+
+## MCP server
+- [listingsAPI MCP server](https://listingsapi.com/mcp): hosted Streamable HTTP endpoint at https://listingsapi.com/mcp for Claude Code, Cursor, and Windsurf — nothing to install. Authenticate with an `Authorization: API <your-key>` header. Exposes docs search (search_docs, get_doc_page), OpenAPI introspection (list_endpoints, get_endpoint), and dev-portal control-plane tools (whoami, list_api_keys, create_api_key, revoke_api_key, get_usage, recent_errors, get_subscription). Claude Code: `claude mcp add --transport http listingsapi https://listingsapi.com/mcp --header "Authorization: API your-key"`.
+
+## Optional
+- [SDKs overview](https://docs.listingsapi.com/sdks): Choose between the Python and Node clients.
+- [Full text for LLMs](https://listingsapi.com/llms-full.txt): Guides, a per-tag REST reference, and the SDK quickstarts concatenated into one file.

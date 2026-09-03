@@ -1,0 +1,32 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enrichment overlay for the Listings API OpenAPI
+  version: 1.0.0
+x-provenance:
+  generated: '2026-09-03'
+  method: generated
+  source: openapi/listings-api-openapi.yaml plus docs.listingsapi.com (error-codes, rate-limits, webhooks)
+extends: listings-api-openapi.yaml
+actions:
+  - target: $.info
+    update:
+      x-apis-io:
+        provider: listings-api
+        rate_limits: rate-limits/listings-api-rate-limits.yml
+        error_catalog: errors/listings-api-problem-types.yml
+        conventions: conventions/listings-api-conventions.yml
+        webhooks: asyncapi/listings-api-webhooks.yml
+        mcp: https://listingsapi.com/mcp
+  - target: $.info.description
+    update: >-
+      Enrichment notes: responses use a GraphQL-style envelope (data.<operation>, relay cursor
+      pagination via first/after and edges/pageInfo). Mutations can return field-level
+      validation errors in data.<operation>.errors on HTTP 200 - always read that array on
+      writes. 429 responses carry Retry-After plus retry_after_seconds and correlation_id in
+      the body; per-plan limits are 10 req/min (Launch) and 50 req/min (Growth). 403/404/422/429
+      are documented at https://docs.listingsapi.com/docs/error-codes but not enumerated
+      per-operation in the source spec. No idempotency mechanism exists - retried writes can
+      duplicate public posts or review replies.
+  - target: $.components.securitySchemes.apiKey
+    update:
+      x-access-levels: [Read, Write]

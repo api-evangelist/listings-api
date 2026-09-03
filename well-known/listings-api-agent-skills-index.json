@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "listingsapi",
+      "type": "skill-md",
+      "description": "Create, sync, and manage local business listings, reviews, posts, and local analytics through the Listings API REST API. Use when a task involves publishing a business to Google, Facebook, Bing, Apple Maps, or local directories, reading or replying to reviews, publishing posts, or reading local search analytics.",
+      "url": "/.well-known/agent-skills/listingsapi/SKILL.md",
+      "digest": "sha256:76ff9600409d2819c4c020eb6017969c1ee5905616c9db570d141384b7bdb45d"
+    }
+  ]
+}

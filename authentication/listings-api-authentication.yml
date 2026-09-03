@@ -1,0 +1,42 @@
+generated: '2026-09-03'
+method: searched
+source: openapi/listings-api-openapi.yaml, https://docs.listingsapi.com/docs/authentication, https://www.listingsapi.com/auth.md
+summary:
+  types:
+  - apiKey
+  api_key_in:
+  - header
+schemes:
+- name: apiKey
+  type: apiKey
+  in: header
+  parameter: Authorization
+  description: 'Authenticate with `Authorization: API <your-key>`.'
+  sources:
+  - openapi/listings-api-openapi.yaml
+  access_levels:
+  - Read
+  - Write
+  notes: Header value is the literal "API " prefix plus the key. Keys are created/rotated in the dashboard,
+    one per agent recommended so each can be revoked independently; revocation is immediate. Access level
+    (Read or Write) is chosen at creation. The agent-facing auth guide at https://www.listingsapi.com/auth.md
+    documents the discover-register-credential flow.
+- name: rapidApiKey
+  type: apiKey
+  in: header
+  parameter: X-RapidAPI-Key
+  description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+  sources:
+  - openapi/listings-api-openapi.yaml
+- name: rapidApiHost
+  type: apiKey
+  in: header
+  parameter: X-RapidAPI-Host
+  description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI
+    proxy.
+  sources:
+  - openapi/listings-api-openapi.yaml
+docs: https://docs.listingsapi.com/docs/authentication
+oauth_note: 'The hosted MCP server additionally accepts OAuth 2.0 Bearer tokens: RFC 8414 metadata at
+  https://listingsapi.com/.well-known/oauth-authorization-server (PKCE S256, dynamic client registration,
+  scopes read/write); consent creates an API key named after the client. See scopes/listings-api-scopes.yml.'

@@ -1,0 +1,83 @@
+generated: '2026-09-03'
+method: probed
+source: live probes of /.well-known/* on listingsapi.com, www.listingsapi.com, docs.listingsapi.com (2026-09-03)
+hosts:
+  - host: listingsapi.com
+    documents:
+      - path: /.well-known/security.txt
+        status: 200
+        file: well-known/listings-api-security.txt
+      - path: /.well-known/oauth-authorization-server
+        status: 200
+        file: well-known/listings-api-oauth-authorization-server.json
+      - path: /.well-known/oauth-protected-resource
+        status: 200
+        file: well-known/listings-api-oauth-protected-resource.json
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+      - path: /.well-known/agent-skills/index.json
+        status: 404
+  - host: www.listingsapi.com
+    documents:
+      - path: /.well-known/oauth-protected-resource
+        status: 200
+        file: well-known/listings-api-www-oauth-protected-resource.json
+      - path: /.well-known/api-catalog
+        status: 200
+        file: well-known/listings-api-api-catalog.json
+      - path: /.well-known/agent-skills/index.json
+        status: 200
+        file: well-known/listings-api-agent-skills-index.json
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/oauth-authorization-server
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+  - host: docs.listingsapi.com
+    documents:
+      - path: /.well-known/security.txt
+        status: 200
+        file: well-known/listings-api-security.txt
+      - path: /.well-known/oauth-authorization-server
+        status: 200
+        file: well-known/listings-api-oauth-authorization-server.json
+      - path: /.well-known/oauth-protected-resource
+        status: 200
+        file: well-known/listings-api-oauth-protected-resource.json
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+notes: >-
+  Real hits on all three hosts. listingsapi.com serves RFC 9116 security.txt plus RFC 8414
+  oauth-authorization-server and RFC 9728 oauth-protected-resource metadata for the MCP server
+  (resource https://listingsapi.com/mcp, scopes read/write, PKCE S256, dynamic client
+  registration). docs.listingsapi.com serves byte-identical copies of all three.
+  www.listingsapi.com serves an RFC 9727 api-catalog linkset (anchor https://listingsapi.com/api/v4,
+  service-desc https://listingsapi.com/openapi.yaml), a separate oauth-protected-resource doc for
+  the REST API (no authorization_servers - API keys only, documented at /auth.md), and an
+  agent-skills discovery index at /.well-known/agent-skills/index.json pointing at a provider-
+  published SKILL.md (saved verbatim in skills/). No A2A agent card on any host (agent-card.json
+  and agent.json 404 everywhere; the 404 bodies are the site's HTML 404 page, not an SPA
+  catch-all 200).

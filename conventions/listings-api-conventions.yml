@@ -1,0 +1,87 @@
+generated: '2026-09-03'
+method: searched
+source: https://docs.listingsapi.com/docs/getting-started, https://docs.listingsapi.com/docs/authentication, https://docs.listingsapi.com/docs/error-codes, https://docs.listingsapi.com/docs/rate-limits, openapi/listings-api-openapi.yaml
+authentication:
+  style: api-key
+  header: 'Authorization'
+  scheme: 'API <your-api-key> (literal "API" prefix with trailing space)'
+  access_levels: [Read, Write]
+  marketplace: X-RapidAPI-Key / X-RapidAPI-Host headers when calling via the RapidAPI proxy
+  oauth: OAuth 2.0 Bearer tokens on the MCP server only (see scopes/listings-api-scopes.yml)
+  cross_link: authentication/listings-api-authentication.yml
+idempotency:
+  coverage: none
+  note: >-
+    No Idempotency-Key header or replay-protection mechanism is documented anywhere on the
+    mutating surface (23 write operations). The MCP README warns "Writes are real." The SDKs
+    retry only on 429/5xx. An agent retrying a createSocialPost or respondToInteraction after a
+    timeout risks a duplicate public post or reply.
+pagination:
+  style: relay-cursor
+  params: [first, after, last, before]
+  response_fields: ["edges", "edges[].cursor", "edges[].node", "pageInfo.endCursor", "pageInfo.hasNextPage", "pageInfo.total"]
+  note: >-
+    Every list endpoint returns the GraphQL cursor-connections shape; page forward by passing
+    pageInfo.endCursor as ?after= while hasNextPage is true, and stop on an empty edges array.
+    No offset or page-number paging.
+envelope:
+  style: graphql
+  note: >-
+    Responses nest under data.<operationName> (e.g. data.allLocations.edges[].node) because the
+    REST facade fronts Synup's federated GraphQL backend. IDs are relay globals (base64
+    "Location:1800289") alongside a numeric databaseId.
+errors:
+  shape: top-level errors[] for request-level failures; data.<operation>.errors[] for mutation validation on HTTP 200
+  codes: SY-prefixed inside the message string
+  cross_link: errors/listings-api-problem-types.yml
+rate_limits:
+  signaling: HTTP 429 with Retry-After header; body carries retry_after_seconds, correlation_id, doc_url
+  cross_link: rate-limits/listings-api-rate-limits.yml
+request_tracing:
+  field: correlation_id (in error envelopes; quote it to support)
+versioning:
+  scheme: path (/api/v4) with a date-based OpenAPI info.version (2026-08-27)
+  cross_link: lifecycle/listings-api-lifecycle.yml
+sandbox:
+  exists: false
+  note: >-
+    The getting-started guide states "There is no separate sandbox environment: every request
+    runs against the live API at https://listingsapi.com." Trials run against production.
+reversibility:
+  grade: documented
+  note: >-
+    Reversal operations exist for several write surfaces but no reversal WINDOW is stated
+    anywhere in the docs, so the grade is documented, not verified. No window is asserted here
+    because none is published.
+  write_surfaces:
+    - action: archive locations
+      operation: archiveLocations
+      reversal: cancelLocationsArchive
+      window: not stated
+    - action: mark listing as duplicate (suppression)
+      operation: markAsDuplicate
+      reversal: markAsNotDuplicate
+      window: not stated
+    - action: publish social post
+      operation: createSocialPost / createBulkSocialPost
+      reversal: deleteSocialPost (takedown; no in-place edit - docs say "delete and repost")
+      window: not stated
+    - action: reply to a review (public on the review site)
+      operation: respondToInteraction
+      reversal: editReviewResponse / archiveReviewResponse (archive is a soft-delete from the local cache; public removal behavior on the review site is not stated)
+      window: not stated
+    - action: connect Google/Facebook account or listing
+      operation: bulkConnectLinkForGoogle / bulkConnectLinkForFacebook / connectListing
+      reversal: gmbBulkDisconnect / fbBulkDisconnect / disconnectConnectedAccountListing
+      window: not stated
+    - action: create location / create GMB listing
+      operation: createLocation / createGmbListingForLocation
+      reversal: archiveLocations (soft); GMB listing creation is asynchronous and no un-create is documented
+      window: not stated
+    - action: add/star location photos
+      operation: addLocationPhotos / starLocationPhotos
+      reversal: removeLocationPhotos
+      window: not stated
+dry_run_mode:
+  exists: false
+  note: No dry-run, validate-only, or preview mode is documented on any write operation.

@@ -1,0 +1,40 @@
+generated: '2026-09-03'
+method: searched
+source: https://docs.listingsapi.com/docs/rate-limits
+docs: https://docs.listingsapi.com/docs/rate-limits
+limit_count: 3
+limits:
+  - plan: Launch
+    scope: per-account
+    window: 1 minute
+    limit: 10
+    daily_cap: ~7200
+  - plan: Growth
+    scope: per-account
+    window: 1 minute
+    limit: 50
+    daily_cap: scales with plan
+  - plan: Enterprise
+    scope: per-account
+    window: 1 minute
+    limit: negotiated
+    daily_cap: negotiated
+scoping: >-
+  Limits are plan-based and enforced per ACCOUNT: every API key on an account draws from the
+  same per-minute and daily budget - creating extra keys does not raise the ceiling. Two
+  windows are metered: a per-minute burst limit and a daily cap. The dashboard Usage page shows
+  live headroom for both.
+exhaustion:
+  status: 429
+  headers:
+    - 'Retry-After (carries the same value as retry_after_seconds, when present)'
+  body_fields:
+    retry_after_seconds: how long to wait before retrying
+    correlation_id: request identifier to quote to support
+    doc_url: link to the rate_limited entry in the error-codes reference
+  code: RATE_LIMITED
+runtime_headers_note: >-
+  No X-RateLimit-*/RateLimit-* headroom headers are documented on successful responses; the
+  only runtime signals are the 429 itself, its Retry-After header, and the dashboard Usage
+  page. Docs recommend honoring retry_after_seconds, else exponential backoff with jitter.
+mcp_note: MCP server calls count against the same account budget.

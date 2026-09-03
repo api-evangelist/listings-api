@@ -1,0 +1,94 @@
+generated: '2026-09-03'
+method: searched
+source: https://docs.listingsapi.com/docs/webhooks-overview, https://docs.listingsapi.com/docs/webhooks-signatures, https://docs.listingsapi.com/docs/webhooks-delivery, https://docs.listingsapi.com/docs/webhooks-events
+type: webhooks
+model: >-
+  One webhooks URL per account, no per-event subscription: every event is delivered to that one
+  URL; consumers branch on the "event" field. Five delivery gates must all pass before a request
+  is sent: plan includes webhooks, a URL is saved, the endpoint passed verification (skipped if
+  no signing secret was ever generated), the URL resolves to a public address, and the account
+  is inside its plan's webhook limit.
+envelope:
+  fields:
+    event: dotted event name (branch on this)
+    timestamp: ISO-8601 UTC, stamped when the delivery was built
+    account_id: integer
+    location_id: numeric string ("279381", not 279381; not coerced on interaction.* events)
+    data: event-specific object; optional fields are OMITTED when empty, never null
+    agency_account_id: integer, only when the account is managed by a parent agency account
+  exception: listing.submission uses its own shape (called out in the event reference)
+signatures:
+  header: 'X-ListingsAPI-Signature: sha256=<digest>'
+  digest: base64(HMAC-SHA256(secret, raw_request_body))
+  verification_challenge: >-
+    One-time endpoint verification handshake answers with a lowercase HEX HMAC digest in the
+    body - base64 in the header, hex in the challenge reply. Docs flag the base64-vs-hex mixup
+    as the single most common integration bug (a wrong encoding yields a permanently
+    "unverified" endpoint with no error).
+delivery:
+  attempts: 1
+  timeout_seconds: 5
+  retries: none
+  note: >-
+    One HTTP POST attempt with a 5-second response budget and no retries; failed-gate attempts
+    are still recorded with a status. Receivers should ack fast and process async.
+events:
+  - name: listing.submission
+    resource: Listings
+    fires: A citation submission to a directory site resolves
+  - name: profile.created
+    resource: Locations
+    fires: A location is created
+  - name: profile.updated
+    resource: Locations
+    fires: A location is edited
+  - name: profile.deleted
+    resource: Locations
+    fires: A location is archived
+  - name: connection.location_connected
+    resource: Connected Accounts
+    fires: A Google or Facebook listing is linked
+  - name: connection.location_disconnected
+    resource: Connected Accounts
+    fires: A listing is unlinked
+  - name: connection.reauth_required
+    resource: Connected Accounts
+    fires: Credentials were invalidated
+  - name: connection.listing_inaccessible
+    resource: Connected Accounts
+    fires: Access to a listing was lost
+  - name: connection.google_verification_verified
+    resource: Connected Accounts
+    fires: Google verification succeeded
+  - name: connection.google_verification_failed
+    resource: Connected Accounts
+    fires: Google verification failed
+  - name: interaction.review
+    resource: Reviews
+    fires: A review arrives or changes
+  - name: interaction.response
+    resource: Reviews
+    fires: A response is posted or changes
+  - name: local_post.created
+    resource: Posts
+    fires: A post is created
+  - name: local_post.published
+    resource: Posts
+    fires: A post goes live on the connected profiles
+  - name: local_post.rejected
+    resource: Posts
+    fires: A post is rejected by a publisher
+  - name: local_post.deleted
+    resource: Posts
+    fires: A post is deleted
+  - name: analytics.daily_snapshot
+    resource: Analytics
+    fires: A daily analytics snapshot is ready
+  - name: analytics.weekly_snapshot
+    resource: Analytics
+    fires: A weekly analytics snapshot is ready
+event_count: 18
+events_note: >-
+  All 18 events from the event reference (https://docs.listingsapi.com/docs/webhooks-events),
+  which documents exact fields and an example payload per event.
+asyncapi_note: No AsyncAPI document is published; this catalog is from the webhook docs.

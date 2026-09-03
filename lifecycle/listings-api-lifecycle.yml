@@ -1,0 +1,17 @@
+generated: '2026-09-03'
+method: searched
+source: openapi/listings-api-openapi.yaml, https://docs.listingsapi.com, https://www.listingsapi.com/pricing, probe of status.listingsapi.com 2026-09-03
+versioning:
+  scheme: path + date
+  current: v4 (path prefix /api/v4), spec version 2026-08-27 (date-based info.version)
+  note: All 56 operations live under /api/v4; the OpenAPI carries a date-based version string.
+deprecation_policy:
+  published: false
+  note: No deprecation or sunset policy page found; no deprecated operations in the OpenAPI; no Sunset/Deprecation (RFC 8594) headers documented.
+status_page:
+  published: false
+  note: status.listingsapi.com does not resolve (DNS failure, probed 2026-09-03); no status page linked from docs or site footer.
+sla:
+  published: false
+  note: Enterprise plan advertises "Dedicated capacity & SLA" on the pricing page; terms are not public.
+deprecated_operations: []

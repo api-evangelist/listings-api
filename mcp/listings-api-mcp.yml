@@ -1,0 +1,79 @@
+generated: '2026-09-03'
+method: searched
+source: https://listingsapi.com/mcp (probed), https://www.listingsapi.com/mcp, https://github.com/listings-api/listingsapi-mcp, https://listingsapi.com/llms.txt
+name: Listings API MCP
+status: official
+deployment:
+  mode: remote
+  endpoint: https://listingsapi.com/mcp
+  auth: api-key
+  verified: probed
+transport: streamable-http
+description: >-
+  Official hosted MCP server for the Listings API. Streamable HTTP at
+  https://listingsapi.com/mcp - nothing to install. Authenticates with
+  "Authorization: API <key>" (dev-portal API key) or OAuth 2.0 Bearer tokens:
+  the server publishes RFC 8414 authorization-server metadata and RFC 9728
+  protected-resource metadata at /.well-known/ on listingsapi.com (scopes read/write,
+  PKCE S256, dynamic client registration; OAuth consent creates an API key named
+  after the client). Exposes the local-marketing surface (locations, listings and
+  citations, reviews and replies, Google Business Profile / Facebook posts, per-publisher
+  analytics, connected-account flows) plus docs search, OpenAPI introspection, and
+  dev-portal control-plane tools.
+probe:
+  fetched: '2026-09-03'
+  request: 'POST tools/list (unauthenticated)'
+  http_status: 401
+  response: 'JSON-RPC error -32001: Send Authorization: API <your-dev-portal-api-key>, or Bearer <oauth-access-token>, with each MCP call.'
+  note: Live tool schemas are auth-gated; the tool list below is from provider-published docs, not authenticated introspection.
+tools:
+  - name: search_docs
+    description: Search the developer documentation.
+    source: llms.txt
+  - name: get_doc_page
+    description: Fetch a documentation page.
+    source: llms.txt
+  - name: list_endpoints
+    description: List the REST endpoints in the OpenAPI document.
+    source: llms.txt
+  - name: get_endpoint
+    description: Get one endpoint's parameters and response shapes from the OpenAPI document.
+    source: llms.txt
+  - name: whoami
+    description: Identify the account behind the credential.
+    source: llms.txt
+  - name: list_api_keys
+    description: List the account's API keys.
+    source: llms.txt
+  - name: create_api_key
+    description: Create an API key.
+    source: llms.txt
+  - name: revoke_api_key
+    description: Revoke an API key.
+    source: llms.txt
+  - name: get_usage
+    description: Read plan usage / rate-limit headroom.
+    source: llms.txt
+  - name: recent_errors
+    description: Recent API errors for the account.
+    source: llms.txt
+  - name: get_subscription
+    description: Read the account's subscription/plan.
+    source: llms.txt
+tool_areas_from_readme:
+  note: >-
+    The listingsapi-mcp README (pushed 2026-09-02) additionally describes tools across five
+    API-backed areas - locations, listings/citations, reviews, posts, analytics, plus
+    connected-account operations - without publishing tool names. Authenticated tools/list
+    introspection is needed to capture their schemas.
+  areas: [locations, listings-citations, reviews, posts, analytics, connected-accounts]
+registry:
+  manifest: https://github.com/listings-api/listingsapi-mcp/blob/main/server.json
+  name: com.listingsapi/mcp
+  version: 1.0.0
+  official_registry_listed: false
+  note: >-
+    server.json targets registry.modelcontextprotocol.io but a registry search for
+    "listingsapi" and "com.listingsapi" returned 0 servers on 2026-09-03.
+clients_documented: [Claude Code, Claude Desktop, Cursor, Windsurf, Gemini CLI, Cline, VS Code Copilot]
+rate_limits_note: MCP calls count against the account's plan rate limit (Launch 10 req/min, Growth 50 req/min), not a separate MCP budget.

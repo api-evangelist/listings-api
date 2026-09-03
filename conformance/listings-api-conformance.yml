@@ -1,0 +1,65 @@
+generated: '2026-09-03'
+method: derived
+source: openapi/listings-api-openapi.yaml, well-known/ probes 2026-09-03, https://docs.listingsapi.com/docs/getting-started, https://docs.listingsapi.com/docs/error-codes
+standards:
+  - id: oauth2
+    conforms: true
+    evidence: >-
+      MCP surface only: RFC 8414 authorization-server metadata at
+      https://listingsapi.com/.well-known/oauth-authorization-server (authorization_code +
+      refresh_token, PKCE S256, dynamic client registration at /oauth/register, scopes
+      read/write). The REST API itself is API-key only (Authorization: API <key>).
+  - id: oauth2-protected-resource-rfc9728
+    conforms: true
+    evidence: >-
+      https://listingsapi.com/.well-known/oauth-protected-resource (resource
+      https://listingsapi.com/mcp) and https://www.listingsapi.com/.well-known/oauth-protected-resource
+      (resource https://listingsapi.com, empty authorization_servers, documented at /auth.md).
+  - id: api-catalog-rfc9727
+    conforms: true
+    evidence: >-
+      https://www.listingsapi.com/.well-known/api-catalog serves an RFC 9727 linkset with anchor
+      https://listingsapi.com/api/v4, service-desc https://listingsapi.com/openapi.yaml and
+      service-doc https://docs.listingsapi.com/docs. The provider's own MCP page cites RFC 9727.
+  - id: security-txt-rfc9116
+    conforms: true
+    evidence: >-
+      https://listingsapi.com/.well-known/security.txt with Contact, Expires (2027-07-01),
+      Preferred-Languages and Canonical fields (saved verbatim in well-known/).
+  - id: pagination
+    conforms: true
+    evidence: >-
+      Relay-style cursor connections on every list endpoint: first/after/last/before parameters,
+      edges[].node / pageInfo.endCursor / hasNextPage response shape
+      (https://docs.listingsapi.com/docs/getting-started). No offset paging.
+  - id: rfc9457
+    conforms: false
+    evidence: >-
+      Errors use a GraphQL-style envelope (top-level errors[] with SY-prefixed codes inside the
+      message string, plus data.<operation>.errors[] for mutation validation on HTTP 200), not
+      application/problem+json (https://docs.listingsapi.com/docs/error-codes).
+  - id: idempotency
+    conforms: false
+    evidence: >-
+      No Idempotency-Key header or replay-protection mechanism appears in the OpenAPI or the docs;
+      writes are live and unprotected (MCP README: "Writes are real.").
+  - id: openapi-3.1
+    conforms: true
+    evidence: openapi/listings-api-openapi.yaml declares openapi 3.1.0, 56 operations, version 2026-08-27.
+  - id: mcp-streamable-http
+    conforms: true
+    evidence: >-
+      Hosted MCP server at https://listingsapi.com/mcp over streamable HTTP transport
+      (server.json manifest in github.com/listings-api/listingsapi-mcp; unauthenticated
+      tools/list answers a JSON-RPC 401 challenge, confirming a live MCP endpoint).
+  - id: agent-skills-discovery
+    conforms: true
+    evidence: >-
+      Provider publishes an agentskills.io 0.2.0 discovery index at
+      https://www.listingsapi.com/.well-known/agent-skills/index.json with a sha256 digest that
+      matches the served SKILL.md (verified 2026-09-03).
+domain_standard: >-
+  No formal domain standard governs the local-listings/citation market (no OpenRTB/SCIM/OData
+  analogue to declare); the contract's Relay cursor-connection pagination follows the GraphQL
+  Cursor Connections specification shape, reflecting the Synup GraphQL backend it fronts.
+  Reward-only check - nothing asserted.

@@ -1,0 +1,37 @@
+generated: '2026-09-03'
+method: searched
+source: https://pypi.org/pypi/listingsapi/json, https://registry.npmjs.org/listingsapi-js, https://github.com/listings-api
+packages:
+  - name: listingsapi
+    registry: pypi
+    url: https://pypi.org/project/listingsapi/
+    language: Python
+    official: true
+    version: 0.5.2
+    published: '2026-07-29'
+    install: pip install listingsapi
+    repository: https://github.com/listings-api/listingsapi-python-sdk
+    docs: https://docs.listingsapi.com/sdks/python
+    note: >-
+      First-party sync client (Python 3.9+) with automatic Relay-cursor pagination, retries on
+      429/5xx, typed errors, and client-side validation. Resources: analytics, connected-accounts,
+      listings, locations, photos, posts, reviews, workflows.
+  - name: listingsapi-js
+    registry: npm
+    url: https://www.npmjs.com/package/listingsapi-js
+    language: TypeScript
+    official: true
+    version: 0.3.1
+    published: '2026-07-20'
+    install: npm install listingsapi-js
+    repository: https://github.com/listings-api/listingsapi-nodejs-sdk
+    docs: https://docs.listingsapi.com/sdks/node
+    note: >-
+      First-party TypeScript/Node client over the same REST surface, with base URL override for
+      proxies and staging.
+notes: >-
+  Both SDKs are first-party (published from the listings-api GitHub org and documented on
+  docs.listingsapi.com). The listings-api/listingsapi-mcp repo holds MCP connection manifests
+  only (server.json, mcp.json, gemini-extension.json) - no installable package; the MCP server
+  is hosted at https://listingsapi.com/mcp. The provider also lists Apify actors at
+  https://apify.com/listingsapi for scheduled/no-code use. Registry metadata read 2026-09-03.

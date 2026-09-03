@@ -1,0 +1,73 @@
+generated: '2026-09-03'
+method: derived
+source: openapi/listings-api-openapi.yaml, https://docs.listingsapi.com/docs/getting-started
+identifiers:
+  scheme: relay-global-id
+  note: >-
+    Objects carry a base64 relay global id (e.g. "TG9jYXRpb246MTgwMDI4OQ==" decodes to
+    "Location:1800289") plus a numeric databaseId. Webhook payloads use numeric-string
+    location_id. Non-base64 IDs fail with SY90002 Invalid Id.
+entities:
+  - name: Account
+    note: The billing/plan boundary; rate limits and webhooks are per-account. agency_account_id links a managed account to its parent agency.
+  - name: Location
+    note: The master record everything keys off - profile fields, categories, photos, store code.
+  - name: Listing
+    note: One record per publisher citation carrying syncStatus, displayStatus, actionRequired, syncIssue, listingUrl; premium and duplicate variants.
+  - name: ConnectedAccount
+    note: A linked Google or Facebook account, with listings, folders, and connection suggestions.
+  - name: Review (Interaction)
+    note: A review pulled from a publisher, with rating, author, text, date, source site, and canRespond.
+  - name: ReviewResponse
+    note: A public owner reply, editable and archivable.
+  - name: Post (SocialPost)
+    note: An announcement, event, or offer published to Google Business Profile / Facebook; bulk posts fan one post across locations.
+  - name: Photo (MediaFile)
+    note: Media attached to a location; uploads are asynchronous (upload-status endpoint).
+  - name: AnalyticsSnapshot
+    note: Per-publisher performance (Google/Facebook/Bing) per location and date range.
+relationships:
+  - from: Account
+    to: Location
+    kind: has_many
+    via: allLocations / location seats on the plan
+  - from: Account
+    to: ConnectedAccount
+    kind: has_many
+    via: connectedAccountsInfo
+  - from: Location
+    to: Listing
+    kind: has_many
+    via: listingsForLocationPremium, duplicateListingsForLocation
+  - from: Location
+    to: Review
+    kind: has_many
+    via: interactions (GET /locations/{locationId}/reviews)
+  - from: Review
+    to: ReviewResponse
+    kind: has_one
+    via: respondToInteraction / editReviewResponse
+  - from: Location
+    to: Post
+    kind: has_many
+    via: rollupSocialPostsByLocation
+  - from: Location
+    to: Photo
+    kind: has_many
+    via: mediaFilesOfLocation
+  - from: Location
+    to: AnalyticsSnapshot
+    kind: has_many
+    via: googleInsights / facebookInsights / bingInsights
+  - from: ConnectedAccount
+    to: Listing
+    kind: has_many
+    via: connectedAccountListings (each publisher listing belongs_to the connected account that surfaced it - SY81070 fires when mismatched)
+  - from: Listing
+    to: Location
+    kind: belongs_to
+    via: connectListing / createLocationFromConnectedAccountListing
+schema_count: 1517
+notes: >-
+  1,517 component schemas in the spec, reflecting the federated GraphQL backend the REST facade
+  fronts; list responses use the edges/node/pageInfo connection shape throughout.

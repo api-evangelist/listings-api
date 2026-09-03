@@ -1,0 +1,1 @@
+{"resource":"https://listingsapi.com/mcp","authorization_servers":["https://listingsapi.com"],"scopes_supported":["read","write"],"bearer_methods_supported":["header"],"resource_documentation":"https://www.listingsapi.com/mcp"}

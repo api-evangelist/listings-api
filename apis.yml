@@ -22,15 +22,46 @@ accessModel:
   method: derived
 image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/listings-api.png
 name: Listings API
-description: >-
-  REST API and agent-native platform for managing business listings, citations, reviews, Google Business Profile posts,
-  and local analytics across major publisher directories (Google, Facebook, Bing, Yelp, TripAdvisor). A facade over
-  Synup's federated GraphQL backend, with first-party Python and Node SDKs, a hosted MCP server, and llms.txt.
+description: REST API and agent-native platform for managing business listings, citations, reviews, Google Business
+  Profile posts, and local analytics across major publisher directories (Google, Facebook, Bing, Yelp, TripAdvisor).
+  A facade over Synup's federated GraphQL backend, with first-party Python and Node SDKs, a hosted MCP server, and
+  llms.txt.
 url: https://raw.githubusercontent.com/api-evangelist/listings-api/refs/heads/main/apis.yml
 created: '2026-07-12'
-modified: '2026-07-12'
+modified: '2026-09-03'
 specificationVersion: '0.23'
 tags:
+- Business Listings
+- Local SEO
+- Locations
+- Reviews
+- Google Business Profile
+- Analytics
+- citation-management
+- Local Marketing
+- social-publishing
+- MCP
+- agent-native
+tags_raw:
+- business-listings
+- local-seo
+- locations
+- reviews
+- google-business-profile
+- analytics
+- citation-management
+- local-marketing
+- social-publishing
+- mcp
+- agent-native
+apis:
+- name: Listings API
+  description: REST API (OpenAPI 3.1) for managing locations, listings, connected accounts, reviews, posts, and
+    analytics, with a hosted MCP server and llms.txt for agent-native access.
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/listings-api.png
+  humanURL: https://docs.listingsapi.com
+  baseURL: https://listingsapi.com/api/v4
+  tags:
   - Business Listings
   - Local SEO
   - Locations
@@ -42,7 +73,7 @@ tags:
   - social-publishing
   - MCP
   - agent-native
-tags_raw:
+  tags_raw:
   - business-listings
   - local-seo
   - locations
@@ -54,55 +85,95 @@ tags_raw:
   - social-publishing
   - mcp
   - agent-native
-apis:
-  - name: Listings API
-    description: >-
-      REST API (OpenAPI 3.1) for managing locations, listings, connected accounts, reviews, posts, and analytics, with a
-      hosted MCP server and llms.txt for agent-native access.
-    humanURL: https://docs.listingsapi.com
-    baseURL: https://listingsapi.com/api/v4
-    tags:
-      - Business Listings
-      - Local SEO
-      - Locations
-      - Reviews
-      - Google Business Profile
-      - Analytics
-      - citation-management
-      - Local Marketing
-      - social-publishing
-      - MCP
-      - agent-native
-    tags_raw:
-      - business-listings
-      - local-seo
-      - locations
-      - reviews
-      - google-business-profile
-      - analytics
-      - citation-management
-      - local-marketing
-      - social-publishing
-      - mcp
-      - agent-native
-    properties:
-      - type: OpenAPI
-        url: https://listingsapi.com/openapi.yaml
-      - type: OpenAPI
-        url: https://listingsapi.com/openapi/spec.json
-      - type: LLMSTxt
-        url: https://listingsapi.com/llms.txt
-      - type: LLMSTxt
-        url: https://listingsapi.com/llms-full.txt
-      - type: MCPServer
-        url: https://listingsapi.com/mcp
-      - type: Documentation
-        url: https://docs.listingsapi.com/docs/getting-started
+  properties:
+  - type: OpenAPI
+    url: https://listingsapi.com/openapi.yaml
+  - type: OpenAPI
+    url: https://listingsapi.com/openapi/spec.json
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms.txt
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms-full.txt
+  - type: MCPServer
+    url: https://listingsapi.com/mcp
+  - type: Documentation
+    url: https://docs.listingsapi.com/docs/getting-started
+  - type: OpenAPI
+    url: openapi/listings-api-openapi.yaml
+  - type: MCPServer
+    url: mcp/listings-api-mcp.yml
+  - type: ToolCrosswalk
+    url: mcp/listings-api-tool-crosswalk.yml
+  - type: LLMsTxt
+    url: llms/listings-api-llms.txt
+  - type: Overlay
+    url: overlays/listings-api-openapi-overlay.yaml
+  - type: ErrorCatalog
+    url: errors/listings-api-problem-types.yml
+  - type: Webhooks
+    url: asyncapi/listings-api-webhooks.yml
+  - type: DataModel
+    url: data-model/listings-api-data-model.yml
+  - type: OAuthScopes
+    url: scopes/listings-api-scopes.yml
+  - type: Conventions
+    url: conventions/listings-api-conventions.yml
+  - type: RateLimits
+    url: rate-limits/listings-api-rate-limits.yml
+  - type: Plans
+    url: plans/listings-api-plans-pricing.yml
+  - type: Lifecycle
+    url: lifecycle/listings-api-lifecycle.yml
+  - type: APIReference
+    url: https://docs.listingsapi.com/docs
+  - type: GettingStarted
+    url: https://docs.listingsapi.com/docs/getting-started
 maintainers:
-  - FN: Listings API Support
-    url: https://www.listingsapi.com/contact
+- FN: Listings API Support
+  email: support@listingsapi.com
+  url: https://www.listingsapi.com/contact
 generated:
   by: apis.io/add
   model: claude-opus-4-8
   confidence: 95
   at: '2026-07-12T04:15:26.652Z'
+common:
+- type: Website
+  url: https://listingsapi.com
+- type: VulnerabilityDisclosure
+  url: security/listings-api-vulnerability-disclosure.yml
+- type: DomainSecurity
+  url: security/listings-api-domain-security.yml
+- type: Authentication
+  url: authentication/listings-api-authentication.yml
+- type: WellKnown
+  url: well-known/listings-api-well-known.yml
+- type: SecurityTxt
+  url: well-known/listings-api-security.txt
+- type: Packages
+  url: packages/listings-api-packages.yml
+- type: SDKs
+  url: packages/listings-api-packages.yml
+- type: Conformance
+  url: conformance/listings-api-conformance.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: Security
+  url: security/listings-api-vulnerability-disclosure.yml
+- type: Pricing
+  url: https://www.listingsapi.com/pricing
+- type: TermsOfService
+  url: https://www.listingsapi.com/terms
+- type: PrivacyPolicy
+  url: https://www.listingsapi.com/privacy
+- type: Support
+  url: https://www.listingsapi.com/contact
+- type: GitHubOrganization
+  url: https://github.com/listings-api
+- type: SignUp
+  url: https://listingsapi.com/signup
+x-enrichment:
+  date: '2026-09-03'
+  status: enriched
+  artifacts_added: 29
+  pass: local-v2

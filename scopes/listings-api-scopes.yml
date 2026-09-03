@@ -1,0 +1,29 @@
+generated: '2026-09-03'
+method: probed
+source: https://listingsapi.com/.well-known/oauth-authorization-server, https://listingsapi.com/.well-known/oauth-protected-resource, https://docs.listingsapi.com/docs/authentication, https://github.com/listings-api/listingsapi-mcp (README)
+docs: https://docs.listingsapi.com/docs/authentication
+oauth:
+  applies_to: MCP server (https://listingsapi.com/mcp) only; the REST API authenticates with static API keys.
+  issuer: https://listingsapi.com
+  authorization_endpoint: https://listingsapi.com/oauth/authorize
+  token_endpoint: https://listingsapi.com/oauth/token
+  registration_endpoint: https://listingsapi.com/oauth/register
+  revocation_endpoint: https://listingsapi.com/oauth/revoke
+  grant_types: [authorization_code, refresh_token]
+  pkce: S256
+  token_endpoint_auth: none
+scopes:
+  - name: read
+    description: >-
+      Read access - every lookup and report: locations, listings and citations, reviews,
+      posts, analytics. Mirrors the "Read" access level on API keys.
+  - name: write
+    description: >-
+      Write access - create/update locations, reply to reviews, publish posts, connect
+      accounts. Mirrors the "Write" access level on API keys.
+notes: >-
+  scopes_supported [read, write] comes from the provider's own RFC 8414 discovery document.
+  API keys carry the same two access levels (Read or Write), chosen at key creation in the
+  dashboard; OAuth consent on the MCP server materialises as an API key named after the client.
+  A key with Read access covers every lookup; writes need Write access (403 on a write means a
+  Read-only key).

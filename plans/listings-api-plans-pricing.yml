@@ -1,0 +1,42 @@
+generated: '2026-09-03'
+method: searched
+source: https://www.listingsapi.com/pricing
+currency: USD
+billing_period: monthly
+plan_count: 3
+plans:
+  - name: Launch
+    price: 99
+    currency: USD
+    period: month
+    included:
+      locations: 4
+      rate_limit: 10 req/min
+      publishers: 27+
+    trial: 14 days free
+    onboarding: self-serve signup
+    support: email
+    notes: SDK and MCP access included; trial converts to the paid plan unless cancelled.
+  - name: Growth
+    price: 499
+    currency: USD
+    period: month
+    included:
+      locations: 25
+      rate_limit: 50 req/min
+      publishers: Launch network +8
+    notes: Everything in Launch; most-popular tier.
+  - name: Enterprise
+    price: null
+    currency: USD
+    period: month
+    included:
+      locations: 100+
+      rate_limit: negotiated
+      publishers: Growth network +13
+    notes: Custom pricing; dedicated capacity and SLA, solutions engineering. Contact sales.
+notes: >-
+  Every plan gets the full API surface (listings, reviews, posts, analytics, SDKs, hosted MCP
+  server); tiers differ in locations, rate limits, citation coverage and support, not features.
+  Overage model not published; extra location seats via add-ons (SY10151 fires when out of
+  seats). Yelp review reading requires Growth or Enterprise.

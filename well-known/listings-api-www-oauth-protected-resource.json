@@ -1,0 +1,8 @@
+{
+  "resource": "https://listingsapi.com",
+  "resource_name": "Listings API",
+  "bearer_methods_supported": ["header"],
+  "scopes_supported": [],
+  "resource_documentation": "https://www.listingsapi.com/auth.md",
+  "resource_signing_alg_values_supported": []
+}

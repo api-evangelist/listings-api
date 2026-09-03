@@ -1,0 +1,104 @@
+generated: '2026-09-03'
+method: derived
+source: https://listingsapi.com/llms.txt, openapi/listings-api-openapi.yaml, https://github.com/listings-api/listingsapi-mcp (README)
+surfaces:
+  openapi: openapi/listings-api-openapi.yaml
+  mcp:
+    url: https://listingsapi.com/mcp
+    gated: true
+    note: tools/list returns 401 unauthenticated; named tools below come from the provider's llms.txt.
+crosswalk: []
+mcp_only:
+  - tool: search_docs
+    reason: Documentation search over docs.listingsapi.com - no public REST operation.
+  - tool: get_doc_page
+    reason: Documentation retrieval - no public REST operation.
+  - tool: list_endpoints
+    reason: Introspection over the OpenAPI document itself, not a REST operation.
+  - tool: get_endpoint
+    reason: Introspection over the OpenAPI document itself, not a REST operation.
+  - tool: whoami
+    reason: Dev-portal control plane (account identity) - not in the public v4 spec.
+  - tool: list_api_keys
+    reason: Dev-portal control plane (key management) - not in the public v4 spec.
+  - tool: create_api_key
+    reason: Dev-portal control plane (key management) - not in the public v4 spec.
+  - tool: revoke_api_key
+    reason: Dev-portal control plane (key management) - not in the public v4 spec.
+  - tool: get_usage
+    reason: Dev-portal control plane (plan usage) - not in the public v4 spec.
+  - tool: recent_errors
+    reason: Dev-portal control plane (request log) - not in the public v4 spec.
+  - tool: get_subscription
+    reason: Dev-portal control plane (billing/plan) - not in the public v4 spec.
+rest_only:
+  - supportedCountries
+  - subcategories
+  - getLocationsByStoreCodes
+  - allLocations
+  - createLocation
+  - searchLocations
+  - getLocationsByIds
+  - updateLocation
+  - addLocationPhotos
+  - removeLocationPhotos
+  - starLocationPhotos
+  - archiveLocations
+  - cancelLocationsArchive
+  - socialPostView
+  - deleteSocialPost
+  - createSocialPost
+  - createBulkSocialPost
+  - socialPostViewBulk
+  - rollupSocialPostsByLocation
+  - rollupSocialPostsBulk
+  - interactions
+  - rollupInteractions
+  - interactionDetails
+  - interactionsSetting
+  - interactionsAnalyticsStats
+  - interactionSiteConfig
+  - respondToInteraction
+  - editReviewResponse
+  - archiveReviewResponse
+  - facebookInsights
+  - googleInsights
+  - bingInsights
+  - connectedAccountsInfo
+  - connectedAccountDetails
+  - connectedAccountListings
+  - connectionSuggestionsForAccount
+  - planSites
+  - getFoldersUnderGoogleAccount
+  - bulkConnectLinkForGoogle
+  - bulkConnectLinkForFacebook
+  - connectedAccountsTriggerMatches
+  - confirmConnectMatches
+  - gmbBulkDisconnect
+  - fbBulkDisconnect
+  - connectListing
+  - createLocationFromConnectedAccountListing
+  - createGmbListingForLocation
+  - disconnectConnectedAccountListing
+  - duplicateListingsForLocation
+  - voiceAssistantsForLocation
+  - duplicateListingsRollup
+  - markAsDuplicate
+  - markAsNotDuplicate
+  - listingsForLocationPremium
+  - mediaFilesOfLocation
+  - getLocationPhotosUploadStatus
+coverage:
+  openapi_operations: 56
+  mcp_tools_named: 11
+  bound: 0
+  mcp_only: 11
+  rest_only: 56
+notes: >-
+  The 11 tools the provider names in llms.txt are docs-search, OpenAPI-introspection and
+  dev-portal control-plane tools, none backed by a public v4 REST operation, so the crosswalk
+  has no bound rows. The MCP repo README (2026-09-02) describes an additional API-backed tool
+  set spanning locations, listings/citations, reviews, posts, analytics and connected accounts -
+  those would bind to the rest_only operations above - but the live tools/list is auth-gated
+  (401) and the tool names are unpublished, so no binding is asserted. Re-run with an
+  authenticated introspection to complete the crosswalk.

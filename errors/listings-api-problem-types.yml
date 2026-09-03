@@ -1,0 +1,86 @@
+generated: '2026-09-03'
+method: searched
+source: https://docs.listingsapi.com/docs/error-codes, https://docs.listingsapi.com/docs/rate-limits, openapi/listings-api-openapi.yaml
+format: proprietary
+envelope: >-
+  Two shapes. (1) Request-level failures (auth, authorization, malformed request, rate limit,
+  server error) return the matching 4xx/5xx with a top-level errors[] array:
+  {"data": {...: null}, "errors": [{"message": "SY90005: Invalid Token"}]}.
+  (2) Mutation validation returns HTTP 200 with the failure nested at
+  data.<operation>.errors[] - always read that array on writes, even on success; on success it
+  is present and empty. SY error codes travel inside the message string as
+  "SYxxxxx: <human-readable reason>". The 429 envelope additionally carries
+  retry_after_seconds, correlation_id and doc_url.
+status_codes:
+  - status: 400
+    meaning: Malformed request, unparseable filter, invalid enum, malformed ID.
+    codes: [SY90006, SY90001]
+    sdk_exception: ValidationError
+  - status: 401
+    meaning: API key missing, malformed, or revoked.
+    codes: [SY90005]
+    sdk_exception: AuthenticationError
+  - status: 403
+    meaning: Key valid but not permitted for the resource.
+    codes: [SY90003]
+    sdk_exception: PermissionDeniedError
+  - status: 404
+    meaning: Path or resource ID does not exist.
+    codes: [SY90002]
+    sdk_exception: NotFoundError
+  - status: 422
+    meaning: Well-formed but unprocessable value (unknown/ambiguous category).
+    sdk_exception: ValidationError
+  - status: 429
+    meaning: Plan rate limit exceeded. Honor Retry-After / retry_after_seconds.
+    codes: [rate_limited]
+    sdk_exception: RateLimitError
+  - status: 500
+    meaning: Server-side or upstream error; safe to retry with backoff.
+    codes: [SY90007]
+    sdk_exception: InternalServerError
+problem_types:
+  - code: SY90005
+    title: Invalid Token
+    status: 401
+    remediation: 'Re-issue a key from the dashboard and send it as "Authorization: API <your-key>".'
+  - code: SY90001
+    title: Not authorized to access this resource
+    status: 401/403
+    remediation: The key was rejected for the requested resource.
+  - code: SY90002
+    title: Invalid Id
+    status: 404/400
+    remediation: A path or argument ID could not be resolved (often a bad or non-base64 relay ID).
+  - code: SY10126
+    title: City is Mandatory
+    status: 200 (mutation body)
+    remediation: Required field city omitted from the input.
+  - code: SY10010
+    title: state_iso
+    status: 200 (mutation body)
+    remediation: stateIso missing or invalid; see the countries endpoint for valid values.
+  - code: SY10151
+    title: Out of location seats
+    status: 200 (nested under SY81086)
+    remediation: Add a location add-on or upgrade the plan.
+  - code: rate_limited
+    title: Too many requests
+    status: 429
+    remediation: Wait retry_after_seconds (mirrored in the Retry-After header), then retry with exponential backoff and jitter.
+code_ranges:
+  - range: SY10xxx
+    meaning: Field-level validation; the message names the field or rule that failed. Arrive in the mutation body on HTTP 200.
+  - range: SY90xxx
+    meaning: Request-level auth/authorization/server errors; arrive at top level with the matching status.
+  - range: SY810xx
+    meaning: >-
+      Connected-account and listing-import errors (SY81019-SY81090 documented individually at
+      https://docs.listingsapi.com/docs/error-codes) - nested in the mutation body on HTTP 200.
+      Notable: SY81068 listing already linked; SY81069 credentials invalid (reconnect);
+      SY81075 Google rate limit (retry with backoff); SY81086 business-rule rejection carrying a
+      nested code.
+openapi_note: >-
+  The OpenAPI declares 200/400/401/500 on all 56 operations with a shared Error schema; 403,
+  404, 422 and 429 are documented in the error-codes reference but not enumerated per-operation
+  in the spec.

@@ -1,0 +1,13 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://listingsapi.com/api/v4",
+      "service-desc": [
+        { "href": "https://listingsapi.com/openapi.yaml", "type": "application/yaml" }
+      ],
+      "service-doc": [
+        { "href": "https://docs.listingsapi.com/docs", "type": "text/html" }
+      ]
+    }
+  ]
+}

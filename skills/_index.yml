@@ -1,0 +1,22 @@
+generated: '2026-09-03'
+method: searched
+source: https://www.listingsapi.com/.well-known/agent-skills/index.json, openapi/listings-api-openapi.yaml
+skills:
+  - name: listingsapi
+    file: skills/listings-api-listingsapi-skill.md
+    method: searched
+    provider_published: true
+    source: https://www.listingsapi.com/.well-known/agent-skills/listingsapi/SKILL.md
+    digest: sha256:76ff9600409d2819c4c020eb6017969c1ee5905616c9db570d141384b7bdb45d
+    note: >-
+      Saved VERBATIM from the provider's agentskills.io discovery index at
+      /.well-known/agent-skills/index.json (digest verified against the served body 2026-09-03).
+      Covers auth, core endpoints, and the sync/reviews/posts/analytics surface.
+  - name: listings-api-respond-to-reviews
+    file: skills/listings-api-respond-to-reviews.md
+    method: generated
+    provider_published: false
+  - name: listings-api-publish-local-posts
+    file: skills/listings-api-publish-local-posts.md
+    method: generated
+    provider_published: false
