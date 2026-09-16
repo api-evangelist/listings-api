@@ -55,59 +55,269 @@ tags_raw:
 - mcp
 - agent-native
 apis:
-- name: Listings API
-  description: REST API (OpenAPI 3.1) for managing locations, listings, connected accounts, reviews, posts, and
-    analytics, with a hosted MCP server and llms.txt for agent-native access.
-  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/listings-api.png
+- aid: listings-api:listings-api-analytics-api
+  name: Listings API Analytics API
+  description: Per-publisher insights (Google / Facebook / Bing) and indexing rate.
   humanURL: https://docs.listingsapi.com
   baseURL: https://listingsapi.com/api/v4
   tags:
-  - Business Listings
-  - Local SEO
-  - Locations
-  - Reviews
-  - Google Business Profile
   - Analytics
-  - citation-management
-  - Local Marketing
-  - social-publishing
-  - MCP
-  - agent-native
-  tags_raw:
-  - business-listings
-  - local-seo
-  - locations
-  - reviews
-  - google-business-profile
-  - analytics
-  - citation-management
-  - local-marketing
-  - social-publishing
-  - mcp
-  - agent-native
   properties:
   - type: OpenAPI
-    url: https://listingsapi.com/openapi.yaml
-  - type: OpenAPI
-    url: https://listingsapi.com/openapi/spec.json
+    url: openapi/listings-api-analytics-api-openapi.yml
   - type: LLMsTxt
     url: https://listingsapi.com/llms.txt
   - type: LLMsTxt
     url: https://listingsapi.com/llms-full.txt
-  - type: MCPServer
-    url: https://listingsapi.com/mcp
   - type: Documentation
     url: https://docs.listingsapi.com/docs/getting-started
-  - type: OpenAPI
-    url: openapi/listings-api-openapi.yaml
-  - type: MCPServer
-    url: mcp/listings-api-mcp.yml
   - type: ToolCrosswalk
     url: mcp/listings-api-tool-crosswalk.yml
   - type: LLMsTxt
     url: llms/listings-api-llms.txt
-  - type: Overlay
-    url: overlays/listings-api-openapi-overlay.yaml
+  - type: ErrorCatalog
+    url: errors/listings-api-problem-types.yml
+  - type: Webhooks
+    url: asyncapi/listings-api-webhooks.yml
+  - type: DataModel
+    url: data-model/listings-api-data-model.yml
+  - type: OAuthScopes
+    url: scopes/listings-api-scopes.yml
+  - type: Conventions
+    url: conventions/listings-api-conventions.yml
+  - type: RateLimits
+    url: rate-limits/listings-api-rate-limits.yml
+  - type: Plans
+    url: plans/listings-api-plans-pricing.yml
+  - type: Lifecycle
+    url: lifecycle/listings-api-lifecycle.yml
+  - type: APIReference
+    url: https://docs.listingsapi.com/docs
+  - type: GettingStarted
+    url: https://docs.listingsapi.com/docs/getting-started
+- aid: listings-api:listings-api-connected-accounts-api
+  name: Listings API Connected Accounts API
+  description: Bulk Google / Facebook / Yelp / TripAdvisor account connection flows.
+  humanURL: https://docs.listingsapi.com
+  baseURL: https://listingsapi.com/api/v4
+  tags:
+  - Connected Accounts
+  properties:
+  - type: OpenAPI
+    url: openapi/listings-api-connected-accounts-api-openapi.yml
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms.txt
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms-full.txt
+  - type: Documentation
+    url: https://docs.listingsapi.com/docs/getting-started
+  - type: ToolCrosswalk
+    url: mcp/listings-api-tool-crosswalk.yml
+  - type: LLMsTxt
+    url: llms/listings-api-llms.txt
+  - type: ErrorCatalog
+    url: errors/listings-api-problem-types.yml
+  - type: Webhooks
+    url: asyncapi/listings-api-webhooks.yml
+  - type: DataModel
+    url: data-model/listings-api-data-model.yml
+  - type: OAuthScopes
+    url: scopes/listings-api-scopes.yml
+  - type: Conventions
+    url: conventions/listings-api-conventions.yml
+  - type: RateLimits
+    url: rate-limits/listings-api-rate-limits.yml
+  - type: Plans
+    url: plans/listings-api-plans-pricing.yml
+  - type: Lifecycle
+    url: lifecycle/listings-api-lifecycle.yml
+  - type: APIReference
+    url: https://docs.listingsapi.com/docs
+  - type: GettingStarted
+    url: https://docs.listingsapi.com/docs/getting-started
+- aid: listings-api:listings-api-listings-api
+  name: Listings API Listings API
+  description: Premium and additional directory listings, duplicates, and AI evaluation.
+  humanURL: https://docs.listingsapi.com
+  baseURL: https://listingsapi.com/api/v4
+  tags:
+  - Listings
+  properties:
+  - type: OpenAPI
+    url: openapi/listings-api-listings-api-openapi.yml
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms.txt
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms-full.txt
+  - type: Documentation
+    url: https://docs.listingsapi.com/docs/getting-started
+  - type: ToolCrosswalk
+    url: mcp/listings-api-tool-crosswalk.yml
+  - type: LLMsTxt
+    url: llms/listings-api-llms.txt
+  - type: ErrorCatalog
+    url: errors/listings-api-problem-types.yml
+  - type: Webhooks
+    url: asyncapi/listings-api-webhooks.yml
+  - type: DataModel
+    url: data-model/listings-api-data-model.yml
+  - type: OAuthScopes
+    url: scopes/listings-api-scopes.yml
+  - type: Conventions
+    url: conventions/listings-api-conventions.yml
+  - type: RateLimits
+    url: rate-limits/listings-api-rate-limits.yml
+  - type: Plans
+    url: plans/listings-api-plans-pricing.yml
+  - type: Lifecycle
+    url: lifecycle/listings-api-lifecycle.yml
+  - type: APIReference
+    url: https://docs.listingsapi.com/docs
+  - type: GettingStarted
+    url: https://docs.listingsapi.com/docs/getting-started
+- aid: listings-api:listings-api-locations-api
+  name: Listings API Locations API
+  description: Create, update, archive, and inspect business locations.
+  humanURL: https://docs.listingsapi.com
+  baseURL: https://listingsapi.com/api/v4
+  tags:
+  - Locations
+  properties:
+  - type: OpenAPI
+    url: openapi/listings-api-locations-api-openapi.yml
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms.txt
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms-full.txt
+  - type: Documentation
+    url: https://docs.listingsapi.com/docs/getting-started
+  - type: ToolCrosswalk
+    url: mcp/listings-api-tool-crosswalk.yml
+  - type: LLMsTxt
+    url: llms/listings-api-llms.txt
+  - type: ErrorCatalog
+    url: errors/listings-api-problem-types.yml
+  - type: Webhooks
+    url: asyncapi/listings-api-webhooks.yml
+  - type: DataModel
+    url: data-model/listings-api-data-model.yml
+  - type: OAuthScopes
+    url: scopes/listings-api-scopes.yml
+  - type: Conventions
+    url: conventions/listings-api-conventions.yml
+  - type: RateLimits
+    url: rate-limits/listings-api-rate-limits.yml
+  - type: Plans
+    url: plans/listings-api-plans-pricing.yml
+  - type: Lifecycle
+    url: lifecycle/listings-api-lifecycle.yml
+  - type: APIReference
+    url: https://docs.listingsapi.com/docs
+  - type: GettingStarted
+    url: https://docs.listingsapi.com/docs/getting-started
+- aid: listings-api:listings-api-posts-api
+  name: Listings API Posts API
+  description: >-
+    Create and manage Google Business Profile posts — announcements, events, and offers — across locations.
+  humanURL: https://docs.listingsapi.com
+  baseURL: https://listingsapi.com/api/v4
+  tags:
+  - Posts
+  properties:
+  - type: OpenAPI
+    url: openapi/listings-api-posts-api-openapi.yml
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms.txt
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms-full.txt
+  - type: Documentation
+    url: https://docs.listingsapi.com/docs/getting-started
+  - type: ToolCrosswalk
+    url: mcp/listings-api-tool-crosswalk.yml
+  - type: LLMsTxt
+    url: llms/listings-api-llms.txt
+  - type: ErrorCatalog
+    url: errors/listings-api-problem-types.yml
+  - type: Webhooks
+    url: asyncapi/listings-api-webhooks.yml
+  - type: DataModel
+    url: data-model/listings-api-data-model.yml
+  - type: OAuthScopes
+    url: scopes/listings-api-scopes.yml
+  - type: Conventions
+    url: conventions/listings-api-conventions.yml
+  - type: RateLimits
+    url: rate-limits/listings-api-rate-limits.yml
+  - type: Plans
+    url: plans/listings-api-plans-pricing.yml
+  - type: Lifecycle
+    url: lifecycle/listings-api-lifecycle.yml
+  - type: APIReference
+    url: https://docs.listingsapi.com/docs
+  - type: GettingStarted
+    url: https://docs.listingsapi.com/docs/getting-started
+- aid: listings-api:listings-api-reviews-api
+  name: Listings API Reviews API
+  description: Reviews and review-response endpoints, including analytics.
+  humanURL: https://docs.listingsapi.com
+  baseURL: https://listingsapi.com/api/v4
+  tags:
+  - Reviews
+  properties:
+  - type: OpenAPI
+    url: openapi/listings-api-reviews-api-openapi.yml
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms.txt
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms-full.txt
+  - type: Documentation
+    url: https://docs.listingsapi.com/docs/getting-started
+  - type: ToolCrosswalk
+    url: mcp/listings-api-tool-crosswalk.yml
+  - type: LLMsTxt
+    url: llms/listings-api-llms.txt
+  - type: ErrorCatalog
+    url: errors/listings-api-problem-types.yml
+  - type: Webhooks
+    url: asyncapi/listings-api-webhooks.yml
+  - type: DataModel
+    url: data-model/listings-api-data-model.yml
+  - type: OAuthScopes
+    url: scopes/listings-api-scopes.yml
+  - type: Conventions
+    url: conventions/listings-api-conventions.yml
+  - type: RateLimits
+    url: rate-limits/listings-api-rate-limits.yml
+  - type: Plans
+    url: plans/listings-api-plans-pricing.yml
+  - type: Lifecycle
+    url: lifecycle/listings-api-lifecycle.yml
+  - type: APIReference
+    url: https://docs.listingsapi.com/docs
+  - type: GettingStarted
+    url: https://docs.listingsapi.com/docs/getting-started
+- aid: listings-api:listings-api-supporting-apis-api
+  name: Listings API Supporting APIs API
+  description: >-
+    Supporting reference data — countries, sub-categories, and publisher site categories — plus the publisher
+    sites included in your plan.
+  humanURL: https://docs.listingsapi.com
+  baseURL: https://listingsapi.com/api/v4
+  tags:
+  - Supporting APIs
+  properties:
+  - type: OpenAPI
+    url: openapi/listings-api-supporting-apis-api-openapi.yml
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms.txt
+  - type: LLMsTxt
+    url: https://listingsapi.com/llms-full.txt
+  - type: Documentation
+    url: https://docs.listingsapi.com/docs/getting-started
+  - type: ToolCrosswalk
+    url: mcp/listings-api-tool-crosswalk.yml
+  - type: LLMsTxt
+    url: llms/listings-api-llms.txt
   - type: ErrorCatalog
     url: errors/listings-api-problem-types.yml
   - type: Webhooks
@@ -138,6 +348,12 @@ generated:
   confidence: 95
   at: '2026-07-12T04:15:26.652Z'
 common:
+- type: MCPServer
+  url: https://listingsapi.com/mcp
+- type: MCPServer
+  url: mcp/listings-api-mcp.yml
+- type: Overlay
+  url: overlays/listings-api-openapi-overlay.yaml
 - type: Website
   url: https://listingsapi.com
 - type: VulnerabilityDisclosure
