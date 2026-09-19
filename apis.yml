@@ -33,7 +33,7 @@ specificationVersion: '0.23'
 tags:
 - Business Listings
 - Local SEO
-- Locations
+- Location
 - Reviews
 - Google Business Profile
 - Analytics
@@ -181,6 +181,8 @@ apis:
   humanURL: https://docs.listingsapi.com
   baseURL: https://listingsapi.com/api/v4
   tags:
+  - Location
+  tags_raw:
   - Locations
   properties:
   - type: OpenAPI
