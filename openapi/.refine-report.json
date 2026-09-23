@@ -1,0 +1,32 @@
+{
+  "provider": "listings-api",
+  "sources": [
+    "_original/listings-api-openapi.yaml"
+  ],
+  "outputs": [
+    "listings-api-analytics-api-openapi.yml",
+    "listings-api-connected-accounts-api-openapi.yml",
+    "listings-api-listings-api-openapi.yml",
+    "listings-api-locations-api-openapi.yml",
+    "listings-api-posts-api-openapi.yml",
+    "listings-api-reviews-api-openapi.yml",
+    "listings-api-supporting-apis-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "listings-api-openapi.yaml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "apis.yml register: already-registered"
+  ],
+  "skipped": [
+    "listings-api-analytics-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "listings-api-connected-accounts-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "listings-api-listings-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "listings-api-locations-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "listings-api-posts-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "listings-api-reviews-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "listings-api-supporting-apis-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
+}

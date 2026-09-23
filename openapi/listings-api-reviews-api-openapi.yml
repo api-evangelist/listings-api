@@ -1,0 +1,1111 @@
+openapi: 3.2.0
+info:
+  title: Listings Reviews API
+  version: 2026-08-27
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  contact:
+    name: Listings API support
+    email: support@listingsapi.com
+    url: https://www.listingsapi.com/contact
+  termsOfService: https://www.listingsapi.com/terms
+  license:
+    name: Proprietary (Listings API Terms of Service)
+    url: https://www.listingsapi.com/terms
+  x-logo:
+    url: https://www.listingsapi.com/favicon.svg
+servers:
+- url: https://listingsapi.com
+  description: Production
+security:
+- apiKey: []
+- rapidApiKey: []
+  rapidApiHost: []
+tags:
+- name: Reviews
+  description: Reviews and review-response endpoints, including analytics.
+paths:
+  /api/v4/locations/{locationId}/reviews:
+    get:
+      operationId: interactions
+      summary: Paginated list of interactions (reviews / Q&A / social) for a single location…
+      tags:
+      - Reviews
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location ID, a raw numeric database ID (e.g. `1800289`) or its Base64-encoded Relay ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`).
+      - name: siteUrls
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of publisher hostnames to include, e.g. `["maps.google.com","yelp.com"]`.
+      - name: startDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Start of the date-range filter (YYYY-MM-DD).
+      - name: searchString
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Full-text search across interaction content.
+      - name: endDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: End of the date-range filter (YYYY-MM-DD).
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Single interaction category, e.g. `REVIEW`.
+      - name: categories
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of interaction categories.
+      - name: ratingFilters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of star ratings to include, e.g. `[3,4]`.
+      - name: ratingFilter
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Single star rating to filter by.
+      - name: responseStatus
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'JSON-encoded response-status filter. Values: `RESPONDED`, `PENDING`.'
+      - name: sortOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'JSON-encoded sort order. Values: `NEWEST_FIRST`, `OLDEST_FIRST`, `LAST_RESPONDED`.'
+      - name: first
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Number of records to return, counting forward from the start of the result set.
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Cursor to page forward from. Pass `pageInfo.endCursor`, or equivalently the `cursor` of the last edge in the previous page. Stop paging when `pageInfo.hasNextPage` is false, or when a page returns an empty `edges` array.
+      - name: last
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Number of records to return, counting backward from the end of the result set.
+      - name: before
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Cursor to page backward from, used with `last`. Pass the `cursor` of the first edge of the page you are moving back from — the gateway's shared `PageInfo` type exposes no `startCursor` field.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - edges
+                - pageInfo
+                properties:
+                  edges:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - node
+                      - cursor
+                      properties:
+                        node:
+                          $ref: '#/components/schemas/InteractionConnection'
+                        cursor:
+                          type: string
+                  pageInfo:
+                    type: object
+                    required:
+                    - hasNextPage
+                    - hasPreviousPage
+                    properties:
+                      hasNextPage:
+                        type: boolean
+                      hasPreviousPage:
+                        type: boolean
+                      endCursor:
+                        type:
+                        - string
+                        - 'null'
+                      total:
+                        type:
+                        - integer
+                        - 'null'
+                  totalCount:
+                    type: integer
+              example:
+                data:
+                  interactions:
+                    pageInfo:
+                      hasNextPage: true
+                      hasPreviousPage: false
+                      endCursor: SW50ZXJhY3Rpb246MV8xNTU0MjQzMDczMDM2LTllMjZkMmE4LWE2ZWQtNDJlYS04NDU0LTQ3ZDFjOTJlYTg0MQ==
+                    edges:
+                    - node:
+                        id: 9e26d2a8-a6ed-42ea-8454-47d1c92ea841
+                        source: maps.google.com
+                        content: nice place for family together
+                        authorName: vaibhav nakate
+                        rating: 5
+                        date: 2019-04-02 22:11:13.036997+00:00
+                        category: Review
+                        type: Review
+                        responded: false
+                        responseCount: 0
+                        canRespond: true
+                        permalink: https://maps.google.com/maps?cid=...
+                      cursor: SW50ZXJhY3Rpb246MV8xNTU0MjQzMDczMDM2LTllMjZkMmE4LWE2ZWQtNDJlYS04NDU0LTQ3ZDFjOTJlYTg0MQ==
+                    totalCount: 425
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns a cursor-paginated list of reviews and social interactions for a single location, with filters.
+  /api/v4/rollup_interactions:
+    get:
+      operationId: rollupInteractions
+      summary: Paginated list of interactions across many locations (rollup scope)
+      tags:
+      - Reviews
+      parameters:
+      - name: locationFilters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of location IDs to restrict the rollup to.
+      - name: siteUrls
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of publisher hostnames to include.
+      - name: startDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Start of the date-range filter (YYYY-MM-DD).
+      - name: endDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: End of the date-range filter (YYYY-MM-DD).
+      - name: searchString
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Full-text search across interaction content.
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Single interaction category, e.g. `REVIEW`.
+      - name: categories
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of interaction categories.
+      - name: ratingFilters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of star ratings to include, e.g. `[3,4]`.
+      - name: ratingFilter
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Single star rating to filter by.
+      - name: responseStatus
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'JSON-encoded response-status filter. Values: `RESPONDED`, `PENDING`.'
+      - name: sortOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'JSON-encoded sort order. Values: `NEWEST_FIRST`, `OLDEST_FIRST`, `LAST_RESPONDED`.'
+      - name: first
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Number of records to return, counting forward from the start of the result set.
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Cursor to page forward from. Pass `pageInfo.endCursor`, or equivalently the `cursor` of the last edge in the previous page. Stop paging when `pageInfo.hasNextPage` is false, or when a page returns an empty `edges` array.
+      - name: last
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Number of records to return, counting backward from the end of the result set.
+      - name: before
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Cursor to page backward from, used with `last`. Pass the `cursor` of the first edge of the page you are moving back from — the gateway's shared `PageInfo` type exposes no `startCursor` field.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - edges
+                - pageInfo
+                properties:
+                  edges:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - node
+                      - cursor
+                      properties:
+                        node:
+                          $ref: '#/components/schemas/InteractionConnection'
+                        cursor:
+                          type: string
+                  pageInfo:
+                    type: object
+                    required:
+                    - hasNextPage
+                    - hasPreviousPage
+                    properties:
+                      hasNextPage:
+                        type: boolean
+                      hasPreviousPage:
+                        type: boolean
+                      endCursor:
+                        type:
+                        - string
+                        - 'null'
+                      total:
+                        type:
+                        - integer
+                        - 'null'
+                  totalCount:
+                    type: integer
+              example:
+                data:
+                  rollupInteractions:
+                    pageInfo:
+                      hasNextPage: true
+                      hasPreviousPage: false
+                    edges:
+                    - node:
+                        id: 9e26d2a8-a6ed-42ea-8454-47d1c92ea841
+                        source: maps.google.com
+                        content: Excellent service, highly recommend.
+                        authorName: Priya S.
+                        rating: 5
+                        date: 2026-06-30 12:04:11+00:00
+                        category: Review
+                        type: Review
+                        responded: false
+                        responseCount: 0
+                        canRespond: true
+                        locationId: 1800289
+                      cursor: SW50ZXJhY3Rpb246OWUyNmQyYTg=
+                    totalCount: 1284
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns a cursor-paginated list of interactions across many locations in the account, with filtering and sorting.
+  /api/v4/reviewDetails:
+    get:
+      operationId: interactionDetails
+      summary: Fetch full interaction records by ID
+      tags:
+      - Reviews
+      parameters:
+      - name: interactionIds
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of interaction IDs to fetch, e.g. `["b2fa765e-c62b-4e0b-b1d6-1c67c855f5e0"]`. Passed as a URL-encoded JSON string.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionsDetail'
+              example:
+                data:
+                  interactionDetails:
+                    interactions:
+                    - id: b2fa765e-c62b-4e0b-b1d6-1c67c855f5e0
+                      source: maps.google.com
+                      content: Great place for dessert!
+                      authorName: Jordan M.
+                      category: Review
+                      type: Review
+                      rating: 5
+                      date: 2026-05-12 09:22:41+00:00
+                      responded: true
+                      responseCount: 1
+                      canRespond: true
+                      responses:
+                      - id: 2090753a-ece6-4837-8336-8494ad308523
+                        content: Thank you so much for the kind words!
+                        authorName: Jenny Home
+                        date: 2026-05-13 14:02:00+00:00
+                        interactionStatus: CONFIRMED
+                        editedResponse: false
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns full interaction objects for a specific set of interaction IDs.
+  /api/v4/locations/{locationId}/reviews/settings:
+    get:
+      operationId: interactionsSetting
+      summary: Per-location interactions settings (connected sites, thresholds)
+      tags:
+      - Reviews
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location to read. Accepts a base64-encoded Relay ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`) or a raw numeric location ID.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionsSetting'
+              example:
+                data:
+                  interactionsSetting:
+                    siteSettings:
+                    - name: maps.google.com
+                      url: null
+                    - name: facebook.com
+                      url: null
+                    - name: yelp.com
+                      url: null
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns the review sources configured for a single location, with their connection URLs.
+  /api/v4/locations/{locationId}/review-analytics-overview:
+    get:
+      operationId: interactionsAnalyticsStats
+      summary: Analytics KPIs for a single location over a date range
+      tags:
+      - Reviews
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location ID, a raw numeric database ID (e.g. `1800289`) or its Base64-encoded Relay ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`).
+      - name: startDate
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Start of the analytics period (YYYY-MM-DD). Required for the `review-analytics-timeline` route.
+      - name: endDate
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: End of the analytics period (YYYY-MM-DD). Required for the `review-analytics-timeline` route.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionsAnalyticsStats'
+              example:
+                data:
+                  interactionsAnalyticsStats:
+                    stats:
+                    - name: total-reviews
+                      value: 9705423
+                      delta: 100
+                    - name: new-reviews
+                      value: 9705423
+                      delta: 100
+                    - name: overall-rating
+                      value: 4.432533457738633
+                      delta: 100
+                    - name: review-response-rate
+                      value: 47.39994331004429
+                      delta: 100
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns overview review analytics (KPIs) for a location. Two sibling routes return a time-series timeline and a per-site breakdown.
+  /api/v4/reviews/site-config:
+    get:
+      operationId: interactionSiteConfig
+      summary: Per-site metadata (colors, icons, plan support)
+      tags:
+      - Reviews
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InteractionSiteConfig'
+              example:
+                data:
+                  interactionSiteConfig:
+                  - site: Google
+                    siteUrl: maps.google.com
+                  - site: Facebook
+                    siteUrl: facebook.com
+                  - site: Yelp
+                    siteUrl: yelp.com
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns the review platforms available to the account. Google Maps and Facebook are available on every plan, Yelp on Growth and Enterprise.
+  /api/v4/locations/reviews/respond:
+    post:
+      operationId: respondToInteraction
+      summary: Post a response to a review / Q&A / social interaction on the source site
+      tags:
+      - Reviews
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespondToInteractionPayload'
+              example:
+                data:
+                  respondToInteraction:
+                    interaction:
+                      id: 2090753a-ece6-4837-8336-8494ad308523
+                      interactionId: 9e26d2a8-a6ed-42ea-8454-47d1c92ea841
+                      content: 'Thank you for visiting Jenny Home: we''re glad you enjoyed your experience!'
+                      interactionStatus: CREATED
+                      editedResponse: false
+                    errors: null
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                responseContent:
+                  type: string
+                interactionId:
+                  oneOf:
+                  - type: integer
+                    description: Raw numeric ID
+                  - type: string
+                    description: Base64-encoded Relay ID
+                  format: base64-or-int
+                respondedWith:
+                  type: string
+              required:
+              - responseContent
+              - interactionId
+            example:
+              interactionId: 9e26d2a8-a6ed-42ea-8454-47d1c92ea841
+              responseContent: 'Thank you for visiting Jenny Home: we''re glad you enjoyed your experience!'
+      description: 'Posts a public response to a review or interaction on its source platform.
+
+
+        **Common errors**
+
+        - SY50121: Google Reviews accept only a single owner reply per review; a second response is rejected.'
+  /api/v4/locations/reviews/respond/edit:
+    post:
+      operationId: editReviewResponse
+      summary: Edit a previously posted response to a review
+      tags:
+      - Reviews
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditResponsePayload'
+              example:
+                data:
+                  editReviewResponse:
+                    status: 'true'
+                    reviewId: 9e26d2a8-a6ed-42ea-8454-47d1c92ea841
+                    responseId: 2090753a-ece6-4837-8336-8494ad308523
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                responseId:
+                  type: string
+                reviewId:
+                  type: string
+                responseContent:
+                  type: string
+                templateId:
+                  type: string
+              required:
+              - responseId
+              - reviewId
+              - responseContent
+            example:
+              reviewId: 9e26d2a8-a6ed-42ea-8454-47d1c92ea841
+              responseId: 2090753a-ece6-4837-8336-8494ad308523
+              responseContent: 'Thank you again: we''ve updated our reply to include our new store hours.'
+      description: Edits a previously posted owner response on a review or interaction.
+  /api/v4/locations/reviews/respond/archive:
+    post:
+      operationId: archiveReviewResponse
+      summary: Archive a response item by ID (soft-delete from the local cache)
+      tags:
+      - Reviews
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchiveInteractionPayload'
+              example:
+                data:
+                  archiveReviewResponse:
+                    status: 'true'
+                    errors: null
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                responseId:
+                  type: string
+              required:
+              - responseId
+            example:
+              responseId: 2090753a-ece6-4837-8336-8494ad308523
+      description: Archives an existing owner response, removing it from the active responses tracked for an interaction.
+components:
+  schemas:
+    InteractionConnection:
+      type: object
+      description: Relay-style paginated list of interactions with aggregate stats.
+      properties:
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionEdge'
+        totalCount:
+          type: integer
+          format: int32
+        interactionStats:
+          $ref: '#/components/schemas/InteractionsCombinedStats'
+      required:
+      - pageInfo
+    ArchiveInteractionPayload:
+      type: object
+      properties:
+        status:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+    InteractionSiteConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        site:
+          type: string
+        color:
+          type: string
+        opacity:
+          type: number
+          format: float
+        siteUrl:
+          type: string
+        image:
+          type: string
+        baseUrl:
+          type: string
+        supportedInPlan:
+          type: boolean
+    InteractionResponseStatus:
+      type: string
+      enum:
+      - CREATED
+      - FAILED
+      - COMPLETED
+      - CONFIRMED
+      description: Lifecycle state of a response item as it's posted out to the source site.
+    EditResponsePayload:
+      type: object
+      properties:
+        status:
+          type: string
+        reviewId:
+          type: string
+        responseId:
+          type: string
+    ContextInfoType:
+      type: object
+      description: (also defined by packaging) (also defined by task-manager)
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    PageInfo:
+      type: object
+      description: (also defined by interactions) (also defined by v2app) (also defined by scantool) (also defined by thirdeye)
+      properties:
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+    InteractionResponse:
+      type: object
+      description: A response to an interaction (review reply, Q&A answer).
+      properties:
+        id:
+          type: string
+        interactionId:
+          type: string
+        content:
+          type: string
+        authorName:
+          type: string
+        date:
+          type: string
+        respondedWith:
+          type: string
+        respondedBy:
+          type: integer
+          format: int32
+        interactionStatus:
+          $ref: '#/components/schemas/InteractionResponseStatus'
+        editedResponse:
+          type: boolean
+        remarks:
+          type: string
+    RespondToInteractionPayload:
+      type: object
+      properties:
+        interaction:
+          $ref: '#/components/schemas/InteractionResponse'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+    InteractionsSetting:
+      type: object
+      properties:
+        id:
+          type: string
+        positiveInteractionThreshold:
+          type: integer
+          format: int32
+        siteSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteSetting'
+        locationId:
+          type: string
+    ErrorType:
+      type: object
+      description: (also defined by contests) (also defined by packaging) (also defined by task-manager) (also defined by social-media) (also defined by messenger) (also defined by crm-integration) (also defined by crawler) (also defined by media-manager)
+      properties:
+        message:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextInfoType'
+        code:
+          type: string
+    SiteSetting:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        connected:
+          type: boolean
+    InteractionsCombinedStats:
+      type: object
+      properties:
+        sitesStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteInteractionCount'
+        otherStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionStat'
+    InteractionsDetail:
+      type: object
+      properties:
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interaction'
+    InteractionEdge:
+      type: object
+      properties:
+        node:
+          $ref: '#/components/schemas/Interaction'
+        cursor:
+          type: string
+      required:
+      - cursor
+    SiteInteractionCount:
+      type: object
+      properties:
+        name:
+          type: string
+        interactionCount:
+          type: integer
+          format: int32
+    InteractionStat:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+          format: float
+        delta:
+          type: number
+          format: float
+        abs:
+          type: number
+          format: float
+    InteractionsAnalyticsStats:
+      type: object
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionStat'
+    Interaction:
+      type: object
+      description: A single review, Q&A item, or social interaction collected from a source site.
+      properties:
+        id:
+          type: string
+        interactionId:
+          type: string
+        source:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        authorName:
+          type: string
+        rating:
+          type: integer
+          format: int32
+        date:
+          type: string
+        permalink:
+          type: string
+        category:
+          type: string
+        type:
+          type: string
+        responded:
+          type: boolean
+        notes:
+          type: string
+        responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionResponse'
+        responseCount:
+          type: integer
+          format: int32
+        canRespond:
+          type: boolean
+        locationId:
+          type: integer
+          format: int32
+        flaggedReason:
+          type: string
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Authenticate with `Authorization: API <your-key>`.'
+    rapidApiKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+    rapidApiHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+      description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
+externalDocs:
+  description: Developer documentation
+  url: https://docs.listingsapi.com

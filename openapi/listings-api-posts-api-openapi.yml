@@ -1,0 +1,1440 @@
+openapi: 3.2.0
+info:
+  title: Listings Posts API
+  version: 2026-08-27
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  contact:
+    name: Listings API support
+    email: support@listingsapi.com
+    url: https://www.listingsapi.com/contact
+  termsOfService: https://www.listingsapi.com/terms
+  license:
+    name: Proprietary (Listings API Terms of Service)
+    url: https://www.listingsapi.com/terms
+  x-logo:
+    url: https://www.listingsapi.com/favicon.svg
+servers:
+- url: https://listingsapi.com
+  description: Production
+security:
+- apiKey: []
+- rapidApiKey: []
+  rapidApiHost: []
+tags:
+- name: Posts
+  description: Create and manage Google Business Profile posts — announcements, events, and offers — across locations.
+paths:
+  /api/v4/posts/{postId}:
+    get:
+      operationId: socialPostView
+      summary: Individual social post view page
+      tags:
+      - Posts
+      parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Base64-encoded social post ID (e.g. from the `id` field of a posts list, or the `socialPost.id` returned by POST /posts).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialPostView'
+              example:
+                data:
+                  socialPostView:
+                    socialPostId: U29jaWFsUG9zdDo0NDEyMg==
+                    socialPostInfo:
+                      id: U29jaWFsUG9zdDo0NDEyMg==
+                      name: Summer Hours Update
+                      status: SUCCESS
+                      type: ANNOUNCEMENT
+                      createdAt: 2026-06-28
+                      scheduledStartDate: 2026-06-28
+                      scheduledEndDate: 2026-07-28
+                      views: 128
+                      clicks: 14
+                      shares: 0
+                      reactions: 3
+                      comments: 1
+                      sites:
+                      - GOOGLE
+                      message:
+                      - site: GOOGLE
+                        message: We have extended our summer hours! Open until 9pm on weekdays.
+                      cta:
+                      - type:
+                          value: LEARN_MORE
+                          label: Learn more
+                        url: https://jennyhome.example/hours
+                        site: GOOGLE
+                        tinyUrl: https://tiny.cc/jh-hours
+                      contextInfo: null
+                      mediaUrl:
+                      - url: https://cdn.listingsapi.com/posts/44122/summer.jpg
+                        site: GOOGLE
+                        type: IMAGE
+                      publishDetails:
+                      - site: GOOGLE
+                        status: PUBLISHED
+                        createdDate: 2026-06-28
+                        publishedDate: 2026-06-28
+                        submissionError: null
+                      postLinks:
+                      - site: GOOGLE
+                        link: https://www.google.com/maps/place/?post=44122
+                      locationIds:
+                      - 1800289
+                    publishedLocationsCount: 1
+                    socialPostAnalyticsBySite:
+                    - site: GOOGLE
+                      views: 128
+                      clicks: 14
+                      reactions: 3
+                      shares: 0
+                      comments: 1
+                    socialPostAnalyticsByLocationId:
+                    - locationId: 1800289
+                      siteStats:
+                      - site: GOOGLE
+                        status: PUBLISHED
+                        views: 128
+                        clicks: 14
+                        reactions: 3
+                        shares: 0
+                        comments: 1
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns a single social post campaign with its content, per-site publish status, and engagement analytics.
+    delete:
+      operationId: deleteSocialPost
+      summary: Delete a social post
+      tags:
+      - Posts
+      parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Base64-encoded social post ID to delete (the `id` from a posts list or the create response).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteSocialPostMutation'
+              example:
+                data:
+                  deleteSocialPost:
+                    success: true
+                    socialPostId: U29jaWFsUG9zdDo0NDEyMg==
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                clientMutationId:
+                  type: string
+            example:
+              clientMutationId: delete-44122-req-1
+      description: Permanently deletes a social post campaign and removes it from every site it was published to.
+  /api/v4/posts:
+    post:
+      operationId: createSocialPost
+      summary: Create social posts for multiple locations
+      tags:
+      - Posts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialPostMutation'
+              example:
+                data:
+                  createSocialPost:
+                    clientMutationId: null
+                    success: true
+                    errors: []
+                    socialPost:
+                      id: U29jaWFsUG9zdDo0NDEyMg==
+                      name: Grand Opening Announcement
+                      status: INPROGRESS
+                      type: ANNOUNCEMENT
+                      createdAt: 2026-06-28
+                      sites:
+                      - GOOGLE
+                      message:
+                      - site: GOOGLE
+                        message: We are now open! Visit Jenny Home this week for our grand opening.
+                      cta:
+                      - type:
+                          value: LEARN_MORE
+                          label: Learn more
+                        url: https://jennyhome.example/opening
+                        site: GOOGLE
+                        tinyUrl: null
+                      contextInfo: null
+                      mediaUrl:
+                      - url: https://cdn.example.com/opening.jpg
+                        site: GOOGLE
+                        type: IMAGE
+                      publishDetails:
+                      - site: GOOGLE
+                        status: PUBLISHING
+                        createdDate: 2026-06-28
+                        submissionError: null
+                      postLinks: []
+                      locationIds:
+                      - 1800289
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/CreateSocialPostMutationInput'
+              required:
+              - input
+            example:
+              input:
+                postName: Grand Opening Announcement
+                locationIds:
+                - TG9jYXRpb246MTgwMDI4OQ==
+                postType: ANNOUNCEMENT
+                postSites:
+                - GOOGLE
+                postMessage:
+                - site: GOOGLE
+                  message: We are now open! Visit Jenny Home this week for our grand opening.
+                postCta:
+                - site: GOOGLE
+                  type: LEARN_MORE
+                  url: https://jennyhome.example/opening
+                postMediaUrl:
+                - site: GOOGLE
+                  url: https://cdn.example.com/opening.jpg
+                  type: IMAGE
+      description: Creates an ANNOUNCEMENT social post and publishes it to the chosen sites for one or more locations.
+  /api/v4/bulk-posts:
+    post:
+      operationId: createBulkSocialPost
+      summary: Create social posts for multiple locations
+      tags:
+      - Posts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialPostMutation'
+              example:
+                data:
+                  createSocialPost:
+                    clientMutationId: null
+                    success: true
+                    errors: null
+                    socialPost:
+                      id: U29jaWFsUG9zdDo5OTIwMQ==
+                      name: July Reopening Announcement
+                      status: SCHEDULED
+                      type: ANNOUNCEMENT
+                      createdAt: 2026-07-08
+                      scheduledStartDate: 2026-07-10
+                      scheduledEndDate: 2026-07-24
+                      sites:
+                      - GOOGLE
+                      - FACEBOOK
+                      locationIds:
+                      - 1800289
+                      - 1800290
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/CreateSocialPostMutationInput'
+              required:
+              - input
+            example:
+              input:
+                postName: July Reopening Announcement
+                locationIds:
+                - TG9jYXRpb246MTgwMDI4OQ==
+                - TG9jYXRpb246MTgwMDI5MA==
+                postType: ANNOUNCEMENT
+                postSites:
+                - GOOGLE
+                - FACEBOOK
+                postMessage:
+                - site: GOOGLE
+                  message: We're back! Visit us this week for our summer menu.
+                - site: FACEBOOK
+                  message: We're back! Swing by for the new summer menu.
+                postMediaUrl:
+                - site: GOOGLE
+                  url: https://cdn.example.com/summer.jpg
+                  type: IMAGE
+                postScheduledDates:
+                  startDatetime: 2026-07-10 09:00:00+00:00
+                  endDatetime: 2026-07-24 23:59:00+00:00
+      description: Creates one social post and publishes it across many locations in a single request.
+  /api/v4/bulk-posts/{postId}:
+    get:
+      operationId: socialPostViewBulk
+      summary: Individual social post view page
+      tags:
+      - Posts
+      parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Base64-encoded bulk post ID (the `id` returned by POST /bulk-posts or listed by GET /locations/{locationId}/bulk-posts).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialPostView'
+              example:
+                data:
+                  socialPostViewBulk:
+                    socialPostId: U29jaWFsUG9zdDo1MTA4OA==
+                    socialPostInfo:
+                      id: U29jaWFsUG9zdDo1MTA4OA==
+                      name: Diwali Offer - All Stores
+                      status: SUCCESS
+                      type: OFFER
+                      createdAt: 2026-06-20
+                      scheduledStartDate: 2026-06-22
+                      scheduledEndDate: 2026-07-06
+                      views: 4210
+                      clicks: 318
+                      shares: 12
+                      reactions: 87
+                      comments: 4
+                      sites:
+                      - GOOGLE
+                      - FACEBOOK
+                      message:
+                      - site: GOOGLE
+                        message: Festive savings across all our stores this week.
+                      - site: FACEBOOK
+                        message: Festive savings across all our stores this week!
+                      cta:
+                      - type:
+                          value: GET_OFFER
+                          label: Get offer
+                        url: https://jennyhome.example/diwali
+                        site: GOOGLE
+                        tinyUrl: https://tiny.cc/jh-diwali
+                      contextInfo:
+                        couponCode: DIWALI25
+                        redeemUrl: https://jennyhome.example/diwali
+                        termsConditions: Valid in-store only. Cannot be combined with other offers.
+                        title: 25% off storewide
+                        discount: 25%
+                        startDay: 2026-06-22
+                        endDay: 2026-07-06
+                      mediaUrl:
+                      - url: https://cdn.listingsapi.com/posts/51088/diwali.jpg
+                        site: GOOGLE
+                        type: IMAGE
+                      publishDetails:
+                      - site: GOOGLE
+                        status: PUBLISHED
+                        createdDate: 2026-06-20
+                        publishedDate: 2026-06-22
+                        submissionError: null
+                      - site: FACEBOOK
+                        status: PUBLISHED
+                        createdDate: 2026-06-20
+                        publishedDate: 2026-06-22
+                        submissionError: null
+                      postLinks:
+                      - site: GOOGLE
+                        link: https://www.google.com/maps/place/?post=51088
+                      locationIds:
+                      - 1800289
+                      - 1800290
+                      - 1800291
+                    publishedLocationsCount: 3
+                    socialPostAnalyticsBySite:
+                    - site: GOOGLE
+                      views: 3120
+                      clicks: 240
+                      reactions: 61
+                      shares: 0
+                      comments: 0
+                    - site: FACEBOOK
+                      views: 1090
+                      clicks: 78
+                      reactions: 26
+                      shares: 12
+                      comments: 4
+                    socialPostAnalyticsByLocationId:
+                    - locationId: 1800289
+                      siteStats:
+                      - site: GOOGLE
+                        status: PUBLISHED
+                        views: 1040
+                        clicks: 80
+                        reactions: 20
+                        shares: 0
+                        comments: 0
+                      - site: FACEBOOK
+                        status: PUBLISHED
+                        views: 360
+                        clicks: 26
+                        reactions: 9
+                        shares: 4
+                        comments: 1
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns a single bulk (multi-location) post campaign with its content, per-location publish status, and engagement analytics.
+  /api/v4/locations/{locationId}/posts:
+    get:
+      operationId: rollupSocialPostsByLocation
+      summary: List of post campaigns for tags/locations
+      tags:
+      - Posts
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Base64-encoded location cursor / global ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`). Pass it verbatim, do not URL-encode it. The base64 cursor always resolves; the raw numeric database ID also works on this endpoint, but the base64 form is the portable choice across the API.
+      - name: locationIds
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of location IDs to include alongside the path location.
+      - name: filters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded SocialPostFiltersInput (e.g. by `type`, `status`, `creationDateRange`, `siteUrls`).
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: 1-based page number for offset pagination.
+      - name: perPage
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Number of records per page.
+      - name: sortFields
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'JSON-encoded sort object `{ "field": "created_at", "order": "Descending" }`. `field` is one of name, type, status, created_at, schedule_start_date, schedule_end_date, client_name, clicks, views, shares.'
+      - name: componentIdentifier
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Filter to posts created by a specific component/integration.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialPostPaginated'
+              example:
+                data:
+                  rollupSocialPosts:
+                    records:
+                    - id: U29jaWFsUG9zdDo0NDEyMg==
+                      name: Summer Hours Update
+                      status: SUCCESS
+                      type: ANNOUNCEMENT
+                      createdAt: 2026-06-28
+                      scheduledStartDate: 2026-06-28
+                      scheduledEndDate: 2026-07-28
+                      views: 128
+                      clicks: 14
+                      shares: 0
+                      reactions: 3
+                      comments: 1
+                      sites:
+                      - GOOGLE
+                      message:
+                      - site: GOOGLE
+                        message: We have extended our summer hours! Open until 9pm on weekdays.
+                      cta:
+                      - type:
+                          value: LEARN_MORE
+                          label: Learn more
+                        url: https://jennyhome.example/hours
+                        site: GOOGLE
+                        tinyUrl: https://tiny.cc/jh-hours
+                      contextInfo: null
+                      mediaUrl:
+                      - url: https://cdn.listingsapi.com/posts/44122/summer.jpg
+                        site: GOOGLE
+                        type: IMAGE
+                      publishDetails:
+                      - site: GOOGLE
+                        status: PUBLISHED
+                        createdDate: 2026-06-28
+                        publishedDate: 2026-06-28
+                        submissionError: null
+                      postLinks:
+                      - site: GOOGLE
+                        link: https://www.google.com/maps/place/?post=44122
+                      locationIds:
+                      - 1800289
+                      clientName: Jenny Home
+                    locationDetails:
+                    - id: TG9jYXRpb246MTgwMDI4OQ==
+                      name: Jenny Home
+                      street: 600 Congress Ave, Suite 200
+                      city: Austin
+                      postalCode: '78701'
+                      countryIso: US
+                      stateIso: TX
+                      stateName: Texas
+                      storeId: null
+                    pageInfo:
+                      totalPages: 1
+                      hasNextPage: false
+                      hasPreviousPage: false
+                      totalRecords: 1
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns a page of social post campaigns (announcements, events, offers) that target a single location.
+  /api/v4/locations/{locationId}/bulk-posts:
+    get:
+      operationId: rollupSocialPostsBulk
+      summary: List of post campaigns for tags/locations
+      tags:
+      - Posts
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Base64-encoded location cursor / global ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`). Pass it verbatim, do not URL-encode it. The base64 cursor always resolves; the raw numeric database ID also works on this endpoint, but the base64 form is the portable choice across the API.
+      - name: locationIds
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded array of location IDs to include alongside the path location.
+      - name: filters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded SocialPostFiltersInput (e.g. by `type`, `status`, `creationDateRange`, `siteUrls`).
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: 1-based page number for offset pagination.
+      - name: perPage
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Number of records per page.
+      - name: sortFields
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'JSON-encoded sort object `{ "field": "created_at", "order": "Descending" }`. `field` is one of name, type, status, created_at, schedule_start_date, schedule_end_date, client_name, clicks, views, shares.'
+      - name: componentIdentifier
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Filter to campaigns created by a specific component/integration.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialPostPaginated'
+              example:
+                data:
+                  rollupSocialPosts:
+                    records:
+                    - id: U29jaWFsUG9zdDo1MTA4OA==
+                      name: Diwali Offer - All Stores
+                      status: SUCCESS
+                      type: OFFER
+                      createdAt: 2026-06-20
+                      scheduledStartDate: 2026-06-22
+                      scheduledEndDate: 2026-07-06
+                      views: 4210
+                      clicks: 318
+                      shares: 12
+                      reactions: 87
+                      comments: 4
+                      sites:
+                      - GOOGLE
+                      - FACEBOOK
+                      message:
+                      - site: GOOGLE
+                        message: Festive savings across all our stores this week.
+                      - site: FACEBOOK
+                        message: Festive savings across all our stores this week!
+                      cta:
+                      - type:
+                          value: GET_OFFER
+                          label: Get offer
+                        url: https://jennyhome.example/diwali
+                        site: GOOGLE
+                        tinyUrl: https://tiny.cc/jh-diwali
+                      contextInfo:
+                        couponCode: DIWALI25
+                        redeemUrl: https://jennyhome.example/diwali
+                        termsConditions: Valid in-store only. Cannot be combined with other offers.
+                        title: 25% off storewide
+                        discount: 25%
+                        startDay: 2026-06-22
+                        endDay: 2026-07-06
+                      mediaUrl:
+                      - url: https://cdn.listingsapi.com/posts/51088/diwali.jpg
+                        site: GOOGLE
+                        type: IMAGE
+                      publishDetails:
+                      - site: GOOGLE
+                        status: PUBLISHED
+                        createdDate: 2026-06-20
+                        publishedDate: 2026-06-22
+                        submissionError: null
+                      - site: FACEBOOK
+                        status: PUBLISHED
+                        createdDate: 2026-06-20
+                        publishedDate: 2026-06-22
+                        submissionError: null
+                      postLinks:
+                      - site: GOOGLE
+                        link: https://www.google.com/maps/place/?post=51088
+                      locationIds:
+                      - 1800289
+                      - 1800290
+                      - 1800291
+                      clientName: Jenny Home
+                    locationDetails:
+                    - id: TG9jYXRpb246MTgwMDI4OQ==
+                      name: Jenny Home
+                      street: 600 Congress Ave, Suite 200
+                      city: Austin
+                      postalCode: '78701'
+                      countryIso: US
+                      stateIso: TX
+                      stateName: Texas
+                      storeId: null
+                    pageInfo:
+                      totalPages: 1
+                      hasNextPage: false
+                      hasPreviousPage: false
+                      totalRecords: 1
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns a page of bulk (multi-location) post campaigns that include a single location.
+components:
+  schemas:
+    SocialPostPublishedLink:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        link:
+          type: string
+    CreateSocialPostMutationInput:
+      type: object
+      properties:
+        postName:
+          type: string
+        locationIds:
+          type: array
+          items:
+            type: string
+        postType:
+          $ref: '#/components/schemas/SocialPostTypeEnum'
+        postSites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SitesType'
+        postMessage:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostMessageInput'
+        postCta:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostCtaInput'
+        postMediaUrl:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostMediaInput'
+        postScheduledDates:
+          $ref: '#/components/schemas/PostScheduledDatesInput'
+        postContextInfo:
+          $ref: '#/components/schemas/PostContextInfoInput'
+        componentIdentifier:
+          type: string
+        componentType:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductInfoInput'
+        clientMutationId:
+          type: string
+      required:
+      - postName
+      - locationIds
+      - postType
+      - postSites
+    ContextError:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    PublishStatusEnum:
+      type: string
+      enum:
+      - PUBLISHING
+      - PUBLISHED
+      - DELETED
+      - EXPIRED
+      - ERROR
+      description: Publish statuses per site.
+    PostScheduledDatesInput:
+      type: object
+      properties:
+        startDatetime:
+          type: string
+          description: Custom scalar Datetime
+        endDatetime:
+          type: string
+          description: Custom scalar Datetime
+        removalSites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SitesType'
+      required:
+      - startDatetime
+      - endDatetime
+    SiteCtaTypes:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+    StatsAndStatus:
+      type: object
+      properties:
+        clicks:
+          type: integer
+          format: int32
+        views:
+          type: integer
+          format: int32
+        reactions:
+          type: integer
+          format: int32
+        shares:
+          type: integer
+          format: int32
+        comments:
+          type: integer
+          format: int32
+        status:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+    SocialPostPaginated:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostEs'
+        locationDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationDetails'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfo'
+      required:
+      - pageInfo
+    PostContextInfo:
+      type: object
+      properties:
+        couponCode:
+          type: string
+        redeemUrl:
+          type: string
+        termsConditions:
+          type: string
+        title:
+          type: string
+        discount:
+          type: string
+        locationType:
+          type: string
+        startDay:
+          type: string
+          format: date
+        startTime:
+          type: string
+        endDay:
+          type: string
+          format: date
+        endTime:
+          type: string
+    SocialPostMediaInput:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        url:
+          type: string
+        type:
+          $ref: '#/components/schemas/MediaTypeEnum'
+      required:
+      - site
+      - url
+    SocialPostView:
+      type: object
+      properties:
+        socialPostId:
+          type: string
+        socialPostInfo:
+          $ref: '#/components/schemas/SocialPost'
+        publishedLocationsCount:
+          type: integer
+          format: int32
+        socialPostAnalyticsBySite:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostAnalyticsSitewise'
+        socialPostAnalyticsByLocationId:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostAnalyticsLocationwise'
+    PostMessageInput:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        message:
+          type: string
+      required:
+      - site
+      - message
+    SocialPostAnalyticsLocationwise:
+      type: object
+      properties:
+        locationId:
+          type: integer
+          format: int32
+        siteStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatsAndStatus'
+    SocialPostAnalyticsSitewise:
+      type: object
+      properties:
+        clicks:
+          type: integer
+          format: int32
+        views:
+          type: integer
+          format: int32
+        reactions:
+          type: integer
+          format: int32
+        shares:
+          type: integer
+          format: int32
+        comments:
+          type: integer
+          format: int32
+        site:
+          $ref: '#/components/schemas/SitesType'
+    MutationError:
+      type: object
+      description: (also defined by insights) (also defined by v2app)
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextError'
+    PostCta:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/SiteCtaTypes'
+        url:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+        tinyUrl:
+          type: string
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+    SocialPostMutation:
+      type: object
+      description: Result of a social post create/edit mutation.
+      properties:
+        clientMutationId:
+          type: string
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationError'
+        socialPost:
+          $ref: '#/components/schemas/SocialPost'
+      required:
+      - success
+    MediaTypeEnum:
+      type: string
+      enum:
+      - IMAGE
+      - VIDEO
+      description: Media type for social posts.
+    ProductInfoInput:
+      type: object
+      properties:
+        productId:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        price:
+          type: string
+        minPrice:
+          type: string
+        maxPrice:
+          type: string
+        description:
+          type: string
+        photo:
+          type: string
+        cta:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostCtaInput'
+        sites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SitesType'
+    DeleteSocialPostMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        socialPostId:
+          type: string
+      required:
+      - success
+      - socialPostId
+    SocialPost:
+      type: object
+      description: A newer multi-site/multi-location post campaign.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/SocialPostStatusEnum'
+        type:
+          $ref: '#/components/schemas/SocialPostTypeEnum'
+        createdAt:
+          type: string
+          format: date
+        deletedAt:
+          type: string
+          format: date
+        expiredAt:
+          type: string
+          format: date
+        scheduledStartDate:
+          type: string
+          format: date
+        scheduledEndDate:
+          type: string
+          format: date
+        views:
+          type: integer
+          format: int32
+        clicks:
+          type: integer
+          format: int32
+        shares:
+          type: integer
+          format: int32
+        reactions:
+          type: integer
+          format: int32
+        comments:
+          type: integer
+          format: int32
+        sites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SitesType'
+        message:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostMessage'
+        cta:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostCta'
+        contextInfo:
+          $ref: '#/components/schemas/PostContextInfo'
+        mediaUrl:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostMedia'
+        publishDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostPublishDetail'
+        postLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostPublishedLink'
+        locationIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+      required:
+      - id
+      - name
+      - status
+      - type
+      - createdAt
+      - sites
+      - locationIds
+    SocialPostEs:
+      type: object
+      description: Elasticsearch-indexed social post record used in rollup listings.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/SocialPostStatusEnum'
+        type:
+          $ref: '#/components/schemas/SocialPostTypeEnum'
+        createdAt:
+          type: string
+          format: date
+        deletedAt:
+          type: string
+          format: date
+        expiredAt:
+          type: string
+          format: date
+        scheduledStartDate:
+          type: string
+          format: date
+        scheduledEndDate:
+          type: string
+          format: date
+        views:
+          type: integer
+          format: int32
+        clicks:
+          type: integer
+          format: int32
+        shares:
+          type: integer
+          format: int32
+        reactions:
+          type: integer
+          format: int32
+        comments:
+          type: integer
+          format: int32
+        sites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SitesType'
+        message:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostMessage'
+        cta:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostCta'
+        contextInfo:
+          $ref: '#/components/schemas/PostContextInfo'
+        mediaUrl:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostMedia'
+        publishDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostPublishDetail'
+        postLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostPublishedLink'
+        locationIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        clientName:
+          type: string
+      required:
+      - id
+      - name
+      - status
+      - type
+      - createdAt
+      - sites
+      - locationIds
+    SocialPostMedia:
+      type: object
+      properties:
+        url:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+        type:
+          $ref: '#/components/schemas/MediaTypeEnum'
+    LocationDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        street:
+          type: string
+        street2:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        countryIso:
+          type: string
+        stateIso:
+          type: string
+        stateName:
+          type: string
+        storeId:
+          type: string
+      required:
+      - id
+    SocialPostStatusEnum:
+      type: string
+      enum:
+      - INPROGRESS
+      - SCHEDULED
+      - SUCCESS
+      - ERROR
+      - DELETED
+      - EXPIRED
+      description: Social Post lifecycle statuses.
+    PostMessage:
+      type: object
+      properties:
+        message:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+    SocialPostPublishDetail:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        status:
+          $ref: '#/components/schemas/PublishStatusEnum'
+        createdDate:
+          type: string
+          format: date
+        publishedDate:
+          type: string
+          format: date
+        deletedDate:
+          type: string
+          format: date
+        expiredDate:
+          type: string
+          format: date
+        submissionError:
+          type: string
+    SitesType:
+      type: string
+      enum:
+      - GOOGLE
+      - FACEBOOK
+      description: Sites a post can be published to.
+    OffsetBasedPageInfo:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+        totalRecords:
+          type: integer
+          format: int32
+      required:
+      - totalPages
+      - totalRecords
+    PostContextInfoInput:
+      type: object
+      description: Additional details for post based on post_type.
+      properties:
+        couponCode:
+          type: string
+        redeemUrl:
+          type: string
+        termsConditions:
+          type: string
+        title:
+          type: string
+        discount:
+          type: string
+        locationType:
+          type: string
+        startDay:
+          type: string
+          format: date
+        startTime:
+          type: string
+        endDay:
+          type: string
+          format: date
+        endTime:
+          type: string
+    PostCtaInput:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        type:
+          type: string
+        url:
+          type: string
+      required:
+      - site
+      - type
+      - url
+    SocialPostTypeEnum:
+      type: string
+      enum:
+      - EVENT
+      - OFFER
+      - ANNOUNCEMENT
+      - COVID19
+      - PRODUCT
+      description: Social Post types.
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Authenticate with `Authorization: API <your-key>`.'
+    rapidApiKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+    rapidApiHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+      description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
+externalDocs:
+  description: Developer documentation
+  url: https://docs.listingsapi.com

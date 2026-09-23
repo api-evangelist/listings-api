@@ -1,0 +1,719 @@
+openapi: 3.2.0
+info:
+  title: Listings API
+  version: 2026-08-27
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  contact:
+    name: Listings API support
+    email: support@listingsapi.com
+    url: https://www.listingsapi.com/contact
+  termsOfService: https://www.listingsapi.com/terms
+  license:
+    name: Proprietary (Listings API Terms of Service)
+    url: https://www.listingsapi.com/terms
+  x-logo:
+    url: https://www.listingsapi.com/favicon.svg
+servers:
+- url: https://listingsapi.com
+  description: Production
+security:
+- apiKey: []
+- rapidApiKey: []
+  rapidApiHost: []
+tags:
+- name: Listings
+  description: Premium and additional directory listings, duplicates, and AI evaluation.
+paths:
+  /api/v4/locations/{locationId}/listings/duplicates:
+    get:
+      operationId: duplicateListingsForLocation
+      summary: Get duplicate listings for the given location
+      tags:
+      - Listings
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location to read. Accepts a base64-encoded Relay ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`) or a raw numeric location ID.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomSiteType'
+              example:
+                data:
+                  duplicateListingsForLocation:
+                  - id: U2l0ZToxNTA=
+                    name: City Squares
+                    url: citysquares.com
+                    listings:
+                    - id: RHVwbGljYXRlOjIzNTk4NDUw
+                      listingItemId: TGlzdGluZ0l0ZW06MjM1OTg0NTA=
+                      name: Woodbury Train Station
+                      liveLink: http://citysquares.com/b/woodbury-train-station-23598450
+                      status: POTENTIAL
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns duplicate listing entries detected for a single location, grouped by publisher site.
+  /api/v4/locations/{locationId}/voice-assistants:
+    get:
+      operationId: voiceAssistantsForLocation
+      summary: Get voice assistants for a location
+      tags:
+      - Listings
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location ID. Accepts either the base64-encoded node ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`) or the raw numeric database ID (e.g. `1800289`).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VoiceAssistantType'
+              example:
+                data:
+                  voiceAssistantsForLocation:
+                  - databaseId: '104468723'
+                    voiceIdentifier: GOOGLE_ASSISTANT
+                    name: Google Assistant
+                    connectedAccountId: null
+                    syncStatus: REQUIRING_ACTION
+                    actionRequired: true
+                    syncIssue: null
+                    errors: []
+                  - databaseId: '104468711'
+                    voiceIdentifier: SIRI
+                    name: Siri
+                    connectedAccountId: null
+                    syncStatus: IN_PROGRESS
+                    actionRequired: false
+                    syncIssue: Google connection is required.
+                    errors: []
+                  - databaseId: '104468714'
+                    voiceIdentifier: ALEXA
+                    name: Alexa
+                    connectedAccountId: null
+                    syncStatus: IN_PROGRESS
+                    actionRequired: false
+                    syncIssue: null
+                    errors: []
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns the voice assistant listing sync status for a location across Google Assistant, Alexa, Siri, Cortana, and Bixby.
+  /api/v4/locations/listings/duplicates:
+    get:
+      operationId: duplicateListingsRollup
+      summary: Duplicate listing rollup for tag
+      tags:
+      - Listings
+      parameters:
+      - name: filters
+        in: query
+        required: true
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'URL-encoded JSON filter object. Requires a `status`, one of `POTENTIAL`, `PROCESSING`, `FIXED`, `FAILED`. Optional `siteId` narrows to a single publisher. Example: `{"status":"POTENTIAL"}`.'
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: 1-based page number.
+      - name: perPage
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Records per page.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuplicateListingRollupType'
+              example:
+                data:
+                  duplicateListingsRollup:
+                    pageInfo:
+                      hasNextPage: true
+                      hasPreviousPage: false
+                      totalPages: 34
+                      totalRecords: 1673
+                    records:
+                    - id: '3329229'
+                      name: Woodbury Train Station
+                      nameValid: false
+                      duplicateProcessingState: POTENTIAL
+                      liveLink: http://citysquares.com/b/woodbury-train-station-23598450
+                      locationId: '73451'
+                      siteName: City Squares
+                      siteUrl: citysquares.com
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns a paginated, account-wide rollup of potential duplicate listings across every location in the account.
+  /api/v4/locations/listings/mark-as-duplicate:
+    post:
+      operationId: markAsDuplicate
+      summary: Marking the duplicate listing item
+      tags:
+      - Listings
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResultType'
+              example:
+                data:
+                  markAsDuplicate:
+                    success: true
+                    errors: null
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/MarkAsDuplicateInput'
+              required:
+              - input
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                listingItemIds:
+                - TGlzdGluZ0l0ZW06MjM1OTg0NTA=
+      description: Flags one or more detected listing items as confirmed duplicates so Listings API can suppress them.
+  /api/v4/locations/listings/mark-as-not-duplicate:
+    post:
+      operationId: markAsNotDuplicate
+      summary: Marking the non duplicate listing item
+      tags:
+      - Listings
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResultType'
+              example:
+                data:
+                  markAsNotDuplicate:
+                    success: true
+                    errors: null
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/MarkAsNotDuplicateInput'
+              required:
+              - input
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                listingItemIds:
+                - TGlzdGluZ0l0ZW06MjM1OTg0NTA=
+      description: Dismisses one or more potential duplicates as false positives so they stop appearing in the duplicates list.
+  /api/v4/locations/{locationId}/listings/premium:
+    get:
+      operationId: listingsForLocationPremium
+      summary: Get listings for a location
+      tags:
+      - Listings
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location to read. Accepts a base64-encoded Relay ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`) or a raw numeric location ID.
+      - name: listingType
+        in: query
+        required: true
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'Which listing tier to return: `premium` for the plan''s premium directory listings, or `additional` for additional/free listings.'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ListingUnion'
+              example:
+                data:
+                  listingsForLocation:
+                  - id: TGlzdGluZzoxMDQ0Njg3MjM=
+                    databaseId: '104468723'
+                    site:
+                      id: U2l0ZTox
+                      databaseId: '1'
+                      name: Google Maps
+                      url: maps.google.com
+                      syScore: '100'
+                    syncStatus: REQUIRING_ACTION
+                    displayStatus: Connect your account to sync the listing
+                    actionRequired: true
+                    listingUrl: null
+                    connectedAccountId: null
+                    lastUpdate: 2026-07-06 18:33:28+00:00
+                    indexStatus: false
+                    syncIssue: null
+                    verified: false
+                  - id: TGlzdGluZzoxMDQ0Njg3MTQ=
+                    databaseId: '104468714'
+                    site:
+                      id: U2l0ZToxODA=
+                      databaseId: '180'
+                      name: Bing
+                      url: www.bing.com
+                      syScore: '97'
+                    syncStatus: IN_PROGRESS
+                    displayStatus: Information submitted to partner; awaiting response
+                    actionRequired: false
+                    listingUrl: null
+                    connectedAccountId: null
+                    lastUpdate: 2026-07-06 18:33:35+00:00
+                    indexStatus: false
+                    syncIssue: null
+                    verified: false
+                  - id: TGlzdGluZzoxMDQ0Njg3Mjc=
+                    databaseId: '104468727'
+                    site:
+                      id: U2l0ZTozODc=
+                      databaseId: '387'
+                      name: BeLocalFocussed
+                      url: belocalfocussed.com
+                      syScore: '80'
+                    syncStatus: SYNCED
+                    displayStatus: Synced
+                    actionRequired: false
+                    listingUrl: https://belocalfocussed.com/jenny-home-26x0ffkd0e
+                    connectedAccountId: null
+                    lastUpdate: 2026-07-06 18:33:30+00:00
+                    indexStatus: false
+                    syncIssue: null
+                    verified: false
+                  - id: TGlzdGluZzoxMDQ0Njg3MDk=
+                    databaseId: '104468709'
+                    site:
+                      id: U2l0ZTozMDE=
+                      databaseId: '301'
+                      name: Local Mint
+                      url: localmint.com
+                      syScore: '69'
+                    syncStatus: FAILED
+                    displayStatus: Partner experiencing issues; awaiting response
+                    actionRequired: false
+                    listingUrl: null
+                    connectedAccountId: null
+                    lastUpdate: 2026-07-06 18:34:03+00:00
+                    indexStatus: false
+                    syncIssue: Publisher requires website URL
+                    verified: false
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns the sync status of every publisher directory in a location's plan.
+components:
+  schemas:
+    MutationResultType:
+      type: object
+      description: (also defined by crawler)
+      properties:
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationErrorType'
+      required:
+      - success
+    OffsetBasedPageInfoType:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        perPage:
+          type: integer
+          format: int32
+        totalPages:
+          type: integer
+          format: int32
+    ListingUnion:
+      oneOf:
+      - $ref: '#/components/schemas/ListingType'
+      - $ref: '#/components/schemas/PremiumListingType'
+      - $ref: '#/components/schemas/AdditionalListingType'
+    VoiceAssistantType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceListingType'
+    ContextInfoType:
+      type: object
+      description: (also defined by packaging) (also defined by task-manager)
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    MarkAsDuplicateInput:
+      type: object
+      properties:
+        listingItemIds:
+          type: array
+          items:
+            type: string
+        locationId:
+          type: string
+      required:
+      - listingItemIds
+    DuplicateListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        listingItemId:
+          type: string
+        name:
+          type: string
+        liveLink:
+          type: string
+        status:
+          type: string
+    DuplicateListingRollupType:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int32
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/DuplicateListingType'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfoType'
+    CustomSiteType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/DuplicateListingType'
+    SiteType:
+      type: object
+      description: Directory site metadata.
+      properties:
+        id:
+          type: string
+        databaseId:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        syScore:
+          type: string
+        addOn:
+          type: string
+      required:
+      - id
+      - databaseId
+      - url
+    PremiumListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        site:
+          $ref: '#/components/schemas/SiteType'
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+    MutationErrorType:
+      type: object
+      description: (also defined by notifications) (also defined by reviewfunnel) (also defined by crawler)
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: array
+          items:
+            type: string
+      required:
+      - message
+    ListingType:
+      type: object
+      description: A single listing on an external directory site.
+      properties:
+        id:
+          type: string
+        databaseId:
+          type: string
+        listingUrl:
+          type: string
+        syncStatus:
+          $ref: '#/components/schemas/ListingSyncStatusType'
+        displayStatus:
+          type: string
+        syncIssue:
+          type: string
+        actionRequired:
+          type: boolean
+        site:
+          $ref: '#/components/schemas/SiteType'
+        lastUpdate:
+          type: string
+        verified:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+        indexStatus:
+          type: boolean
+        httpStatus:
+          type: integer
+          format: int32
+        issueType:
+          type: string
+    VoiceIdentifierType:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ErrorType:
+      type: object
+      description: (also defined by contests) (also defined by packaging) (also defined by task-manager) (also defined by social-media) (also defined by messenger) (also defined by crm-integration) (also defined by crawler) (also defined by media-manager)
+      properties:
+        message:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextInfoType'
+        code:
+          type: string
+    VoiceListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        voiceIdentifier:
+          $ref: '#/components/schemas/VoiceIdentifierType'
+    AdditionalListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        site:
+          $ref: '#/components/schemas/SiteType'
+    MarkAsNotDuplicateInput:
+      type: object
+      properties:
+        listingItemIds:
+          type: array
+          items:
+            type: string
+        locationId:
+          type: string
+      required:
+      - listingItemIds
+    ListingSyncStatusType:
+      type: string
+      enum:
+      - IN_PROGRESS
+      - SYNCED
+      - FAILED
+      - REQUIRING_ACTION
+      - AVAILABLE
+      - COMPLETED
+      - PENDING_APPROVAL
+      - CANNOT_SUBMIT
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Authenticate with `Authorization: API <your-key>`.'
+    rapidApiKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+    rapidApiHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+      description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
+externalDocs:
+  description: Developer documentation
+  url: https://docs.listingsapi.com

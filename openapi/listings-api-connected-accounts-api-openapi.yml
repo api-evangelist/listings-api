@@ -1,0 +1,1214 @@
+openapi: 3.2.0
+info:
+  title: Listings Connected Accounts API
+  version: 2026-08-27
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  contact:
+    name: Listings API support
+    email: support@listingsapi.com
+    url: https://www.listingsapi.com/contact
+  termsOfService: https://www.listingsapi.com/terms
+  license:
+    name: Proprietary (Listings API Terms of Service)
+    url: https://www.listingsapi.com/terms
+  x-logo:
+    url: https://www.listingsapi.com/favicon.svg
+servers:
+- url: https://listingsapi.com
+  description: Production
+security:
+- apiKey: []
+- rapidApiKey: []
+  rapidApiHost: []
+tags:
+- name: Connected Accounts
+  description: Bulk Google / Facebook / Yelp / TripAdvisor account connection flows.
+paths:
+  /api/v4/connected-accounts:
+    get:
+      operationId: connectedAccountsInfo
+      summary: connectedAccountsInfo
+      tags:
+      - Connected Accounts
+      parameters:
+      - name: accountId
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Listings API account ID to scope results to. Defaults to the account that owns the API key.
+      - name: filters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded object used to narrow the result set (for example by connection status or account type).
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded object describing the sort order to apply to the records.
+      - name: pageInfo
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded pagination object, e.g. `{"page":1,"perPage":20}`.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectedAccountsPaginated'
+              example:
+                data:
+                  connectedAccountsInfo:
+                    pageInfo:
+                      hasNextPage: false
+                      hasPreviousPage: false
+                      totalPages: 1
+                      totalRecords: 1
+                    records:
+                    - accountId: '62670'
+                      clientName: owner@brightsmile-dental.com
+                      connectedAccountId: 4f712c17-4f95-42dd-90f4-97171a2e67b5
+                      connectedAccountType: GoogleAccount
+                      connectedLocationsCount: 0
+                      connectivityIssue: null
+                      email: owner@brightsmile-dental.com
+                      lastFetchMatchesRequestedAt: 2026-07-06 21:43:07 UTC
+                      remarks: null
+                      requestMatches: false
+                      requestMatchesStatus: MATCH_COMPLETED
+                      status: CONNECTED
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns the Google and Facebook accounts connected to your Listings API account, with connection health and linked-location counts.
+  /api/v4/connected-accounts/{connectedAccountId}/details:
+    get:
+      operationId: connectedAccountDetails
+      summary: connectedAccountDetails
+      tags:
+      - Connected Accounts
+      parameters:
+      - name: connectedAccountId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: UUID of the connected account (from the list connected accounts endpoint).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectedAccountDetails'
+              example:
+                data:
+                  connectedAccountDetails:
+                    details:
+                      accountId: '62670'
+                      clientName: owner@brightsmile-dental.com
+                      connectedAccountId: 4f712c17-4f95-42dd-90f4-97171a2e67b5
+                      connectedAccountType: GoogleAccount
+                      connectedLocationsCount: 0
+                      connectivityIssue: null
+                      email: owner@brightsmile-dental.com
+                      lastFetchMatchesRequestedAt: 2026-07-06 21:43:07 UTC
+                      remarks: null
+                      requestMatches: false
+                      requestMatchesStatus: MATCH_COMPLETED
+                      status: CONNECTED
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns the details of a single connected Google or Facebook account by its ID.
+  /api/v4/connected-accounts/connected-account-listings:
+    post:
+      operationId: connectedAccountListings
+      summary: Listings belonging to a connected account
+      tags:
+      - Connected Accounts
+      parameters:
+      - name: connectedAccountId
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: filters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+      - name: pageInfo
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectedAccountListingsPaginated'
+              example:
+                data:
+                  connectedAccountListings:
+                    pageInfo:
+                      hasNextPage: false
+                      hasPreviousPage: false
+                      totalPages: 1
+                      totalRecords: 60
+                    records:
+                    - accountTypeName: Google
+                      address: 123 William St, NY 10038, Manhattan, US
+                      id: R21iQnVsa0RhdGFMYWtlOjA2MDQ4NmExLTA0NzQtNDc4NS1iMjNhLTBkOGM4MzhmNGQ5OA==
+                      liveLink: null
+                      locationName: Trial
+                      phone: (718) 667-7787
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns the Google Business Profile or Facebook listings accessible to a connected account, with optional filtering and pagination.
+  /api/v4/connected-accounts/{connectedAccountId}/connection-suggestions:
+    get:
+      operationId: connectionSuggestionsForAccount
+      summary: connectionSuggestionsForAccount
+      tags:
+      - Connected Accounts
+      parameters:
+      - name: connectedAccountId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: UUID of the connected account to list suggestions for.
+      - name: accountId
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Listings API account ID to scope suggestions to. Defaults to the account the API key belongs to.
+      - name: filters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded filter object to narrow the suggestions.
+      - name: sortBy
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded sort object.
+      - name: pageInfo
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON-encoded pagination object (page / perPage).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionSuggestionsForAccount'
+              example:
+                data:
+                  connectionSuggestionsForAccount:
+                    pageInfo:
+                      hasNextPage: false
+                      hasPreviousPage: false
+                      totalPages: 1
+                      totalRecords: 2
+                    records:
+                    - accountEmail: contact@brightsmile-dental.com
+                      accountType: GMB
+                      connectedAccountId: 4f712c17-4f95-42dd-90f4-97171a2e67b5
+                      locationId: '73415'
+                      matchedDataDatabaseId: 0d5e306f-0da0-46e3-929f-fd3c67ccd8cc
+                      locationInfo:
+                        name: My Business
+                        city: Lincoln
+                        stateIso: NE
+                      suggestedLocationInfo:
+                        locationInfo:
+                          name: My Business
+                          city: Lincoln
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns suggested matches between Listings API locations and Google Business Profile or Facebook listings for a connected account.
+  /api/v4/connected-accounts/{connectedAccountId}/folders:
+    get:
+      operationId: getFoldersUnderGoogleAccount
+      summary: getFoldersUnderGoogleAccount
+      tags:
+      - Connected Accounts
+      parameters:
+      - name: connectedAccountId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: UUID of the connected Google account (from the list connected accounts endpoint).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GmbFolder'
+              example:
+                data:
+                  getFoldersUnderGoogleAccount:
+                  - folderId: accounts/104890024806530350198
+                    folderName: Aniruddha Basu
+                    locationCount: null
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns the Google Business Profile folders (groups) accessible to a connected Google account.
+  /api/v4/connected-accounts/connect-google:
+    post:
+      operationId: bulkConnectLinkForGoogle
+      summary: bulkConnectLinkForGoogle
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectUrl'
+              example:
+                data:
+                  bulkConnectLinkForGoogle:
+                    errors: null
+                    success: true
+                    url: https://claim.verifymybiz.com/locations/redirect_oauth_bulk/google_oauth2?onboarding=false&platform=local&token=9009dc92-2b18-421f-b856-d157f3f06d6b
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/GoogleOauthBulkInput'
+              required:
+              - input
+            example:
+              input:
+                successUrl: https://docs.listingsapi.com/docs/api/connected-accounts-trigger-matches
+                errorUrl: https://docs.listingsapi.com/docs/api/connected-accounts-connect
+      description: Returns an OAuth URL to link a Google Business Profile account to your Listings API account.
+  /api/v4/connected-accounts/connect-facebook:
+    post:
+      operationId: bulkConnectLinkForFacebook
+      summary: bulkConnectLinkForFacebook
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectUrl'
+              example:
+                data:
+                  bulkConnectLinkForFacebook:
+                    errors: null
+                    success: true
+                    url: https://claim.verifymybiz.com/locations/redirect_oauth_bulk/facebook?onboarding=false&platform=local&token=bfac8e06-8d72-4810-9c50-ae7ee12a7b52
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/FacebookOauthBulkInput'
+              required:
+              - input
+            example:
+              input:
+                successUrl: https://docs.listingsapi.com/docs/api/connected-accounts-trigger-matches
+                errorUrl: https://docs.listingsapi.com/docs/api/connected-accounts-connect-facebook
+      description: Returns an OAuth URL to link a Facebook Pages account to your Listings API account.
+  /api/v4/connected-accounts/trigger-matches:
+    post:
+      operationId: connectedAccountsTriggerMatches
+      summary: connectedAccountsTriggerMatches
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectedAccountsTriggerMatchesResult'
+              example:
+                data:
+                  connectedAccountsTriggerMatches:
+                    failedIds: null
+                    success: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/ConnectedAccountsTriggerMatchesInput'
+              required:
+              - input
+            example:
+              input:
+                connectedAccountIds:
+                - 4f712c17-4f95-42dd-90f4-97171a2e67b5
+      description: Fetches the Google and Facebook profiles for connected accounts and matches them against your Listings API locations.
+  /api/v4/connected-accounts/confirm-matches:
+    post:
+      operationId: confirmConnectMatches
+      summary: confirmConnectMatches
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmConnectMatchesResult'
+              example:
+                data:
+                  confirmConnectMatches:
+                    failedIds: null
+                    success: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/ConfirmConnectMatchesInput'
+              required:
+              - input
+            example:
+              input:
+                matchRecordIds:
+                - 0d5e306f-0da0-46e3-929f-fd3c67ccd8cc
+      description: Confirms suggested location-to-listing matches returned by the connection suggestions endpoint.
+  /api/v4/connected-accounts/disconnect-google:
+    post:
+      operationId: gmbBulkDisconnect
+      summary: gmbBulkDisconnect
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDisconnectResult'
+              example:
+                data:
+                  gmbBulkDisconnect:
+                    success: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/BulkDisconnectLocationsInput'
+              required:
+              - input
+            example:
+              input:
+                connectedAccountId: d2397854-52c2-41d7-95f1-b90cba16498d
+      description: Disconnects a connected Google Business Profile account (or specific locations under it) from your Listings API account.
+  /api/v4/connected-accounts/disconnect-facebook:
+    post:
+      operationId: fbBulkDisconnect
+      summary: fbBulkDisconnect
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDisconnectResult'
+              example:
+                data:
+                  fbBulkDisconnect:
+                    success: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/FbBulkDisconnectLocationsInput'
+              required:
+              - input
+            example:
+              input:
+                connectedAccountId: d2397854-52c2-41d7-95f1-b90cba16498d
+      description: Disconnects a previously connected Facebook Pages account from your Listings API account.
+  /api/v4/connected-accounts/connect-listing:
+    post:
+      operationId: connectListing
+      summary: connectListing
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectListingResult'
+              example:
+                data:
+                  connectListing:
+                    message: null
+                    success: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/ConnectListingInput'
+              required:
+              - input
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                connectedAccountId: 4f712c17-4f95-42dd-90f4-97171a2e67b5
+                connectedAccountListingId: R29vZ2xlTG9jYXRpb246ODc3NTkzNGItNTA5OC00ZDBhLThiNDQ=
+      description: Links a specific Google Business Profile or Facebook listing to a Listings API location.
+  /api/v4/connected-accounts/create-location-from-listing:
+    post:
+      operationId: createLocationFromConnectedAccountListing
+      summary: createLocationFromConnectedAccountListing
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResult'
+              example:
+                data:
+                  createLocationFromConnectedAccountListing:
+                    success: true
+                    locationId: 88277
+                    errors: null
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/CreateLocationFromListingInput'
+              required:
+              - input
+            example:
+              input:
+                connectedAccountId: 4f712c17-4f95-42dd-90f4-97171a2e67b5
+                connectedAccountListingId: R21iQnVsa0RhdGFMYWtlOjU3NzU5MzRiLTUwOTgtNGQwYS04YjQ0LTNjY2ZlZmZkZmUzNw==
+      description: Creates a new Listings API location from an existing Google Business Profile or Facebook listing in a connected account.
+  /api/v4/locations/create/gmb-listing:
+    post:
+      operationId: createGmbListingForLocation
+      summary: createGmbListingForLocation
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResult'
+              example:
+                data:
+                  createGmbListingForLocation:
+                    clientMutationId: null
+                    success: true
+                    errors: null
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/CreateGmbListingForLocationInput'
+              required:
+              - input
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                connectedAccountId: 4f712c17-4f95-42dd-90f4-97171a2e67b5
+      description: Creates a new Google Business Profile listing for an existing Listings API location and links it to a connected Google account.
+  /api/v4/connected-accounts/disconnect-listing:
+    post:
+      operationId: disconnectConnectedAccountListing
+      summary: disconnectConnectedAccountListing
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteConnectedAccountsLocationsResult'
+              example:
+                data:
+                  disconnectConnectedAccountListing:
+                    deleted: 1
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locationIds:
+                  type: array
+                  items:
+                    type: string
+              required:
+              - locationIds
+      description: Unlinks the connected Google or Facebook listing from one or more Listings API locations.
+components:
+  schemas:
+    ContextError:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ConfirmConnectMatchesResult:
+      type: object
+      properties:
+        confirmed:
+          type: integer
+          format: int32
+    FacebookOauthBulkInput:
+      type: object
+      properties:
+        successUrl:
+          type: string
+        errorUrl:
+          type: string
+      required:
+      - successUrl
+      - errorUrl
+    ConnectedAccountDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        type:
+          $ref: '#/components/schemas/ConnectedSite'
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountListing'
+      required:
+      - id
+    MutationResult:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationError'
+    ConnectedAccountListingsPaginated:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountListing'
+        totalCount:
+          type: integer
+          format: int32
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+    GoogleOauthBulkInput:
+      type: object
+      properties:
+        successUrl:
+          type: string
+        errorUrl:
+          type: string
+      required:
+      - successUrl
+      - errorUrl
+    ConnectedAccountsTriggerMatchesInput:
+      type: object
+      properties:
+        connectedAccountIds:
+          type: array
+          items:
+            type: string
+    BulkDisconnectLocationsInput:
+      type: object
+      properties:
+        connectedAccountId:
+          type: string
+        locationIds:
+          type: array
+          items:
+            type: string
+      required:
+      - connectedAccountId
+    ConnectionSuggestionLocationInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    FbBulkDisconnectLocationsInput:
+      type: object
+      properties:
+        connectedAccountId:
+          type: string
+        locationIds:
+          type: array
+          items:
+            type: string
+      required:
+      - connectedAccountId
+    ConnectListingResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+    ConnectionSuggestion:
+      type: object
+      properties:
+        id:
+          type: string
+        location:
+          $ref: '#/components/schemas/ConnectionSuggestionLocationInfo'
+        listing:
+          $ref: '#/components/schemas/ConnectedAccountListing'
+      required:
+      - id
+    PageInfo:
+      type: object
+      description: (also defined by interactions) (also defined by v2app) (also defined by scantool) (also defined by thirdeye)
+      properties:
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+    CreateGmbListingForLocationInput:
+      type: object
+      properties:
+        locationId:
+          type: string
+        connectedAccountId:
+          type: string
+      required:
+      - locationId
+      - connectedAccountId
+    ConnectedAccountLocationStatus:
+      type: string
+      enum:
+      - CONNECTED
+      - DISCONNECTED
+      - PENDING
+      - ERROR
+    ConnectedAccountListing:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        status:
+          $ref: '#/components/schemas/ConnectedAccountLocationStatus'
+      required:
+      - id
+    ConnectedAccountsTriggerMatchesResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+    CreateLocationFromListingInput:
+      type: object
+      properties:
+        listingId:
+          type: string
+      required:
+      - listingId
+    DeleteConnectedAccountsLocationsResult:
+      type: object
+      properties:
+        deleted:
+          type: integer
+          format: int32
+    ConnectedAccountInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        type:
+          $ref: '#/components/schemas/ConnectedSite'
+        status:
+          $ref: '#/components/schemas/ConnectedAccountStatus'
+      required:
+      - id
+    ConnectListingInput:
+      type: object
+      properties:
+        connectedAccountId:
+          type: string
+        connectedAccountListingId:
+          type: string
+      required:
+      - connectedAccountId
+      - connectedAccountListingId
+    MutationError:
+      type: object
+      description: (also defined by insights) (also defined by v2app)
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextError'
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+    BulkDisconnectResult:
+      type: object
+      properties:
+        disconnected:
+          type: integer
+          format: int32
+    LocationResult:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        locationId:
+          type: string
+        success:
+          type: boolean
+    GmbFolder:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    ConnectUrl:
+      type: object
+      properties:
+        url:
+          type: string
+      required:
+      - url
+    ConnectionSuggestionsForAccount:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionSuggestion'
+        totalCount:
+          type: integer
+          format: int32
+    ConnectedAccountsPaginated:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountInfo'
+        totalCount:
+          type: integer
+          format: int32
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+    ConnectedSite:
+      type: string
+      enum:
+      - GOOGLE
+      - FACEBOOK
+      - YELP
+      - LINKEDIN
+      - APPLE
+      - PINTEREST
+      - TRIPADVISOR
+    ConnectedAccountStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - DISCONNECTED
+      - EXPIRED
+      - ERROR
+    ConfirmConnectMatchesInput:
+      type: object
+      properties:
+        connectedAccountId:
+          type: string
+        matchRecordIds:
+          type: array
+          items:
+            type: string
+      required:
+      - matchRecordIds
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Authenticate with `Authorization: API <your-key>`.'
+    rapidApiKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+    rapidApiHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+      description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
+externalDocs:
+  description: Developer documentation
+  url: https://docs.listingsapi.com

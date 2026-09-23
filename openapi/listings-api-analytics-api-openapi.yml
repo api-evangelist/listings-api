@@ -1,0 +1,347 @@
+openapi: 3.2.0
+info:
+  title: Listings Analytics API
+  version: 2026-08-27
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  contact:
+    name: Listings API support
+    email: support@listingsapi.com
+    url: https://www.listingsapi.com/contact
+  termsOfService: https://www.listingsapi.com/terms
+  license:
+    name: Proprietary (Listings API Terms of Service)
+    url: https://www.listingsapi.com/terms
+  x-logo:
+    url: https://www.listingsapi.com/favicon.svg
+servers:
+- url: https://listingsapi.com
+  description: Production
+security:
+- apiKey: []
+- rapidApiKey: []
+  rapidApiHost: []
+tags:
+- name: Analytics
+  description: Per-publisher insights (Google / Facebook / Bing) and indexing rate.
+paths:
+  /api/v4/locations/{locationId}/facebook-analytics:
+    get:
+      operationId: facebookInsights
+      summary: Facebook v4 metrics for a single location over a date range
+      tags:
+      - Analytics
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Base64-encoded location ID (Relay id, e.g. TG9jYXRpb246MTgwMDI4OQ==). The raw numeric id is not accepted here.
+      - name: fromDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Start of the range (YYYY-MM-DD). Defaults to a recent window when omitted.
+      - name: toDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: End of the range (YYYY-MM-DD).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacebookMetricV4'
+              example:
+                data:
+                  facebookInsights:
+                    views:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 120
+                    ctaAction:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 5
+                    directionsAction:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 3
+                    phoneAction:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 2
+                    websiteAction:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 9
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns daily Facebook Page interaction metrics for a location over a date range.
+  /api/v4/locations/{locationId}/google-analytics:
+    get:
+      operationId: googleInsights
+      summary: Google My Business v4 metrics for a single location over a date range
+      tags:
+      - Analytics
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Base64-encoded location ID (Relay id, e.g. TG9jYXRpb246MTgwMDI4OQ==). The raw numeric id is not accepted here.
+      - name: fromDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Start of the range (YYYY-MM-DD). Defaults to a recent window when omitted.
+      - name: toDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: End of the range (YYYY-MM-DD).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleMetricV4'
+              example:
+                data:
+                  googleInsights:
+                    total:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 412
+                    - startTime: 2025-06-02 00:00:00+00:00
+                      value: 388
+                    search:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 300
+                    maps:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 112
+                    directionsAction:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 24
+                    phoneAction:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 8
+                    websiteAction:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 41
+                    businessBookings:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 0
+                    businessFoodOrders:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 0
+                    businessFoodMenuClicks:
+                    - startTime: 2025-06-01 00:00:00+00:00
+                      value: 0
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns daily Google Business Profile interaction metrics for a location over a date range.
+  /api/v4/locations/{locationId}/bing-analytics:
+    get:
+      operationId: bingInsights
+      summary: Bing Places v4 metrics for a single location over a date range
+      tags:
+      - Analytics
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Base64-encoded location ID (Relay id, e.g. TG9jYXRpb246MTgwMDI4OQ==). The raw numeric id is not accepted here.
+      - name: fromDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Start of the range (YYYY-MM-DD). Defaults to a recent window when omitted.
+      - name: toDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: End of the range (YYYY-MM-DD).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BingMetricV4'
+              example:
+                data:
+                  bingInsights:
+                    views:
+                    - startTime: 2025-06-02 00:00:00+00:00
+                      value: 73
+                    - startTime: 2025-06-09 00:00:00+00:00
+                      value: 58
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns weekly Bing Places profile view metrics for a location over a date range.
+components:
+  schemas:
+    BingMetricV4:
+      type: object
+      description: Bing Places metrics.
+      properties:
+        views:
+          $ref: '#/components/schemas/MetricDelta'
+    GoogleMetricV4:
+      type: object
+      description: Google My Business metrics including maps, search and actions.
+      properties:
+        total:
+          $ref: '#/components/schemas/MetricDelta'
+        maps:
+          $ref: '#/components/schemas/MetricDelta'
+        search:
+          $ref: '#/components/schemas/MetricDelta'
+        websiteAction:
+          $ref: '#/components/schemas/MetricDelta'
+        directionsAction:
+          $ref: '#/components/schemas/MetricDelta'
+        phoneAction:
+          $ref: '#/components/schemas/MetricDelta'
+        directSearch:
+          $ref: '#/components/schemas/MetricDelta'
+        indirectSearch:
+          $ref: '#/components/schemas/MetricDelta'
+        bookings:
+          $ref: '#/components/schemas/MetricDelta'
+        foodOrders:
+          $ref: '#/components/schemas/MetricDelta'
+        foodMenuClicks:
+          $ref: '#/components/schemas/MetricDelta'
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+    MetricDelta:
+      type: object
+      description: Metric value with optional previous-period comparison.
+      properties:
+        current:
+          type: integer
+          format: int32
+        previous:
+          type: integer
+          format: int32
+        diff:
+          type: integer
+          format: int32
+        diffPercentage:
+          type: number
+          format: float
+        label:
+          type: string
+    FacebookMetricV4:
+      type: object
+      description: Facebook metrics with views and action breakdowns.
+      properties:
+        views:
+          $ref: '#/components/schemas/MetricDelta'
+        ctaAction:
+          $ref: '#/components/schemas/MetricDelta'
+        websiteAction:
+          $ref: '#/components/schemas/MetricDelta'
+        directionsAction:
+          $ref: '#/components/schemas/MetricDelta'
+        phoneAction:
+          $ref: '#/components/schemas/MetricDelta'
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Authenticate with `Authorization: API <your-key>`.'
+    rapidApiKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+    rapidApiHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+      description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
+externalDocs:
+  description: Developer documentation
+  url: https://docs.listingsapi.com

@@ -1,0 +1,300 @@
+openapi: 3.2.0
+info:
+  title: Listings Supporting APIs API
+  version: 2026-08-27
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  contact:
+    name: Listings API support
+    email: support@listingsapi.com
+    url: https://www.listingsapi.com/contact
+  termsOfService: https://www.listingsapi.com/terms
+  license:
+    name: Proprietary (Listings API Terms of Service)
+    url: https://www.listingsapi.com/terms
+  x-logo:
+    url: https://www.listingsapi.com/favicon.svg
+servers:
+- url: https://listingsapi.com
+  description: Production
+security:
+- apiKey: []
+- rapidApiKey: []
+  rapidApiHost: []
+tags:
+- name: Supporting APIs
+  description: Supporting reference data — countries, sub-categories, and publisher site categories — plus the publisher sites included in your plan.
+paths:
+  /api/v4/countries:
+    get:
+      operationId: supportedCountries
+      summary: List of supported countries
+      tags:
+      - Supporting APIs
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CountryType'
+              example:
+                data:
+                  supportedCountries:
+                  - databaseId: 13
+                    hasCity: true
+                    id: Q291bnRyeToxMw==
+                    iso: AU
+                    name: Australia
+                    states:
+                    - countryId: 13
+                      id: '139'
+                      iso: VIC
+                      name: Victoria
+                    - countryId: 13
+                      id: '142'
+                      iso: NSW
+                      name: New South Wales
+                    - countryId: 13
+                      id: '141'
+                      iso: QLD
+                      name: Queensland
+                  - databaseId: 17
+                    hasCity: true
+                    id: Q291bnRyeToxNw==
+                    iso: BE
+                    name: Belgium
+                    states: []
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns every country Listings API supports along with its states/provinces and the ISO codes used when creating or updating locations.
+  /api/v4/sub-categories:
+    get:
+      operationId: subcategories
+      summary: List of sub-categories
+      tags:
+      - Supporting APIs
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubCategoryType'
+              example:
+                data:
+                  subcategories:
+                  - databaseId: 639
+                    id: U3ViQ2F0ZWdvcnk6NjM5
+                    key: 3d-printing
+                    name: 3D Printing
+                    primary: true
+                  - databaseId: 4589
+                    id: U3ViQ2F0ZWdvcnk6NDU4OQ==
+                    key: 3d-printing-service
+                    name: 3D printing service
+                    primary: true
+                  - databaseId: 3268
+                    id: U3ViQ2F0ZWdvcnk6MzI2OA==
+                    key: aadhaar-center
+                    name: Aadhaar center
+                    primary: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns the full catalog of subcategories used to classify locations when creating or updating them.
+  /api/v4/plan-sites:
+    get:
+      operationId: planSites
+      summary: planSites
+      tags:
+      - Supporting APIs
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanSite'
+              example:
+                data:
+                  planSites:
+                  - hideAddressSupportedCountries:
+                    - US
+                    - CA
+                    - AU
+                    - IN
+                    - GB
+                    id: 1
+                    name: Google Maps
+                    supportedCountries:
+                    - US
+                    - CA
+                    - IN
+                    - GB
+                    - DE
+                    url: maps.google.com
+                  - hideAddressSupportedCountries:
+                    - US
+                    - CA
+                    - AU
+                    - IN
+                    - GB
+                    id: 184
+                    name: Facebook
+                    supportedCountries:
+                    - US
+                    - CA
+                    - IN
+                    - GB
+                    - DE
+                    url: facebook.com
+                  - hideAddressSupportedCountries:
+                    - US
+                    - CA
+                    - AU
+                    - GB
+                    id: 2
+                    name: Yelp
+                    supportedCountries:
+                    - US
+                    - CA
+                    - GB
+                    - DE
+                    - FR
+                    url: yelp.com
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Returns every publisher directory site included in the account's plan, with each site's ID, URL, and supported countries.
+components:
+  schemas:
+    PlanSite:
+      type: object
+      properties:
+        site:
+          type: string
+        enabled:
+          type: boolean
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+    StateType:
+      type: object
+      properties:
+        iso:
+          type: string
+        name:
+          type: string
+      required:
+      - iso
+      - name
+    CountryType:
+      type: object
+      description: A country supported by Listings API.
+      properties:
+        iso:
+          type: string
+        name:
+          type: string
+        dialCode:
+          type: string
+        states:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateType'
+      required:
+      - iso
+      - name
+    SubCategoryType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+      required:
+      - id
+      - name
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Authenticate with `Authorization: API <your-key>`.'
+    rapidApiKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+    rapidApiHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+      description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
+externalDocs:
+  description: Developer documentation
+  url: https://docs.listingsapi.com
