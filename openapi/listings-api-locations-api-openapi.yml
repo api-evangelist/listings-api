@@ -1214,80 +1214,6 @@ paths:
       description: Returns the current processing status for a bulk photo upload request.
 components:
   schemas:
-    DayOfTheWeekType:
-      type: string
-      enum:
-      - MONDAY
-      - TUESDAY
-      - WEDNESDAY
-      - THURSDAY
-      - FRIDAY
-      - SATURDAY
-      - SUNDAY
-    LocationSummaryConnectionType:
-      type: object
-      description: A Relay connection over LocationSummary.
-      properties:
-        edges:
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationSummaryEdgeType'
-        nodes:
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationSummaryType'
-        pageInfo:
-          $ref: '#/components/schemas/PageInfoType'
-        totalCount:
-          type: integer
-          format: int32
-      required:
-      - pageInfo
-    BusinessHoursDayInput:
-      type: object
-      properties:
-        day:
-          $ref: '#/components/schemas/DayOfTheWeekType'
-        slots:
-          type: array
-          items:
-            $ref: '#/components/schemas/BusinessHoursSlotInput'
-        type:
-          $ref: '#/components/schemas/BusinessHours'
-      required:
-      - day
-      - type
-    ServiceAreaInput:
-      type: object
-      properties:
-        businessType:
-          type: string
-        regionCode:
-          type: string
-        placeInfos:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlaceInfoInput'
-    ArchiveLocationsInput:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        locationIds:
-          type: array
-          items:
-            type: string
-      required:
-      - locationIds
-    LocationSummaryEdgeType:
-      type: object
-      properties:
-        cursor:
-          type: string
-        node:
-          $ref: '#/components/schemas/LocationSummaryType'
-      required:
-      - cursor
     LocationPhotosUploadStatusType:
       type: object
       properties:
@@ -1299,17 +1225,60 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LocationPhotoUploadItem'
-    MoreHourDayInput:
+    CancelLocationsArchivePayload:
       type: object
       properties:
-        day:
-          $ref: '#/components/schemas/DayOfTheWeekType'
-        openTime:
+        clientMutationId:
           type: string
-        closeTime:
+        cancelledCount:
+          type: integer
+          format: int32
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationErrorType'
+    LocationPhotoUploadItem:
+      type: object
+      properties:
+        mediaId:
+          type: string
+        locationId:
+          type: string
+        status:
+          type: string
+        errorMessage:
+          type: string
+    CustomAttributeInputTypeEnum:
+      type: string
+      enum:
+      - STRING
+      - NUMBER
+      - BOOLEAN
+      - DATE
+      - ENUM
+      - URL
+    PlaceInfoType:
+      type: object
+      properties:
+        placeId:
+          type: string
+        placeName:
           type: string
       required:
-      - day
+      - placeId
+    CreateLocationPayload:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        location:
+          $ref: '#/components/schemas/LocationSummaryType'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationErrorType'
+        success:
+          type: boolean
     PlaceActionTypeEnum:
       type: string
       enum:
@@ -1321,19 +1290,6 @@ components:
       - FOOD_TAKEOUT
       - SHOP_ONLINE
       description: Google place action types.
-    CustomAttributeInputType:
-      type: object
-      properties:
-        name:
-          type: string
-        value:
-          type: string
-        type:
-          $ref: '#/components/schemas/CustomAttributeInputTypeEnum'
-        levelType:
-          $ref: '#/components/schemas/CustomAttributeLevelTypeEnum'
-      required:
-      - name
     StarLocationPhotosInput:
       type: object
       properties:
@@ -1351,30 +1307,101 @@ components:
       - locationId
       - photoIds
       - starred
-    RemoveLocationPhotosPayload:
+    PlaceActionLinkType:
+      type: object
+      description: A Google place action link (ordering, delivery, takeout, reservation, appointment, etc.).
+      properties:
+        placeActionType:
+          type: string
+        uri:
+          type: string
+        isPreferred:
+          type: boolean
+        name:
+          type: string
+        providerType:
+          type: string
+        isEditable:
+          type: boolean
+        submissionStatus:
+          type: string
+        submissionMessage:
+          type: string
+        submissionCode:
+          type: string
+        lastSubmittedAt:
+          type: string
+      required:
+      - placeActionType
+      - uri
+    ServiceAreaType:
+      type: object
+      properties:
+        businessType:
+          type: string
+        regionCode:
+          type: string
+        placeInfos:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlaceInfoType'
+    BusinessHours:
+      type: string
+      enum:
+      - OPEN
+      - CLOSED
+    ArchiveLocationsPayload:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        archivedCount:
+          type: integer
+          format: int32
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationSummaryType'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationErrorType'
+      required:
+      - archivedCount
+    AddLocationPhotosPayload:
       type: object
       description: (also defined by media-manager)
       properties:
         clientMutationId:
           type: string
-        removedCount:
-          type: integer
-          format: int32
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhotoType'
         errors:
           type: array
           items:
             $ref: '#/components/schemas/MutationErrorType'
-    MoreHourInput:
+    LocationStatusType:
+      type: string
+      enum:
+      - ACTIVE
+      - ARCHIVED
+      - PENDING
+      - TEMPORARILY_CLOSED
+      - SCHEDULED_FOR_ARCHIVE
+      description: Lifecycle states of a location.
+    CancelLocationsArchiveInput:
       type: object
       properties:
-        type:
+        clientMutationId:
           type: string
-        days:
+        locationIds:
           type: array
           items:
-            $ref: '#/components/schemas/MoreHourDayInput'
+            type: string
       required:
-      - type
+      - locationIds
     PhotoType:
       type: object
       properties:
@@ -1389,20 +1416,44 @@ components:
       required:
       - id
       - url
-    RemoveLocationPhotosInput:
+    DayOfTheWeekType:
+      type: string
+      enum:
+      - MONDAY
+      - TUESDAY
+      - WEDNESDAY
+      - THURSDAY
+      - FRIDAY
+      - SATURDAY
+      - SUNDAY
+    BusinessHoursDayInput:
       type: object
       properties:
-        clientMutationId:
+        day:
+          $ref: '#/components/schemas/DayOfTheWeekType'
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessHoursSlotInput'
+        type:
+          $ref: '#/components/schemas/BusinessHours'
+      required:
+      - day
+      - type
+    MutationErrorType:
+      type: object
+      description: (also defined by notifications) (also defined by reviewfunnel) (also defined by crawler)
+      properties:
+        code:
           type: string
-        locationId:
+        message:
           type: string
-        photoIds:
+        path:
           type: array
           items:
             type: string
       required:
-      - locationId
-      - photoIds
+      - message
     LocationSummaryType:
       type: object
       description: Summary view of a business location.
@@ -1459,179 +1510,49 @@ components:
       required:
       - id
       - name
-    AddLocationPhotosPayload:
+    LocationSummaryConnectionType:
       type: object
-      description: (also defined by media-manager)
+      description: A Relay connection over LocationSummary.
       properties:
-        clientMutationId:
-          type: string
-        photos:
+        edges:
           type: array
           items:
-            $ref: '#/components/schemas/PhotoType'
-        errors:
+            $ref: '#/components/schemas/LocationSummaryEdgeType'
+        nodes:
           type: array
           items:
-            $ref: '#/components/schemas/MutationErrorType'
-    LocationPhotoUploadItem:
-      type: object
-      properties:
-        mediaId:
-          type: string
-        locationId:
-          type: string
-        status:
-          type: string
-        errorMessage:
-          type: string
-    AddLocationPhotosInput:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        locationId:
-          type: string
-        photos:
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationPhotoInput'
-      required:
-      - locationId
-      - photos
-    ServiceAreaType:
-      type: object
-      properties:
-        businessType:
-          type: string
-        regionCode:
-          type: string
-        placeInfos:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlaceInfoType'
-    MediaFileOfLocationType:
-      type: object
-      properties:
-        id:
-          type: string
-        url:
-          type: string
-        thumbnailUrl:
-          type: string
-        categoryName:
-          type: string
-        categoryId:
-          type: string
-        fileType:
-          type: string
-        starred:
-          type: boolean
-        viewsCount:
+            $ref: '#/components/schemas/LocationSummaryType'
+        pageInfo:
+          $ref: '#/components/schemas/PageInfoType'
+        totalCount:
           type: integer
           format: int32
       required:
-      - id
-    LocationStatusType:
-      type: string
-      enum:
-      - ACTIVE
-      - ARCHIVED
-      - PENDING
-      - TEMPORARILY_CLOSED
-      - SCHEDULED_FOR_ARCHIVE
-      description: Lifecycle states of a location.
-    LocationPhotoInput:
-      type: object
-      properties:
-        url:
-          type: string
-        caption:
-          type: string
-        type:
-          type: string
-      required:
-      - url
-    PlaceActionLinkInputType:
-      type: object
-      description: Write payload for a Google place action link (append/upsert model).
-      properties:
-        placeActionType:
-          $ref: '#/components/schemas/PlaceActionTypeEnum'
-        uri:
-          type: string
-        isPreferred:
-          type: boolean
-        name:
-          type: string
-        providerType:
-          type: string
-        isEditable:
-          type: boolean
-        action:
-          type: string
-      required:
-      - placeActionType
-      - uri
-    StarLocationPhotosPayload:
+      - pageInfo
+    RemoveLocationPhotosInput:
       type: object
       properties:
         clientMutationId:
           type: string
-        photos:
-          type: array
-          items:
-            $ref: '#/components/schemas/PhotoType'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationErrorType'
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
+        locationId:
           type: string
-        message:
-          type: string
-        field:
-          type: string
-    MutationErrorType:
-      type: object
-      description: (also defined by notifications) (also defined by reviewfunnel) (also defined by crawler)
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        path:
+        photoIds:
           type: array
           items:
             type: string
       required:
-      - message
-    PlaceInfoInput:
+      - locationId
+      - photoIds
+    LocationSummaryEdgeType:
       type: object
       properties:
-        placeId:
+        cursor:
           type: string
-        placeName:
-          type: string
-      required:
-      - placeId
-    UpdateLocationPayload:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        location:
+        node:
           $ref: '#/components/schemas/LocationSummaryType'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationErrorType'
-        success:
-          type: boolean
-    PlaceInfoType:
+      required:
+      - cursor
+    PlaceInfoInput:
       type: object
       properties:
         placeId:
@@ -1650,56 +1571,11 @@ components:
       required:
       - start
       - end
-    PlaceActionLinkType:
-      type: object
-      description: A Google place action link (ordering, delivery, takeout, reservation, appointment, etc.).
-      properties:
-        placeActionType:
-          type: string
-        uri:
-          type: string
-        isPreferred:
-          type: boolean
-        name:
-          type: string
-        providerType:
-          type: string
-        isEditable:
-          type: boolean
-        submissionStatus:
-          type: string
-        submissionMessage:
-          type: string
-        submissionCode:
-          type: string
-        lastSubmittedAt:
-          type: string
-      required:
-      - placeActionType
-      - uri
-    CancelLocationsArchiveInput:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        locationIds:
-          type: array
-          items:
-            type: string
-      required:
-      - locationIds
-    CancelLocationsArchivePayload:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        cancelledCount:
-          type: integer
-          format: int32
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationErrorType'
+    CustomAttributeLevelTypeEnum:
+      type: string
+      enum:
+      - ACCOUNT
+      - LOCATION
     CreateLocationInput:
       type: object
       properties:
@@ -1746,29 +1622,162 @@ components:
       - description
       - countryIso
       - subCategoryId
-    ArchiveLocationsPayload:
+    PlaceActionLinkInputType:
+      type: object
+      description: Write payload for a Google place action link (append/upsert model).
+      properties:
+        placeActionType:
+          $ref: '#/components/schemas/PlaceActionTypeEnum'
+        uri:
+          type: string
+        isPreferred:
+          type: boolean
+        name:
+          type: string
+        providerType:
+          type: string
+        isEditable:
+          type: boolean
+        action:
+          type: string
+      required:
+      - placeActionType
+      - uri
+    PageInfoType:
+      type: object
+      description: (also defined by notifications) (also defined by reviewfunnel) (also defined by contests) (also defined by social-media)
+      properties:
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+        startCursor:
+          type: string
+        endCursor:
+          type: string
+      required:
+      - hasNextPage
+      - hasPreviousPage
+    StarLocationPhotosPayload:
       type: object
       properties:
         clientMutationId:
           type: string
-        archivedCount:
-          type: integer
-          format: int32
-        locations:
+        photos:
           type: array
           items:
-            $ref: '#/components/schemas/LocationSummaryType'
+            $ref: '#/components/schemas/PhotoType'
         errors:
           type: array
           items:
             $ref: '#/components/schemas/MutationErrorType'
+    MoreHourInput:
+      type: object
+      properties:
+        type:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/MoreHourDayInput'
       required:
-      - archivedCount
-    CustomAttributeLevelTypeEnum:
-      type: string
-      enum:
-      - ACCOUNT
-      - LOCATION
+      - type
+    MediaFileOfLocationType:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        thumbnailUrl:
+          type: string
+        categoryName:
+          type: string
+        categoryId:
+          type: string
+        fileType:
+          type: string
+        starred:
+          type: boolean
+        viewsCount:
+          type: integer
+          format: int32
+      required:
+      - id
+    UpdateLocationPayload:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        location:
+          $ref: '#/components/schemas/LocationSummaryType'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationErrorType'
+        success:
+          type: boolean
+    AddLocationPhotosInput:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        locationId:
+          type: string
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationPhotoInput'
+      required:
+      - locationId
+      - photos
+    CustomAttributeInputType:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        type:
+          $ref: '#/components/schemas/CustomAttributeInputTypeEnum'
+        levelType:
+          $ref: '#/components/schemas/CustomAttributeLevelTypeEnum'
+      required:
+      - name
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+    ArchiveLocationsInput:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        locationIds:
+          type: array
+          items:
+            type: string
+      required:
+      - locationIds
+    RemoveLocationPhotosPayload:
+      type: object
+      description: (also defined by media-manager)
+      properties:
+        clientMutationId:
+          type: string
+        removedCount:
+          type: integer
+          format: int32
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationErrorType'
     UpdateLocationInput:
       type: object
       properties:
@@ -1810,48 +1819,39 @@ components:
             $ref: '#/components/schemas/PlaceActionLinkInputType'
       required:
       - id
-    CustomAttributeInputTypeEnum:
-      type: string
-      enum:
-      - STRING
-      - NUMBER
-      - BOOLEAN
-      - DATE
-      - ENUM
-      - URL
-    BusinessHours:
-      type: string
-      enum:
-      - OPEN
-      - CLOSED
-    PageInfoType:
+    MoreHourDayInput:
       type: object
-      description: (also defined by notifications) (also defined by reviewfunnel) (also defined by contests) (also defined by social-media)
       properties:
-        hasNextPage:
-          type: boolean
-        hasPreviousPage:
-          type: boolean
-        startCursor:
+        day:
+          $ref: '#/components/schemas/DayOfTheWeekType'
+        openTime:
           type: string
-        endCursor:
+        closeTime:
           type: string
       required:
-      - hasNextPage
-      - hasPreviousPage
-    CreateLocationPayload:
+      - day
+    ServiceAreaInput:
       type: object
       properties:
-        clientMutationId:
+        businessType:
           type: string
-        location:
-          $ref: '#/components/schemas/LocationSummaryType'
-        errors:
+        regionCode:
+          type: string
+        placeInfos:
           type: array
           items:
-            $ref: '#/components/schemas/MutationErrorType'
-        success:
-          type: boolean
+            $ref: '#/components/schemas/PlaceInfoInput'
+    LocationPhotoInput:
+      type: object
+      properties:
+        url:
+          type: string
+        caption:
+          type: string
+        type:
+          type: string
+      required:
+      - url
   securitySchemes:
     apiKey:
       type: apiKey

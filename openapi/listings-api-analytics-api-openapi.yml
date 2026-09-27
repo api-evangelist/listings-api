@@ -252,12 +252,24 @@ paths:
       description: Returns weekly Bing Places profile view metrics for a location over a date range.
 components:
   schemas:
-    BingMetricV4:
+    MetricDelta:
       type: object
-      description: Bing Places metrics.
+      description: Metric value with optional previous-period comparison.
       properties:
-        views:
-          $ref: '#/components/schemas/MetricDelta'
+        current:
+          type: integer
+          format: int32
+        previous:
+          type: integer
+          format: int32
+        diff:
+          type: integer
+          format: int32
+        diffPercentage:
+          type: number
+          format: float
+        label:
+          type: string
     GoogleMetricV4:
       type: object
       description: Google My Business metrics including maps, search and actions.
@@ -284,34 +296,6 @@ components:
           $ref: '#/components/schemas/MetricDelta'
         foodMenuClicks:
           $ref: '#/components/schemas/MetricDelta'
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
-    MetricDelta:
-      type: object
-      description: Metric value with optional previous-period comparison.
-      properties:
-        current:
-          type: integer
-          format: int32
-        previous:
-          type: integer
-          format: int32
-        diff:
-          type: integer
-          format: int32
-        diffPercentage:
-          type: number
-          format: float
-        label:
-          type: string
     FacebookMetricV4:
       type: object
       description: Facebook metrics with views and action breakdowns.
@@ -325,6 +309,22 @@ components:
         directionsAction:
           $ref: '#/components/schemas/MetricDelta'
         phoneAction:
+          $ref: '#/components/schemas/MetricDelta'
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+    BingMetricV4:
+      type: object
+      description: Bing Places metrics.
+      properties:
+        views:
           $ref: '#/components/schemas/MetricDelta'
   securitySchemes:
     apiKey:

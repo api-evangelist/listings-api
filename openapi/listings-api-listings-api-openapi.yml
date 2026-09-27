@@ -460,77 +460,17 @@ paths:
       description: Returns the sync status of every publisher directory in a location's plan.
 components:
   schemas:
-    MutationResultType:
+    ErrorType:
       type: object
-      description: (also defined by crawler)
+      description: (also defined by contests) (also defined by packaging) (also defined by task-manager) (also defined by social-media) (also defined by messenger) (also defined by crm-integration) (also defined by crawler) (also defined by media-manager)
       properties:
-        success:
-          type: boolean
-        errors:
+        message:
+          type: string
+        contextInfo:
           type: array
           items:
-            $ref: '#/components/schemas/MutationErrorType'
-      required:
-      - success
-    OffsetBasedPageInfoType:
-      type: object
-      properties:
-        page:
-          type: integer
-          format: int32
-        perPage:
-          type: integer
-          format: int32
-        totalPages:
-          type: integer
-          format: int32
-    ListingUnion:
-      oneOf:
-      - $ref: '#/components/schemas/ListingType'
-      - $ref: '#/components/schemas/PremiumListingType'
-      - $ref: '#/components/schemas/AdditionalListingType'
-    VoiceAssistantType:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        listings:
-          type: array
-          items:
-            $ref: '#/components/schemas/VoiceListingType'
-    ContextInfoType:
-      type: object
-      description: (also defined by packaging) (also defined by task-manager)
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    MarkAsDuplicateInput:
-      type: object
-      properties:
-        listingItemIds:
-          type: array
-          items:
-            type: string
-        locationId:
-          type: string
-      required:
-      - listingItemIds
-    DuplicateListingType:
-      type: object
-      properties:
-        id:
-          type: string
-        listingItemId:
-          type: string
-        name:
-          type: string
-        liveLink:
-          type: string
-        status:
+            $ref: '#/components/schemas/ContextInfoType'
+        code:
           type: string
     DuplicateListingRollupType:
       type: object
@@ -544,6 +484,61 @@ components:
             $ref: '#/components/schemas/DuplicateListingType'
         pageInfo:
           $ref: '#/components/schemas/OffsetBasedPageInfoType'
+    MarkAsNotDuplicateInput:
+      type: object
+      properties:
+        listingItemIds:
+          type: array
+          items:
+            type: string
+        locationId:
+          type: string
+      required:
+      - listingItemIds
+    ContextInfoType:
+      type: object
+      description: (also defined by packaging) (also defined by task-manager)
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    DuplicateListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        listingItemId:
+          type: string
+        name:
+          type: string
+        liveLink:
+          type: string
+        status:
+          type: string
+    MutationResultType:
+      type: object
+      description: (also defined by crawler)
+      properties:
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationErrorType'
+      required:
+      - success
+    VoiceAssistantType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceListingType'
     CustomSiteType:
       type: object
       properties:
@@ -557,26 +552,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DuplicateListingType'
-    SiteType:
+    AdditionalListingType:
       type: object
-      description: Directory site metadata.
       properties:
         id:
           type: string
-        databaseId:
-          type: string
-        name:
-          type: string
-        url:
-          type: string
-        syScore:
-          type: string
-        addOn:
+        site:
+          $ref: '#/components/schemas/SiteType'
+    MarkAsDuplicateInput:
+      type: object
+      properties:
+        listingItemIds:
+          type: array
+          items:
+            type: string
+        locationId:
           type: string
       required:
-      - id
-      - databaseId
-      - url
+      - listingItemIds
     PremiumListingType:
       type: object
       properties:
@@ -584,16 +577,17 @@ components:
           type: string
         site:
           $ref: '#/components/schemas/SiteType'
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
+    ListingSyncStatusType:
+      type: string
+      enum:
+      - IN_PROGRESS
+      - SYNCED
+      - FAILED
+      - REQUIRING_ACTION
+      - AVAILABLE
+      - COMPLETED
+      - PENDING_APPROVAL
+      - CANNOT_SUBMIT
     MutationErrorType:
       type: object
       description: (also defined by notifications) (also defined by reviewfunnel) (also defined by crawler)
@@ -643,25 +637,28 @@ components:
           format: int32
         issueType:
           type: string
-    VoiceIdentifierType:
+    Error:
       type: object
+      description: Listings API error envelope returned from mutations.
       properties:
-        key:
-          type: string
-        value:
-          type: string
-    ErrorType:
-      type: object
-      description: (also defined by contests) (also defined by packaging) (also defined by task-manager) (also defined by social-media) (also defined by messenger) (also defined by crm-integration) (also defined by crawler) (also defined by media-manager)
-      properties:
-        message:
-          type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContextInfoType'
         code:
           type: string
+        message:
+          type: string
+        field:
+          type: string
+    OffsetBasedPageInfoType:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        perPage:
+          type: integer
+          format: int32
+        totalPages:
+          type: integer
+          format: int32
     VoiceListingType:
       type: object
       properties:
@@ -669,35 +666,38 @@ components:
           type: string
         voiceIdentifier:
           $ref: '#/components/schemas/VoiceIdentifierType'
-    AdditionalListingType:
+    SiteType:
       type: object
+      description: Directory site metadata.
       properties:
         id:
           type: string
-        site:
-          $ref: '#/components/schemas/SiteType'
-    MarkAsNotDuplicateInput:
-      type: object
-      properties:
-        listingItemIds:
-          type: array
-          items:
-            type: string
-        locationId:
+        databaseId:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        syScore:
+          type: string
+        addOn:
           type: string
       required:
-      - listingItemIds
-    ListingSyncStatusType:
-      type: string
-      enum:
-      - IN_PROGRESS
-      - SYNCED
-      - FAILED
-      - REQUIRING_ACTION
-      - AVAILABLE
-      - COMPLETED
-      - PENDING_APPROVAL
-      - CANNOT_SUBMIT
+      - id
+      - databaseId
+      - url
+    ListingUnion:
+      oneOf:
+      - $ref: '#/components/schemas/ListingType'
+      - $ref: '#/components/schemas/PremiumListingType'
+      - $ref: '#/components/schemas/AdditionalListingType'
+    VoiceIdentifierType:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
   securitySchemes:
     apiKey:
       type: apiKey
