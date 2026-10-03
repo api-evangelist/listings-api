@@ -252,6 +252,16 @@ paths:
       description: Returns weekly Bing Places profile view metrics for a location over a date range.
 components:
   schemas:
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
     MetricDelta:
       type: object
       description: Metric value with optional previous-period comparison.
@@ -310,16 +320,6 @@ components:
           $ref: '#/components/schemas/MetricDelta'
         phoneAction:
           $ref: '#/components/schemas/MetricDelta'
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
     BingMetricV4:
       type: object
       description: Bing Places metrics.
