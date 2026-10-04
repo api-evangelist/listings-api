@@ -223,45 +223,6 @@ paths:
       description: Returns every publisher directory site included in the account's plan, with each site's ID, URL, and supported countries.
 components:
   schemas:
-    SubCategoryType:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        category:
-          type: string
-      required:
-      - id
-      - name
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
-    PlanSite:
-      type: object
-      properties:
-        site:
-          type: string
-        enabled:
-          type: boolean
-    StateType:
-      type: object
-      properties:
-        iso:
-          type: string
-        name:
-          type: string
-      required:
-      - iso
-      - name
     CountryType:
       type: object
       description: A country supported by Listings API.
@@ -279,6 +240,45 @@ components:
       required:
       - iso
       - name
+    SubCategoryType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+      required:
+      - id
+      - name
+    StateType:
+      type: object
+      properties:
+        iso:
+          type: string
+        name:
+          type: string
+      required:
+      - iso
+      - name
+    PlanSite:
+      type: object
+      properties:
+        site:
+          type: string
+        enabled:
+          type: boolean
+    Error:
+      type: object
+      description: Listings API error envelope returned from mutations.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
   securitySchemes:
     apiKey:
       type: apiKey

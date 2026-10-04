@@ -830,14 +830,6 @@ paths:
       description: Archives an existing owner response, removing it from the active responses tracked for an interaction.
 components:
   schemas:
-    SiteInteractionCount:
-      type: object
-      properties:
-        name:
-          type: string
-        interactionCount:
-          type: integer
-          format: int32
     InteractionStat:
       type: object
       properties:
@@ -852,6 +844,30 @@ components:
         abs:
           type: number
           format: float
+    SiteSetting:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        connected:
+          type: boolean
+    ContextInfoType:
+      type: object
+      description: (also defined by packaging) (also defined by task-manager)
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    InteractionsDetail:
+      type: object
+      properties:
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interaction'
     InteractionsSetting:
       type: object
       properties:
@@ -874,40 +890,43 @@ components:
       - COMPLETED
       - CONFIRMED
       description: Lifecycle state of a response item as it's posted out to the source site.
-    PageInfo:
-      type: object
-      description: (also defined by interactions) (also defined by v2app) (also defined by scantool) (also defined by thirdeye)
-      properties:
-        hasNextPage:
-          type: boolean
-        hasPreviousPage:
-          type: boolean
-    EditResponsePayload:
+    RespondToInteractionPayload:
       type: object
       properties:
-        status:
-          type: string
-        reviewId:
-          type: string
-        responseId:
-          type: string
-    SiteSetting:
+        interaction:
+          $ref: '#/components/schemas/InteractionResponse'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+    InteractionConnection:
+      type: object
+      description: Relay-style paginated list of interactions with aggregate stats.
+      properties:
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionEdge'
+        totalCount:
+          type: integer
+          format: int32
+        interactionStats:
+          $ref: '#/components/schemas/InteractionsCombinedStats'
+      required:
+      - pageInfo
+    InteractionsCombinedStats:
       type: object
       properties:
-        name:
-          type: string
-        url:
-          type: string
-        connected:
-          type: boolean
-    ContextInfoType:
-      type: object
-      description: (also defined by packaging) (also defined by task-manager)
-      properties:
-        key:
-          type: string
-        value:
-          type: string
+        sitesStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteInteractionCount'
+        otherStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionStat'
     InteractionSiteConfig:
       type: object
       properties:
@@ -929,15 +948,6 @@ components:
           type: string
         supportedInPlan:
           type: boolean
-    RespondToInteractionPayload:
-      type: object
-      properties:
-        interaction:
-          $ref: '#/components/schemas/InteractionResponse'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorType'
     InteractionResponse:
       type: object
       description: A response to an interaction (review reply, Q&A answer).
@@ -963,43 +973,21 @@ components:
           type: boolean
         remarks:
           type: string
-    InteractionsCombinedStats:
+    SiteInteractionCount:
       type: object
       properties:
-        sitesStats:
-          type: array
-          items:
-            $ref: '#/components/schemas/SiteInteractionCount'
-        otherStats:
+        name:
+          type: string
+        interactionCount:
+          type: integer
+          format: int32
+    InteractionsAnalyticsStats:
+      type: object
+      properties:
+        stats:
           type: array
           items:
             $ref: '#/components/schemas/InteractionStat'
-    InteractionEdge:
-      type: object
-      properties:
-        node:
-          $ref: '#/components/schemas/Interaction'
-        cursor:
-          type: string
-      required:
-      - cursor
-    InteractionConnection:
-      type: object
-      description: Relay-style paginated list of interactions with aggregate stats.
-      properties:
-        pageInfo:
-          $ref: '#/components/schemas/PageInfo'
-        edges:
-          type: array
-          items:
-            $ref: '#/components/schemas/InteractionEdge'
-        totalCount:
-          type: integer
-          format: int32
-        interactionStats:
-          $ref: '#/components/schemas/InteractionsCombinedStats'
-      required:
-      - pageInfo
     Error:
       type: object
       description: Listings API error envelope returned from mutations.
@@ -1010,13 +998,33 @@ components:
           type: string
         field:
           type: string
-    InteractionsAnalyticsStats:
+    EditResponsePayload:
       type: object
       properties:
-        stats:
+        status:
+          type: string
+        reviewId:
+          type: string
+        responseId:
+          type: string
+    ArchiveInteractionPayload:
+      type: object
+      properties:
+        status:
+          type: string
+        errors:
           type: array
           items:
-            $ref: '#/components/schemas/InteractionStat'
+            $ref: '#/components/schemas/ErrorType'
+    InteractionEdge:
+      type: object
+      properties:
+        node:
+          $ref: '#/components/schemas/Interaction'
+        cursor:
+          type: string
+      required:
+      - cursor
     ErrorType:
       type: object
       description: (also defined by contests) (also defined by packaging) (also defined by task-manager) (also defined by social-media) (also defined by messenger) (also defined by crm-integration) (also defined by crawler) (also defined by media-manager)
@@ -1029,22 +1037,6 @@ components:
             $ref: '#/components/schemas/ContextInfoType'
         code:
           type: string
-    ArchiveInteractionPayload:
-      type: object
-      properties:
-        status:
-          type: string
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorType'
-    InteractionsDetail:
-      type: object
-      properties:
-        interactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Interaction'
     Interaction:
       type: object
       description: A single review, Q&A item, or social interaction collected from a source site.
@@ -1090,6 +1082,14 @@ components:
           format: int32
         flaggedReason:
           type: string
+    PageInfo:
+      type: object
+      description: (also defined by interactions) (also defined by v2app) (also defined by scantool) (also defined by thirdeye)
+      properties:
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
   securitySchemes:
     apiKey:
       type: apiKey

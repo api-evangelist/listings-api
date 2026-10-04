@@ -890,48 +890,37 @@ paths:
       description: Unlinks the connected Google or Facebook listing from one or more Listings API locations.
 components:
   schemas:
-    ConnectedAccountListingsPaginated:
+    ConfirmConnectMatchesResult:
       type: object
       properties:
-        nodes:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedAccountListing'
-        totalCount:
+        confirmed:
           type: integer
           format: int32
-        pageInfo:
-          $ref: '#/components/schemas/PageInfo'
-    FacebookOauthBulkInput:
+    BulkDisconnectLocationsInput:
       type: object
       properties:
-        successUrl:
+        connectedAccountId:
           type: string
-        errorUrl:
+        locationIds:
+          type: array
+          items:
+            type: string
+      required:
+      - connectedAccountId
+    ConnectedAccountStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - DISCONNECTED
+      - EXPIRED
+      - ERROR
+    ConnectUrl:
+      type: object
+      properties:
+        url:
           type: string
       required:
-      - successUrl
-      - errorUrl
-    ConnectedAccountListing:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        address:
-          type: string
-        status:
-          $ref: '#/components/schemas/ConnectedAccountLocationStatus'
-      required:
-      - id
-    ContextError:
-      type: object
-      properties:
-        key:
-          type: string
-        value:
-          type: string
+      - url
     GoogleOauthBulkInput:
       type: object
       properties:
@@ -942,41 +931,6 @@ components:
       required:
       - successUrl
       - errorUrl
-    PageInfo:
-      type: object
-      description: (also defined by interactions) (also defined by v2app) (also defined by scantool) (also defined by thirdeye)
-      properties:
-        hasNextPage:
-          type: boolean
-        hasPreviousPage:
-          type: boolean
-    LocationResult:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        locationId:
-          type: string
-        success:
-          type: boolean
-    ConnectedAccountsTriggerMatchesInput:
-      type: object
-      properties:
-        connectedAccountIds:
-          type: array
-          items:
-            type: string
-    ConfirmConnectMatchesInput:
-      type: object
-      properties:
-        connectedAccountId:
-          type: string
-        matchRecordIds:
-          type: array
-          items:
-            type: string
-      required:
-      - matchRecordIds
     ConnectionSuggestion:
       type: object
       properties:
@@ -988,34 +942,6 @@ components:
           $ref: '#/components/schemas/ConnectedAccountListing'
       required:
       - id
-    ConnectListingInput:
-      type: object
-      properties:
-        connectedAccountId:
-          type: string
-        connectedAccountListingId:
-          type: string
-      required:
-      - connectedAccountId
-      - connectedAccountListingId
-    ConnectedAccountsTriggerMatchesResult:
-      type: object
-      properties:
-        success:
-          type: boolean
-    ConnectedAccountLocationStatus:
-      type: string
-      enum:
-      - CONNECTED
-      - DISCONNECTED
-      - PENDING
-      - ERROR
-    BulkDisconnectResult:
-      type: object
-      properties:
-        disconnected:
-          type: integer
-          format: int32
     CreateLocationFromListingInput:
       type: object
       properties:
@@ -1023,20 +949,6 @@ components:
           type: string
       required:
       - listingId
-    ConnectUrl:
-      type: object
-      properties:
-        url:
-          type: string
-      required:
-      - url
-    ConnectedAccountStatus:
-      type: string
-      enum:
-      - ACTIVE
-      - DISCONNECTED
-      - EXPIRED
-      - ERROR
     ConnectedAccountDetails:
       type: object
       properties:
@@ -1052,65 +964,47 @@ components:
             $ref: '#/components/schemas/ConnectedAccountListing'
       required:
       - id
-    ConnectionSuggestionLocationInfo:
+    FacebookOauthBulkInput:
       type: object
       properties:
-        id:
+        successUrl:
           type: string
-        name:
+        errorUrl:
           type: string
-    FbBulkDisconnectLocationsInput:
+      required:
+      - successUrl
+      - errorUrl
+    ContextError:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ConnectListingInput:
       type: object
       properties:
         connectedAccountId:
           type: string
-        locationIds:
-          type: array
-          items:
-            type: string
+        connectedAccountListingId:
+          type: string
       required:
       - connectedAccountId
-    CreateGmbListingForLocationInput:
+      - connectedAccountListingId
+    ConnectListingResult:
       type: object
       properties:
+        success:
+          type: boolean
+    LocationResult:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
         locationId:
           type: string
-        connectedAccountId:
-          type: string
-      required:
-      - locationId
-      - connectedAccountId
-    MutationError:
-      type: object
-      description: (also defined by insights) (also defined by v2app)
-      properties:
-        message:
-          type: string
-        code:
-          type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContextError'
-    GmbFolder:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-    ConnectedAccountsPaginated:
-      type: object
-      properties:
-        nodes:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedAccountInfo'
-        totalCount:
-          type: integer
-          format: int32
-        pageInfo:
-          $ref: '#/components/schemas/PageInfo'
+        success:
+          type: boolean
     ConnectedAccountInfo:
       type: object
       properties:
@@ -1124,7 +1018,61 @@ components:
           $ref: '#/components/schemas/ConnectedAccountStatus'
       required:
       - id
-    BulkDisconnectLocationsInput:
+    MutationError:
+      type: object
+      description: (also defined by insights) (also defined by v2app)
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextError'
+    ConnectionSuggestionLocationInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    ConnectedAccountListing:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        status:
+          $ref: '#/components/schemas/ConnectedAccountLocationStatus'
+      required:
+      - id
+    ConnectedAccountListingsPaginated:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountListing'
+        totalCount:
+          type: integer
+          format: int32
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+    ConnectionSuggestionsForAccount:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionSuggestion'
+        totalCount:
+          type: integer
+          format: int32
+    FbBulkDisconnectLocationsInput:
       type: object
       properties:
         connectedAccountId:
@@ -1135,12 +1083,20 @@ components:
             type: string
       required:
       - connectedAccountId
-    DeleteConnectedAccountsLocationsResult:
+    ConnectedAccountsTriggerMatchesInput:
       type: object
       properties:
-        deleted:
-          type: integer
-          format: int32
+        connectedAccountIds:
+          type: array
+          items:
+            type: string
+    GmbFolder:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
     Error:
       type: object
       description: Listings API error envelope returned from mutations.
@@ -1161,13 +1117,67 @@ components:
       - APPLE
       - PINTEREST
       - TRIPADVISOR
-    ConfirmConnectMatchesResult:
+    CreateGmbListingForLocationInput:
       type: object
       properties:
-        confirmed:
+        locationId:
+          type: string
+        connectedAccountId:
+          type: string
+      required:
+      - locationId
+      - connectedAccountId
+    ConnectedAccountsPaginated:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountInfo'
+        totalCount:
           type: integer
           format: int32
-    ConnectListingResult:
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+    ConnectedAccountLocationStatus:
+      type: string
+      enum:
+      - CONNECTED
+      - DISCONNECTED
+      - PENDING
+      - ERROR
+    ConfirmConnectMatchesInput:
+      type: object
+      properties:
+        connectedAccountId:
+          type: string
+        matchRecordIds:
+          type: array
+          items:
+            type: string
+      required:
+      - matchRecordIds
+    DeleteConnectedAccountsLocationsResult:
+      type: object
+      properties:
+        deleted:
+          type: integer
+          format: int32
+    PageInfo:
+      type: object
+      description: (also defined by interactions) (also defined by v2app) (also defined by scantool) (also defined by thirdeye)
+      properties:
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+    BulkDisconnectResult:
+      type: object
+      properties:
+        disconnected:
+          type: integer
+          format: int32
+    ConnectedAccountsTriggerMatchesResult:
       type: object
       properties:
         success:
@@ -1183,16 +1193,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MutationError'
-    ConnectionSuggestionsForAccount:
-      type: object
-      properties:
-        suggestions:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectionSuggestion'
-        totalCount:
-          type: integer
-          format: int32
   securitySchemes:
     apiKey:
       type: apiKey
