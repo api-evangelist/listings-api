@@ -1,0 +1,57 @@
+slug: listings-api
+provider: Listings API
+generated_by: planning/capability-mapping/scripts/classify_capabilities.py
+model: claude-opus-5
+frame:
+- Software & Technology
+min_confidence: 0.7
+capability_model:
+  source: https://github.com/vincentmakes/turbo-ea-capabilities
+  license: CC-BY-4.0
+  attribution: Turbo EA Capabilities by Vincent Verdet — Turbo EA, https://github.com/vincentmakes/turbo-ea-capabilities,
+    CC BY 4.0
+  notice: NOTICE
+edge_count: 4
+edges:
+- tag: Posts
+  spec_file: listings-api-posts-api-openapi.yml
+  capability_id: BC-400.60
+  capability_id_l1: BC-400
+  capability_name: Digital Marketing Management
+  confidence: 0.82
+  evidence: '''Create social posts for multiple locations'', ''Delete a social post'', schema ''SocialPostAnalyticsLocationwise'''
+  reason: Creation, scheduling, publication and analytics of social posts across locations is social/digital
+    marketing publishing, mapping to Digital Marketing Management (content distribution via social channels).
+- tag: Analytics
+  spec_file: listings-api-analytics-api-openapi.yml
+  capability_id: BC-400.60
+  capability_id_l1: BC-400
+  capability_name: Digital Marketing Management
+  confidence: 0.74
+  evidence: '''Google My Business v4 metrics for a single location over a date range'', ''Facebook v4
+    metrics for a single location'', ''Bing Places v4 metrics'''
+  reason: Pulls local search/social listing performance metrics per location from Google, Facebook and
+    Bing — digital marketing performance measurement. Mapped to Digital Marketing Management; some ambiguity
+    with Marketing Operations measurement.
+- tag: Reviews
+  spec_file: listings-api-reviews-api-openapi.yml
+  capability_id: BC-430.50
+  capability_id_l1: BC-430
+  capability_name: Customer Feedback Management
+  confidence: 0.72
+  evidence: '''Post a response to a review / Q&A / social interaction on the source site'', ''Edit a previously
+    posted response to a review'', ''Analytics KPIs for a single location over a date range'''
+  reason: Capture of customer reviews/Q&A across sites plus response workflows and review analytics is
+    voice-of-customer / customer feedback management. Some ambiguity with brand or digital marketing management,
+    hence moderate confidence.
+- tag: Listings
+  spec_file: listings-api-listings-api-openapi.yml
+  capability_id: BC-400.60
+  capability_id_l1: BC-400
+  capability_name: Digital Marketing Management
+  confidence: 0.7
+  evidence: '''Get duplicate listings for the given location'', ''Marking the duplicate listing item'',
+    ''ListingSyncStatusType'', ''Get voice assistants for a location'''
+  reason: Manages the business's presence/citations across publisher directories including duplicate-listing
+    hygiene and sync status — local/digital presence management, closest to Digital Marketing Management.
+    Moderate confidence as it also resembles master-data hygiene.
