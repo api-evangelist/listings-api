@@ -350,6 +350,10 @@ generated:
   confidence: 95
   at: '2026-07-12T04:15:26.652Z'
 common:
+- type: Plans
+  url: plans/listings-api-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/listings-api-rate-limits.yml
 - type: CapabilityMap
   url: capabilities/listings-api-capability-edges.yml
   name: Listings API Business Capability Map
