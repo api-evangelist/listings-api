@@ -40,3 +40,31 @@ notes: >-
   server); tiers differ in locations, rate limits, citation coverage and support, not features.
   Overage model not published; extra location seats via add-ons (SY10151 fires when out of
   seats). Yelp review reading requires Growth or Enterprise.
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - subscription
+  units: []
+  plans:
+  - name: Launch
+    access: other
+    model: subscription
+    model_how: derived
+    units: []
+    periods:
+    - month
+  - name: Growth
+    access: other
+    model: subscription
+    model_how: derived
+    units: []
+    periods:
+    - month
+  - name: Enterprise
+    access: other
+    model: unstated
+    model_how: derived
+    units: []
+    periods:
+    - month

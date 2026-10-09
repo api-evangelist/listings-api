@@ -94,3 +94,20 @@ clients_documented:
 - VS Code Copilot
 rate_limits_note: MCP calls count against the account's plan rate limit (Launch 10 req/min, Growth 50
   req/min), not a separate MCP budget.
+rfc9728:
+  endpoint: https://listingsapi.com/mcp
+  metadata_url: https://listingsapi.com/.well-known/oauth-protected-resource
+  discovered_via: WWW-Authenticate resource_metadata on an anonymous POST initialize
+  fetched: '2026-09-25'
+  http_status: 200
+  content_type: application/json
+  document:
+    resource: https://listingsapi.com/mcp
+    authorization_servers:
+    - https://listingsapi.com
+    scopes_supported:
+    - read
+    - write
+    bearer_methods_supported:
+    - header
+    resource_documentation: https://www.listingsapi.com/mcp
