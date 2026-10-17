@@ -252,6 +252,13 @@ components:
       required:
       - id
       - name
+    PlanSite:
+      type: object
+      properties:
+        site:
+          type: string
+        enabled:
+          type: boolean
     StateType:
       type: object
       properties:
@@ -262,13 +269,6 @@ components:
       required:
       - iso
       - name
-    PlanSite:
-      type: object
-      properties:
-        site:
-          type: string
-        enabled:
-          type: boolean
     Error:
       type: object
       description: Listings API error envelope returned from mutations.
