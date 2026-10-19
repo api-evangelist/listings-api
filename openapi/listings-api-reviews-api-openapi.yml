@@ -1,8 +1,11 @@
 openapi: 3.2.0
 info:
   title: Listings Reviews API
-  version: 2026-08-27
-  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  version: 2026-09-09
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.
+
+
+    Try the sandbox day pass, no card required, when it is offered: sign up at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. It covers the locations and listings endpoints and syncs only to listingsAPI demo directories. Agents can use the Day pass operations, which need no key; see https://listingsapi.com/docs/day-pass.'
   contact:
     name: Listings API support
     email: support@listingsapi.com
@@ -133,7 +136,7 @@ paths:
         required: false
         schema:
           type: string
-        description: Cursor to page backward from, used with `last`. Pass the `cursor` of the first edge of the page you are moving back from — the gateway's shared `PageInfo` type exposes no `startCursor` field.
+        description: Cursor to page backward from, used with `last`. Pass the `cursor` of the first edge of the page you are moving back from. The response `pageInfo` has no `startCursor` field.
       responses:
         '200':
           description: Successful response
@@ -142,41 +145,54 @@ paths:
               schema:
                 type: object
                 required:
-                - edges
-                - pageInfo
+                - data
                 properties:
-                  edges:
-                    type: array
-                    items:
-                      type: object
-                      required:
-                      - node
-                      - cursor
-                      properties:
-                        node:
-                          $ref: '#/components/schemas/InteractionConnection'
-                        cursor:
-                          type: string
-                  pageInfo:
+                  data:
                     type: object
-                    required:
-                    - hasNextPage
-                    - hasPreviousPage
                     properties:
-                      hasNextPage:
-                        type: boolean
-                      hasPreviousPage:
-                        type: boolean
-                      endCursor:
-                        type:
-                        - string
-                        - 'null'
-                      total:
-                        type:
-                        - integer
-                        - 'null'
-                  totalCount:
-                    type: integer
+                      interactions:
+                        type: object
+                        required:
+                        - edges
+                        - pageInfo
+                        properties:
+                          edges:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                              - node
+                              - cursor
+                              properties:
+                                node:
+                                  $ref: '#/components/schemas/InteractionConnection'
+                                cursor:
+                                  type: string
+                          pageInfo:
+                            type: object
+                            required:
+                            - hasNextPage
+                            - hasPreviousPage
+                            properties:
+                              hasNextPage:
+                                type: boolean
+                              hasPreviousPage:
+                                type: boolean
+                              endCursor:
+                                type:
+                                - string
+                                - 'null'
+                              total:
+                                type:
+                                - integer
+                                - 'null'
+                          totalCount:
+                            type: integer
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   interactions:
@@ -201,23 +217,37 @@ paths:
                       cursor: SW50ZXJhY3Rpb246MV8xNTU0MjQzMDczMDM2LTllMjZkMmE4LWE2ZWQtNDJlYS04NDU0LTQ3ZDFjOTJlYTg0MQ==
                     totalCount: 425
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns a cursor-paginated list of reviews and social interactions for a single location, with filters.
   /api/v4/rollup_interactions:
     get:
@@ -232,7 +262,6 @@ paths:
         schema:
           type: string
           description: JSON-encoded filter object
-        description: JSON-encoded array of location IDs to restrict the rollup to.
       - name: siteUrls
         in: query
         required: false
@@ -324,7 +353,14 @@ paths:
         required: false
         schema:
           type: string
-        description: Cursor to page backward from, used with `last`. Pass the `cursor` of the first edge of the page you are moving back from — the gateway's shared `PageInfo` type exposes no `startCursor` field.
+        description: Cursor to page backward from, used with `last`. Pass the `cursor` of the first edge of the page you are moving back from. The response `pageInfo` has no `startCursor` field.
+      - name: tag
+        in: query
+        required: false
+        schema:
+          type: string
+          default: all
+        description: Location tag to scope the rollup to. Defaults to `all`, every location the key can see.
       responses:
         '200':
           description: Successful response
@@ -333,41 +369,54 @@ paths:
               schema:
                 type: object
                 required:
-                - edges
-                - pageInfo
+                - data
                 properties:
-                  edges:
-                    type: array
-                    items:
-                      type: object
-                      required:
-                      - node
-                      - cursor
-                      properties:
-                        node:
-                          $ref: '#/components/schemas/InteractionConnection'
-                        cursor:
-                          type: string
-                  pageInfo:
+                  data:
                     type: object
-                    required:
-                    - hasNextPage
-                    - hasPreviousPage
                     properties:
-                      hasNextPage:
-                        type: boolean
-                      hasPreviousPage:
-                        type: boolean
-                      endCursor:
-                        type:
-                        - string
-                        - 'null'
-                      total:
-                        type:
-                        - integer
-                        - 'null'
-                  totalCount:
-                    type: integer
+                      rollupInteractions:
+                        type: object
+                        required:
+                        - edges
+                        - pageInfo
+                        properties:
+                          edges:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                              - node
+                              - cursor
+                              properties:
+                                node:
+                                  $ref: '#/components/schemas/InteractionConnection'
+                                cursor:
+                                  type: string
+                          pageInfo:
+                            type: object
+                            required:
+                            - hasNextPage
+                            - hasPreviousPage
+                            properties:
+                              hasNextPage:
+                                type: boolean
+                              hasPreviousPage:
+                                type: boolean
+                              endCursor:
+                                type:
+                                - string
+                                - 'null'
+                              total:
+                                type:
+                                - integer
+                                - 'null'
+                          totalCount:
+                            type: integer
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   rollupInteractions:
@@ -391,24 +440,205 @@ paths:
                       cursor: SW50ZXJhY3Rpb246OWUyNmQyYTg=
                     totalCount: 1284
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns a cursor-paginated list of interactions across many locations in the account, with filtering and sorting.
+  /api/v4/review-phrases:
+    get:
+      operationId: newReviewPhrases
+      summary: Newer per-phrase stats breakdown for one or more locations
+      tags:
+      - Reviews
+      parameters:
+      - name: locationIds
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON array of location IDs to aggregate over, e.g. `[1800289,1800290]`. Query values are JSON-parsed, so a bare single ID also works. Omit to cover every location the key can read.
+      - name: siteUrls
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON array of review sources to include, e.g. `["maps.google.com"]`.
+      - name: startDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Only count reviews on or after this date (`YYYY-MM-DD`).
+      - name: endDate
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Only count reviews on or before this date (`YYYY-MM-DD`).
+      - name: searchString
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Only return phrases containing this substring.
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Deprecated single-value form of `categories`. Kept for v4 compatibility; prefer `categories`.
+      - name: ratingFilter
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Deprecated single-value form of `ratingFilters`. Kept for v4 compatibility; prefer `ratingFilters`.
+      - name: phraseCount
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Maximum number of phrases to return.
+      - name: categories
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON array of interaction categories to include (see the interaction attributes reference).
+      - name: ratingFilters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON array of star ratings to include, e.g. `[1,2]` to mine only unhappy reviews.
+      - name: responseStatus
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: JSON array of `RESPONDED` / `PENDING` to restrict by whether the review has an owner reply.
+      - name: sortOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: One of `NEWEST_FIRST`, `OLDEST_FIRST`, `LAST_RESPONDED`, `LOWEST_RATING`, `HIGHEST_RATING`.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      newReviewPhrases:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/NewReviewPhraseInfo'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  newReviewPhrases:
+                  - reviewPhrase: friendly staff
+                    phraseStats:
+                      stats:
+                      - name: total-reviews
+                        value: 46
+                        delta: 12.5
+                        abs: 5
+                      - name: overall-rating
+                        value: 4.7
+                        delta: 1.1
+                        abs: 0.05
+                  - reviewPhrase: long wait
+                    phraseStats:
+                      stats:
+                      - name: total-reviews
+                        value: 11
+                        delta: 37.5
+                        abs: 3
+                      - name: overall-rating
+                        value: 2.9
+                        delta: -8.4
+                        abs: -0.27
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns the phrases customers use most in a location's reviews, each with its own review stats.
   /api/v4/reviewDetails:
     get:
       operationId: interactionDetails
@@ -429,7 +659,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InteractionsDetail'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      interactionDetails:
+                        $ref: '#/components/schemas/InteractionsDetail'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   interactionDetails:
@@ -453,23 +696,37 @@ paths:
                         interactionStatus: CONFIRMED
                         editedResponse: false
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns full interaction objects for a specific set of interaction IDs.
   /api/v4/locations/{locationId}/reviews/settings:
     get:
@@ -495,7 +752,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InteractionsSetting'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      interactionsSetting:
+                        $ref: '#/components/schemas/InteractionsSetting'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   interactionsSetting:
@@ -507,23 +777,37 @@ paths:
                     - name: yelp.com
                       url: null
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns the review sources configured for a single location, with their connection URLs.
   /api/v4/locations/{locationId}/review-analytics-overview:
     get:
@@ -549,56 +833,306 @@ paths:
         schema:
           type: string
           format: date
-        description: Start of the analytics period (YYYY-MM-DD). Required for the `review-analytics-timeline` route.
+        description: 'Start of the analytics period (YYYY-MM-DD). Optional here: it narrows the window the KPIs and their deltas are computed over. Required by the timeline route.'
       - name: endDate
         in: query
         required: false
         schema:
           type: string
           format: date
-        description: End of the analytics period (YYYY-MM-DD). Required for the `review-analytics-timeline` route.
+        description: End of the analytics period (YYYY-MM-DD). Optional here, required by the timeline route.
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InteractionsAnalyticsStats'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      interactionsAnalyticsStats:
+                        $ref: '#/components/schemas/InteractionsAnalyticsStats'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   interactionsAnalyticsStats:
                     stats:
                     - name: total-reviews
-                      value: 9705423
-                      delta: 100
+                      value: 128
+                      delta: 6.67
                     - name: new-reviews
-                      value: 9705423
-                      delta: 100
+                      value: 9
+                      delta: -25
                     - name: overall-rating
-                      value: 4.432533457738633
-                      delta: 100
+                      value: 4.43
+                      delta: 2.31
                     - name: review-response-rate
-                      value: 47.39994331004429
-                      delta: 100
+                      value: 62.5
+                      delta: 12.5
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns overview review analytics (KPIs) for a location. Two sibling routes return a time-series timeline and a per-site breakdown.
+  /api/v4/locations/{locationId}/review-analytics-timeline:
+    get:
+      operationId: interactionsChartData
+      summary: Time-series review volume / average-rating data for a single location
+      tags:
+      - Reviews
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location ID, a raw numeric database ID (e.g. `1800289`) or its Base64-encoded Relay ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`).
+      - name: startDate
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: First day of the series (`YYYY-MM-DD`). Omitting it lets the service pick its default window, so pass it whenever the chart's range matters.
+      - name: endDate
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Last day of the series (`YYYY-MM-DD`).
+      - name: site
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Restrict the series to a single review source, by site URL (e.g. `maps.google.com`). Omit for all sources combined.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      interactionsChartData:
+                        $ref: '#/components/schemas/InteractionsChartData'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  interactionsChartData:
+                    data:
+                    - date: 2026-08-01
+                      interactionCount: 4
+                      averageRating: 4.5
+                    - date: 2026-08-02
+                      interactionCount: 0
+                      averageRating: null
+                    - date: 2026-08-03
+                      interactionCount: 7
+                      averageRating: 4.285714285714286
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns a daily time series of review volume and average rating for one location.
+  /api/v4/locations/{locationId}/review-analytics-sites-stats:
+    get:
+      operationId: interactionsSitesStats
+      summary: Per-site breakdown of interactions stats for a single location
+      tags:
+      - Reviews
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location ID, a raw numeric database ID (e.g. `1800289`) or its Base64-encoded Relay ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`).
+      - name: startDate
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Start of the comparison period (`YYYY-MM-DD`). The `delta` fields compare this period against the previous equivalent one.
+      - name: endDate
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: End of the comparison period (`YYYY-MM-DD`).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      interactionsSitesStats:
+                        $ref: '#/components/schemas/InteractionsSitesStats'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  interactionsSitesStats:
+                    stats:
+                    - key: google
+                      siteUrl: maps.google.com
+                      averageRating:
+                        value: 4.6
+                        delta: 2.2
+                      totalInteractions:
+                        value: 412
+                        delta: 6.1
+                      newInteractions:
+                        value: 24
+                        delta: 33.3
+                      recency: 2026-09-06 14:12:00+00:00
+                      baseRating: 4.5
+                      baseInteractions: 388
+                      humanizedRecency: 3 days ago
+                    - key: facebook
+                      siteUrl: facebook.com
+                      averageRating:
+                        value: 4.1
+                        delta: -1.4
+                      totalInteractions:
+                        value: 57
+                        delta: 0
+                      newInteractions:
+                        value: 0
+                        delta: -100
+                      recency: null
+                      baseRating: 4.16
+                      baseInteractions: 57
+                      humanizedRecency: null
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns a per-source breakdown of review volume, rating, and recency for one location.
   /api/v4/reviews/site-config:
     get:
       operationId: interactionSiteConfig
@@ -612,9 +1146,22 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/InteractionSiteConfig'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      interactionSiteConfig:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InteractionSiteConfig'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   interactionSiteConfig:
@@ -625,23 +1172,37 @@ paths:
                   - site: Yelp
                     siteUrl: yelp.com
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns the review platforms available to the account. Google Maps and Facebook are available on every plan, Yelp on Growth and Enterprise.
   /api/v4/locations/reviews/respond:
     post:
@@ -656,7 +1217,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RespondToInteractionPayload'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      respondToInteraction:
+                        $ref: '#/components/schemas/RespondToInteractionPayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   respondToInteraction:
@@ -668,23 +1242,37 @@ paths:
                       editedResponse: false
                     errors: null
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -715,6 +1303,114 @@ paths:
         **Common errors**
 
         - SY50121: Google Reviews accept only a single owner reply per review; a second response is rejected.'
+  /api/v4/locations/reviews/settings/edit:
+    post:
+      operationId: editInteractionsSetting
+      summary: Update a location's review-source settings (monitored sites) and…
+      tags:
+      - Reviews
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      editInteractionsSetting:
+                        $ref: '#/components/schemas/EditInteractionsSetting'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  editInteractionsSetting:
+                    errors: null
+                    interactionSetting:
+                      id: '1800289'
+                      locationId: '1800289'
+                      positiveInteractionThreshold: 4
+                      siteSettings:
+                      - name: maps.google.com
+                        url: null
+                        monitored: true
+                        canRespond: true
+                      - name: yelp.com
+                        url: https://www.yelp.com/biz/blue-bottle-coffee-oakland
+                        monitored: true
+                        canRespond: false
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locationId:
+                  oneOf:
+                  - type: integer
+                    description: Raw numeric ID
+                  - type: string
+                    description: Base64-encoded Relay ID
+                  format: base64-or-int
+                siteUrls:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SiteSettingInputType'
+                positiveInteractionThreshold:
+                  type: integer
+                  format: int32
+              required:
+              - locationId
+            example:
+              locationId: TG9jYXRpb246MTgwMDI4OQ==
+              positiveInteractionThreshold: 4
+              siteUrls:
+              - name: maps.google.com
+                url: null
+              - name: yelp.com
+                url: https://www.yelp.com/biz/blue-bottle-coffee-oakland
+      description: Sets which review sources a location is monitored on, and its positive-review threshold.
   /api/v4/locations/reviews/respond/edit:
     post:
       operationId: editReviewResponse
@@ -728,31 +1424,58 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EditResponsePayload'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      editResponse:
+                        $ref: '#/components/schemas/EditResponsePayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
-                  editReviewResponse:
+                  editResponse:
                     status: 'true'
                     reviewId: 9e26d2a8-a6ed-42ea-8454-47d1c92ea841
                     responseId: 2090753a-ece6-4837-8336-8494ad308523
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -790,30 +1513,56 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ArchiveInteractionPayload'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      archiveResponse:
+                        $ref: '#/components/schemas/ArchiveInteractionPayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
-                  archiveReviewResponse:
+                  archiveResponse:
                     status: 'true'
-                    errors: null
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -830,6 +1579,131 @@ paths:
       description: Archives an existing owner response, removing it from the active responses tracked for an interaction.
 components:
   schemas:
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    InteractionResponseStatus:
+      type: string
+      enum:
+      - CREATED
+      - FAILED
+      - COMPLETED
+      - CONFIRMED
+      description: Lifecycle state of a response item as it's posted out to the source site.
+    InteractionsCombinedStats:
+      type: object
+      properties:
+        sitesStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteInteractionCount'
+        otherStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionStat'
+    EditResponsePayload:
+      type: object
+      properties:
+        status:
+          type: string
+        reviewId:
+          type: string
+        responseId:
+          type: string
+    SiteInteractionCount:
+      type: object
+      properties:
+        name:
+          type: string
+        interactionCount:
+          type: integer
+          format: int32
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    SiteSetting:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        connected:
+          type: boolean
+        totalReviews:
+          type: integer
+          format: int32
+        averageRating:
+          type: number
+          format: float
+        lastReviewAt:
+          type: string
+        monitored:
+          type: boolean
+        type:
+          type: string
+        canRespond:
+          type: boolean
     InteractionStat:
       type: object
       properties:
@@ -844,96 +1718,6 @@ components:
         abs:
           type: number
           format: float
-    InteractionsAnalyticsStats:
-      type: object
-      properties:
-        stats:
-          type: array
-          items:
-            $ref: '#/components/schemas/InteractionStat'
-    InteractionResponseStatus:
-      type: string
-      enum:
-      - CREATED
-      - FAILED
-      - COMPLETED
-      - CONFIRMED
-      description: Lifecycle state of a response item as it's posted out to the source site.
-    InteractionEdge:
-      type: object
-      properties:
-        node:
-          $ref: '#/components/schemas/Interaction'
-        cursor:
-          type: string
-      required:
-      - cursor
-    EditResponsePayload:
-      type: object
-      properties:
-        status:
-          type: string
-        reviewId:
-          type: string
-        responseId:
-          type: string
-    InteractionResponse:
-      type: object
-      description: A response to an interaction (review reply, Q&A answer).
-      properties:
-        id:
-          type: string
-        interactionId:
-          type: string
-        content:
-          type: string
-        authorName:
-          type: string
-        date:
-          type: string
-        respondedWith:
-          type: string
-        respondedBy:
-          type: integer
-          format: int32
-        interactionStatus:
-          $ref: '#/components/schemas/InteractionResponseStatus'
-        editedResponse:
-          type: boolean
-        remarks:
-          type: string
-    SiteInteractionCount:
-      type: object
-      properties:
-        name:
-          type: string
-        interactionCount:
-          type: integer
-          format: int32
-    InteractionsSetting:
-      type: object
-      properties:
-        id:
-          type: string
-        positiveInteractionThreshold:
-          type: integer
-          format: int32
-        siteSettings:
-          type: array
-          items:
-            $ref: '#/components/schemas/SiteSetting'
-        locationId:
-          type: string
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
     Interaction:
       type: object
       description: A single review, Q&A item, or social interaction collected from a source site.
@@ -979,50 +1763,69 @@ components:
           format: int32
         flaggedReason:
           type: string
-    InteractionConnection:
-      type: object
-      description: Relay-style paginated list of interactions with aggregate stats.
-      properties:
-        pageInfo:
-          $ref: '#/components/schemas/PageInfo'
-        edges:
-          type: array
-          items:
-            $ref: '#/components/schemas/InteractionEdge'
-        totalCount:
-          type: integer
-          format: int32
-        interactionStats:
-          $ref: '#/components/schemas/InteractionsCombinedStats'
-      required:
-      - pageInfo
-    SiteSetting:
+    ContextInfoType:
       type: object
       properties:
-        name:
+        key:
           type: string
-        url:
+        value:
           type: string
-        connected:
-          type: boolean
-    InteractionsCombinedStats:
+    InteractionsAnalyticsStats:
       type: object
       properties:
-        sitesStats:
-          type: array
-          items:
-            $ref: '#/components/schemas/SiteInteractionCount'
-        otherStats:
+        stats:
           type: array
           items:
             $ref: '#/components/schemas/InteractionStat'
-    InteractionsDetail:
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    ArchiveInteractionPayload:
       type: object
       properties:
-        interactions:
+        status:
+          type: string
+        errors:
           type: array
           items:
-            $ref: '#/components/schemas/Interaction'
+            $ref: '#/components/schemas/ErrorType'
+    ErrorType:
+      type: object
+      properties:
+        message:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextInfoType'
+        code:
+          type: string
+    NewReviewPhraseInfo:
+      type: object
+      properties:
+        reviewPhrase:
+          type: string
+        phraseStats:
+          $ref: '#/components/schemas/InteractionsStats'
     InteractionSiteConfig:
       type: object
       properties:
@@ -1044,14 +1847,90 @@ components:
           type: string
         supportedInPlan:
           type: boolean
-    PageInfo:
+    InteractionsDetail:
       type: object
-      description: (also defined by interactions) (also defined by v2app) (also defined by scantool) (also defined by thirdeye)
       properties:
-        hasNextPage:
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interaction'
+    InteractionConnection:
+      type: object
+      description: Relay-style paginated list of interactions with aggregate stats.
+      properties:
+        pageInfo:
+          $ref: '#/components/schemas/ReviewsPageInfo'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionEdge'
+        totalCount:
+          type: integer
+          format: int32
+        interactionStats:
+          $ref: '#/components/schemas/InteractionsCombinedStats'
+      required:
+      - pageInfo
+    InteractionsChartData:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChartData'
+    ChartData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        interactionCount:
+          type: integer
+          format: int32
+        averageRating:
+          type: number
+          format: float
+    InteractionsSitesStats:
+      type: object
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteStat'
+    DeltaStat:
+      type: object
+      properties:
+        value:
+          type: number
+          format: float
+        delta:
+          type: number
+          format: float
+    InteractionResponse:
+      type: object
+      description: A response to an interaction (review reply, Q&A answer).
+      properties:
+        id:
+          type: string
+        interactionId:
+          type: string
+        content:
+          type: string
+        authorName:
+          type: string
+        date:
+          type: string
+        respondedWith:
+          type: string
+        respondedBy:
+          type: integer
+          format: int32
+        interactionStatus:
+          $ref: '#/components/schemas/InteractionResponseStatus'
+        editedResponse:
           type: boolean
-        hasPreviousPage:
-          type: boolean
+        remarks:
+          type: string
     RespondToInteractionPayload:
       type: object
       properties:
@@ -1061,34 +1940,89 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ErrorType'
-    ArchiveInteractionPayload:
+    EditInteractionsSetting:
       type: object
       properties:
-        status:
-          type: string
         errors:
           type: array
           items:
             $ref: '#/components/schemas/ErrorType'
-    ErrorType:
+        interactionSetting:
+          $ref: '#/components/schemas/InteractionsSetting'
+    SiteStat:
       type: object
-      description: (also defined by contests) (also defined by packaging) (also defined by task-manager) (also defined by social-media) (also defined by messenger) (also defined by crm-integration) (also defined by crawler) (also defined by media-manager)
-      properties:
-        message:
-          type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContextInfoType'
-        code:
-          type: string
-    ContextInfoType:
-      type: object
-      description: (also defined by packaging) (also defined by task-manager)
       properties:
         key:
           type: string
-        value:
+        siteUrl:
+          type: string
+        averageRating:
+          $ref: '#/components/schemas/DeltaStat'
+        totalInteractions:
+          $ref: '#/components/schemas/DeltaStat'
+        newInteractions:
+          $ref: '#/components/schemas/DeltaStat'
+        baseRating:
+          type: number
+          format: float
+        baseInteractions:
+          type: integer
+          format: int32
+        recency:
+          type: string
+        humanizedRecency:
+          type: string
+    InteractionsSetting:
+      type: object
+      properties:
+        id:
+          type: string
+        positiveInteractionThreshold:
+          type: integer
+          format: int32
+        siteSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteSetting'
+        locationId:
+          type: string
+    InteractionsStats:
+      type: object
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionStat'
+    ReviewsPageInfo:
+      type: object
+      properties:
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+        startCursor:
+          type: string
+        endCursor:
+          type: string
+      required:
+      - hasNextPage
+      - hasPreviousPage
+    InteractionEdge:
+      type: object
+      properties:
+        node:
+          $ref: '#/components/schemas/Interaction'
+        cursor:
+          type: string
+      required:
+      - cursor
+    SiteSettingInputType:
+      type: object
+      description: Input payload representing a single connected site entry on interactions settings.
+      properties:
+        name:
+          type: string
+        url:
           type: string
   securitySchemes:
     apiKey:
@@ -1108,4 +2042,4 @@ components:
       description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
 externalDocs:
   description: Developer documentation
-  url: https://docs.listingsapi.com
+  url: https://listingsapi.com/docs

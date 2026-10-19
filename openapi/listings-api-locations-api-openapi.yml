@@ -1,8 +1,11 @@
 openapi: 3.2.0
 info:
   title: Listings Locations API
-  version: 2026-08-27
-  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  version: 2026-09-09
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.
+
+
+    Try the sandbox day pass, no card required, when it is offered: sign up at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. It covers the locations and listings endpoints and syncs only to listingsAPI demo directories. Agents can use the Day pass operations, which need no key; see https://listingsapi.com/docs/day-pass.'
   contact:
     name: Listings API support
     email: support@listingsapi.com
@@ -44,9 +47,22 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/LocationSummaryType'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      getLocationsByStoreCodes:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LocationSummaryType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   getLocationsByStoreCodes:
@@ -76,23 +92,37 @@ paths:
                       submissionStatus: success
                     discoveredPlaceActionLinks: []
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns full location details for one or more locations identified by their store codes.
   /api/v4/locations:
     get:
@@ -126,7 +156,7 @@ paths:
         required: false
         schema:
           type: string
-        description: Cursor to page backward from, used with `last`. Pass the `cursor` of the first edge of the page you are moving back from — the gateway's shared `PageInfo` type exposes no `startCursor` field.
+        description: Cursor to page backward from, used with `last`. Pass the `cursor` of the first edge of the page you are moving back from. The response `pageInfo` has no `startCursor` field.
       - name: filter
         in: query
         required: false
@@ -142,41 +172,54 @@ paths:
               schema:
                 type: object
                 required:
-                - edges
-                - pageInfo
+                - data
                 properties:
-                  edges:
-                    type: array
-                    items:
-                      type: object
-                      required:
-                      - node
-                      - cursor
-                      properties:
-                        node:
-                          $ref: '#/components/schemas/LocationSummaryConnectionType'
-                        cursor:
-                          type: string
-                  pageInfo:
+                  data:
                     type: object
-                    required:
-                    - hasNextPage
-                    - hasPreviousPage
                     properties:
-                      hasNextPage:
-                        type: boolean
-                      hasPreviousPage:
-                        type: boolean
-                      endCursor:
-                        type:
-                        - string
-                        - 'null'
-                      total:
-                        type:
-                        - integer
-                        - 'null'
-                  totalCount:
-                    type: integer
+                      allLocations:
+                        type: object
+                        required:
+                        - edges
+                        - pageInfo
+                        properties:
+                          edges:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                              - node
+                              - cursor
+                              properties:
+                                node:
+                                  $ref: '#/components/schemas/LocationSummaryConnectionType'
+                                cursor:
+                                  type: string
+                          pageInfo:
+                            type: object
+                            required:
+                            - hasNextPage
+                            - hasPreviousPage
+                            properties:
+                              hasNextPage:
+                                type: boolean
+                              hasPreviousPage:
+                                type: boolean
+                              endCursor:
+                                type:
+                                - string
+                                - 'null'
+                              total:
+                                type:
+                                - integer
+                                - 'null'
+                          totalCount:
+                            type: integer
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   allLocations:
@@ -248,23 +291,37 @@ paths:
                       endCursor: TG9jYXRpb246MTgwMDI4OQ==
                       total: 1
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns a cursor-paginated list of locations in your account.
     post:
       operationId: createLocation
@@ -278,7 +335,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateLocationPayload'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      createLocation:
+                        $ref: '#/components/schemas/CreateLocationPayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   createLocation:
@@ -289,7 +359,7 @@ paths:
                       id: TG9jYXRpb246MTgwMDI5MA==
                       databaseId: 1800290
                       storeId: ACME01
-                      name: Acme Dental
+                      name: Acme Kitchen
                       street: 123 Jump Street
                       city: New York
                       stateIso: NY
@@ -299,35 +369,49 @@ paths:
                       status: PENDING
                       primaryGbpSiteCategoryId: null
                       placeActionLinks:
-                      - placeActionType: APPOINTMENT
-                        uri: https://book.acmedental.example.com
+                      - placeActionType: FOOD_ORDERING
+                        uri: https://order.acmekitchen.example.com
                         isPreferred: true
                         name: null
                         submissionStatus: null
-                      - placeActionType: ONLINE_APPOINTMENT
-                        uri: https://virtual.acmedental.example.com
+                      - placeActionType: FOOD_TAKEOUT
+                        uri: https://takeout.acmekitchen.example.com
                         isPreferred: false
                         name: null
                         submissionStatus: null
                       discoveredPlaceActionLinks: []
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -341,8 +425,8 @@ paths:
               - input
             example:
               input:
-                name: Acme Dental
-                description: Acme Dental is a family-owned dental practice in downtown New York offering preventive care, cosmetic dentistry, orthodontics, and emergency appointments. Our board-certified team combines modern equipment with a gentle, patient-first approach, and same-week appointments are available for new patients.
+                name: Acme Kitchen
+                description: Acme Kitchen is a family-owned neighborhood restaurant in downtown New York serving wood-fired pizza, hand-rolled pasta, and a short seasonal menu built around produce from nearby growers. Our dining room seats forty, takeout and delivery run until close, and the bar pours regional wine and beer on tap.
                 storeId: ACME01
                 street: 123 Jump Street
                 city: New York
@@ -350,7 +434,11 @@ paths:
                 postalCode: '10013'
                 countryIso: US
                 phone: '6443859313'
+                bizUrl: https://acmekitchen.example.com
                 subCategoryId: 1432
+                primaryGbpSiteCategoryId: gcid:restaurant
+                additionalGbpSiteCategoryIds:
+                - gcid:pizza_restaurant
                 businessHours:
                 - day: MONDAY
                   type: OPEN
@@ -386,11 +474,11 @@ paths:
                   type: CLOSED
                   slots: []
                 placeActionLinks:
-                - placeActionType: APPOINTMENT
-                  uri: https://book.acmedental.example.com
+                - placeActionType: FOOD_ORDERING
+                  uri: https://order.acmekitchen.example.com
                   isPreferred: true
-                - placeActionType: ONLINE_APPOINTMENT
-                  uri: https://virtual.acmedental.example.com
+                - placeActionType: FOOD_TAKEOUT
+                  uri: https://takeout.acmekitchen.example.com
       description: Creates a new business location in your account and queues it for listing submission.
   /api/v4/locations/search:
     get:
@@ -433,41 +521,54 @@ paths:
               schema:
                 type: object
                 required:
-                - edges
-                - pageInfo
+                - data
                 properties:
-                  edges:
-                    type: array
-                    items:
-                      type: object
-                      required:
-                      - node
-                      - cursor
-                      properties:
-                        node:
-                          $ref: '#/components/schemas/LocationSummaryConnectionType'
-                        cursor:
-                          type: string
-                  pageInfo:
+                  data:
                     type: object
-                    required:
-                    - hasNextPage
-                    - hasPreviousPage
                     properties:
-                      hasNextPage:
-                        type: boolean
-                      hasPreviousPage:
-                        type: boolean
-                      endCursor:
-                        type:
-                        - string
-                        - 'null'
-                      total:
-                        type:
-                        - integer
-                        - 'null'
-                  totalCount:
-                    type: integer
+                      searchLocations:
+                        type: object
+                        required:
+                        - edges
+                        - pageInfo
+                        properties:
+                          edges:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                              - node
+                              - cursor
+                              properties:
+                                node:
+                                  $ref: '#/components/schemas/LocationSummaryConnectionType'
+                                cursor:
+                                  type: string
+                          pageInfo:
+                            type: object
+                            required:
+                            - hasNextPage
+                            - hasPreviousPage
+                            properties:
+                              hasNextPage:
+                                type: boolean
+                              hasPreviousPage:
+                                type: boolean
+                              endCursor:
+                                type:
+                                - string
+                                - 'null'
+                              total:
+                                type:
+                                - integer
+                                - 'null'
+                          totalCount:
+                            type: integer
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   searchLocations:
@@ -568,23 +669,37 @@ paths:
                       hasPreviousPage: false
                       total: 1
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns a cursor-paginated list of locations matching a keyword, searchable by name, address, or store ID.
   /api/v4/locations-by-ids:
     get:
@@ -605,9 +720,22 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/LocationSummaryType'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      getLocationsByIds:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LocationSummaryType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   getLocationsByIds:
@@ -665,23 +793,37 @@ paths:
                       providerType: MERCHANT
                       isEditable: true
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns full location information for a specified set of location IDs in one request.
   /api/v4/locations/update:
     post:
@@ -696,7 +838,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateLocationPayload'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      updateLocation:
+                        $ref: '#/components/schemas/UpdateLocationPayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   updateLocation:
@@ -723,23 +878,37 @@ paths:
                         submissionStatus: null
                       discoveredPlaceActionLinks: []
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -755,6 +924,8 @@ paths:
               input:
                 id: TG9jYXRpb246MTgwMDI4OQ==
                 phone: '5125550199'
+                bizUrl: https://acmekitchen.example.com
+                primaryGbpSiteCategoryId: gcid:restaurant
                 businessHours:
                 - day: MONDAY
                   type: OPEN
@@ -790,185 +961,6 @@ paths:
                   type: CLOSED
                   slots: []
       description: Updates writable fields on an existing location. Only the fields you send are changed.
-  /api/v4/locations/photos:
-    post:
-      operationId: addLocationPhotos
-      summary: Add photos for a location
-      tags:
-      - Locations
-      parameters: []
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AddLocationPhotosPayload'
-              example:
-                data:
-                  addLocationPhotos:
-                    clientMutationId: null
-                    photos:
-                    - id: TWVkaWFGaWxlOjU4Nzg5MzE=
-                      url: https://sy-media-store.s3-us-west-2.amazonaws.com/f868bb3f/59c670a3/f47d62a6.png
-                      caption: null
-                      starred: false
-                    - id: TWVkaWFGaWxlOjU4Nzg5MzI=
-                      url: https://sy-media-store.s3-us-west-2.amazonaws.com/f868bb3f/59c670a3/ef4ffb12.jpg
-                      caption: null
-                      starred: false
-                    errors: null
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                input:
-                  $ref: '#/components/schemas/AddLocationPhotosInput'
-              required:
-              - input
-            example:
-              input:
-                locationId: TG9jYXRpb246MTgwMDI4OQ==
-                photos:
-                - photo: https://cdn.example.com/jenny-home/logo.png
-                - photo: https://cdn.example.com/jenny-home/storefront.jpg
-      description: Attaches media to a location, either by public image URL or by referencing files already in your media library.
-  /api/v4/locations/photos/remove:
-    post:
-      operationId: removeLocationPhotos
-      summary: Remove photos from a location
-      tags:
-      - Locations
-      parameters: []
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RemoveLocationPhotosPayload'
-              example:
-                data:
-                  removeLocationPhotos:
-                    clientMutationId: null
-                    removedCount: 1
-                    errors: null
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                input:
-                  $ref: '#/components/schemas/RemoveLocationPhotosInput'
-              required:
-              - input
-            example:
-              input:
-                locationId: TG9jYXRpb246MTgwMDI4OQ==
-                photoIds:
-                - TWVkaWFGaWxlOjU4Nzg5MzI=
-      description: Detaches one or more media files from a location by their media IDs.
-  /api/v4/locations/photos/star:
-    post:
-      operationId: starLocationPhotos
-      summary: Mark photos as favourite
-      tags:
-      - Locations
-      parameters: []
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StarLocationPhotosPayload'
-              example:
-                data:
-                  starLocationPhotos:
-                    clientMutationId: null
-                    photos:
-                    - id: TWVkaWFGaWxlOjU4Nzg5MzI=
-                      url: https://sy-media-store.s3-us-west-2.amazonaws.com/f868bb3f/59c670a3/ef4ffb12.jpg
-                      caption: null
-                      starred: true
-                    errors: null
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                input:
-                  $ref: '#/components/schemas/StarLocationPhotosInput'
-              required:
-              - input
-            example:
-              input:
-                locationId: TG9jYXRpb246MTgwMDI4OQ==
-                photoIds:
-                - TWVkaWFGaWxlOjU4Nzg5MzI=
-                starred: true
-      description: Marks one or more of a location's additional photos as favourites for priority placement on supported publishers.
   /api/v4/locations/archive:
     post:
       operationId: archiveLocations
@@ -982,7 +974,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ArchiveLocationsPayload'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      archiveLocations:
+                        $ref: '#/components/schemas/ArchiveLocationsPayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   archiveLocations:
@@ -1000,23 +1005,37 @@ paths:
                       success: true
                       errors: null
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -1047,7 +1066,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CancelLocationsArchivePayload'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      cancelLocationsArchive:
+                        $ref: '#/components/schemas/CancelLocationsArchivePayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   cancelLocationsArchive:
@@ -1061,23 +1093,37 @@ paths:
                       success: true
                       errors: null
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -1111,16 +1157,29 @@ paths:
           - type: string
             description: Base64-encoded Relay ID
           format: base64-or-int
-        description: 'The location''s raw Base64-encoded Relay ID (for example `TG9jYXRpb246MTgwMDI4OQ==`). Send it un-encoded, a numeric database ID or a URL-encoded value returns `SY90002: Invalid Id`.'
+        description: The location's Base64-encoded Relay ID (for example `TG9jYXRpb246MTgwMDI4OQ==`). The raw numeric database ID (`1800289`) is also accepted, and so is a percent-encoded value such as `...%3D%3D`.
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MediaFileOfLocationType'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      mediaFilesOfLocation:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MediaFileOfLocationType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   mediaFilesOfLocation:
@@ -1141,23 +1200,37 @@ paths:
                     starred: true
                     viewsCount: 143
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns all media files attached to a single location, including starred and unstarred photos.
   /api/v4/locations/photos/requests/{requestId}:
     get:
@@ -1171,14 +1244,27 @@ paths:
         required: true
         schema:
           type: string
-        description: UUID request ID returned in the `request` object by the add-photos endpoint when a batch exceeds 30 photos.
+        description: UUID request ID returned in the `request` object by the add-photos endpoint when it queues a batch instead of uploading it inline.
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LocationPhotosUploadStatusType'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      getLocationPhotosUploadStatus:
+                        $ref: '#/components/schemas/LocationPhotosUploadStatusType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   getLocationPhotosUploadStatus:
@@ -1194,26 +1280,683 @@ paths:
                       status: ERROR
                       errorMessage: Image dimensions below the minimum 250x250.
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns the current processing status for a bulk photo upload request.
+  /api/v4/locations/photos:
+    post:
+      operationId: addLocationPhotos
+      summary: Attach photos to a location by public image URL
+      tags:
+      - Locations
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      addLocationPhotos:
+                        $ref: '#/components/schemas/AddLocationPhotosMutation'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  addLocationPhotos:
+                    clientMutationId: null
+                    success: true
+                    request: {}
+                    photos:
+                    - id: TWVkaWFGaWxlOjU4Nzg5MzE=
+                      databaseId: 5878931
+                      url: https://sy-media-store.s3-us-west-2.amazonaws.com/f868bb3f/59c670a3/f47d62a6.png
+                      thumbnailUrl: https://sy-media-store.s3-us-west-2.amazonaws.com/f868bb3f/59c670a3/thumbnail_f47d62a6.png
+                      type: LOGO
+                      starred: false
+                    - id: TWVkaWFGaWxlOjU4Nzg5MzI=
+                      databaseId: 5878932
+                      url: https://sy-media-store.s3-us-west-2.amazonaws.com/f868bb3f/59c670a3/ef4ffb12.jpg
+                      thumbnailUrl: https://sy-media-store.s3-us-west-2.amazonaws.com/f868bb3f/59c670a3/thumbnail_ef4ffb12.jpg
+                      type: ADDITIONAL
+                      starred: false
+                    errors: null
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/AddLocationMediaItemsInputType'
+              required:
+              - input
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                photos:
+                - photo: https://cdn.example.com/jenny-home/logo.png
+                  type: LOGO
+                - photo: https://cdn.example.com/jenny-home/storefront.jpg
+                  type: ADDITIONAL
+      description: Attaches media to a location, either by public image URL or by referencing files already in your media library.
+  /api/v4/locations/photos/remove:
+    post:
+      operationId: removeLocationPhotos
+      summary: Detach photos from a location
+      tags:
+      - Locations
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      removeLocationPhotos:
+                        $ref: '#/components/schemas/RemoveLocationPhotosMutation'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  removeLocationPhotos:
+                    clientMutationId: null
+                    removedCount: 1
+                    errors: null
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/RemoveLocationMediaItemsInputType'
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                photoIds:
+                - TWVkaWFGaWxlOjU4Nzg5MzI=
+      description: Detaches one or more media files from a location by their media IDs.
+  /api/v4/locations/photos/star:
+    post:
+      operationId: starUnstarLocationPhotos
+      summary: Star or unstar a location's photos.
+      tags:
+      - Locations
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      starUnstarLocationPhotos:
+                        $ref: '#/components/schemas/StarUnstarLocationPhotosMutation'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  starUnstarLocationPhotos:
+                    success: true
+                    photos:
+                    - id: TWVkaWFGaWxlOjU4Nzg5MzI=
+                      databaseId: 5878932
+                      url: https://sy-media-store.s3-us-west-2.amazonaws.com/f868bb3f/59c670a3/ef4ffb12.jpg
+                      thumbnailUrl: https://sy-media-store.s3-us-west-2.amazonaws.com/f868bb3f/59c670a3/thumbnail_ef4ffb12.jpg
+                      type: ADDITIONAL
+                      starred: true
+                    error: null
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/StarUnstarLocationPhotosInputType'
+              required:
+              - input
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                photoIds:
+                - TWVkaWFGaWxlOjU4Nzg5MzI=
+                starred: true
+      description: Marks one or more of a location's additional photos as favourites for priority placement on supported publishers.
 components:
   schemas:
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    UpdateLocationInput:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        storeId:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        stateIso:
+          type: string
+        postalCode:
+          type: string
+        countryIso:
+          type: string
+        subCategoryId:
+          type: integer
+          format: int32
+        phone:
+          type: string
+        businessHours:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessHoursDayInput'
+        moreHours:
+          type: array
+          items:
+            $ref: '#/components/schemas/MoreHourInput'
+        serviceArea:
+          $ref: '#/components/schemas/ServiceAreaInput'
+        customAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomAttributeInputType'
+        placeActionLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlaceActionLinkInputType'
+        bizUrl:
+          type: string
+        primaryGbpSiteCategoryId:
+          type: string
+        additionalGbpSiteCategoryIds:
+          type: array
+          items:
+            type: string
+        offeringsUrl:
+          type: string
+        bookingUrl:
+          type: string
+        reservationUrl:
+          type: string
+        street1:
+          type: string
+        latitude:
+          type: string
+        longitude:
+          type: string
+        ownerEmail:
+          type: string
+        ownerName:
+          type: string
+        facebookUrl:
+          type: string
+        twitterUrl:
+          type: string
+        linkedinUrl:
+          type: string
+        instagramUrl:
+          type: string
+        youtubeUrl:
+          type: string
+        tiktokUrl:
+          type: string
+        pinterestUrl:
+          type: string
+        tagline:
+          type: string
+        description:
+          type: string
+        yearOfIncorporation:
+          type: string
+        enabledSiteIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        googleAdsPhone:
+          type: string
+        additionalPhones:
+          type: array
+          items:
+            type: string
+        videos:
+          type: array
+          items:
+            type: string
+        additionalCategoryIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        submissionDisabledSiteIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        updateOnlySiteIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        hideAddress:
+          type: boolean
+        temporarilyClosed:
+          type: boolean
+        contentPreferredLanguage:
+          $ref: '#/components/schemas/LanguageEnumType'
+        serviceItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceItemInputType'
+        paymentMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethodType'
+      required:
+      - id
+    LocationPhotosUploadStatusType:
+      type: object
+      properties:
+        requestId:
+          type: string
+        status:
+          type: string
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationPhotoUploadItem'
+    LocationMediaType:
+      type: string
+      enum:
+      - LOGO
+      - COVER
+      - ADDITIONAL
+    CreateLocationPayload:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        location:
+          $ref: '#/components/schemas/LocationSummaryType'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationErrorType'
+        success:
+          type: boolean
+    LocationSummaryEdgeType:
+      type: object
+      properties:
+        cursor:
+          type: string
+        node:
+          $ref: '#/components/schemas/LocationSummaryType'
+      required:
+      - cursor
+    BusinessHoursSlotInput:
+      type: object
+      properties:
+        start:
+          type: string
+        end:
+          type: string
+      required:
+      - start
+      - end
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    ServiceAreaInput:
+      type: object
+      properties:
+        businessType:
+          type: string
+        regionCode:
+          type: string
+        placeInfos:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlaceInfoInput'
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    BusinessHoursDayInput:
+      type: object
+      properties:
+        day:
+          $ref: '#/components/schemas/DayOfTheWeekType'
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessHoursSlotInput'
+        type:
+          $ref: '#/components/schemas/BusinessHours'
+      required:
+      - day
+      - type
+    DayOfTheWeekType:
+      type: string
+      enum:
+      - MONDAY
+      - TUESDAY
+      - WEDNESDAY
+      - THURSDAY
+      - FRIDAY
+      - SATURDAY
+      - SUNDAY
+    StarUnstarLocationPhotosMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          $ref: '#/components/schemas/ErrorType'
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationMedia'
+    LocationStatusType:
+      type: string
+      enum:
+      - ACTIVE
+      - ARCHIVED
+      - PENDING
+      - TEMPORARILY_CLOSED
+      - SCHEDULED_FOR_ARCHIVE
+      description: Lifecycle states of a location.
+    ContextInfoType:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    CustomAttributeInputTypeEnum:
+      type: string
+      enum:
+      - STRING
+      - NUMBER
+      - BOOLEAN
+      - DATE
+      - ENUM
+      - URL
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    ErrorType:
+      type: object
+      properties:
+        message:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextInfoType'
+        code:
+          type: string
+    MediaFileOfLocationType:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        thumbnailUrl:
+          type: string
+        categoryName:
+          type: string
+        categoryId:
+          type: string
+        fileType:
+          type: string
+        starred:
+          type: boolean
+        viewsCount:
+          type: integer
+          format: int32
+      required:
+      - id
     MoreHourDayInput:
       type: object
       properties:
@@ -1225,6 +1968,299 @@ components:
           type: string
       required:
       - day
+    AddLocationMediaItemsInputType:
+      type: object
+      properties:
+        locationId:
+          type: string
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationMediaInputType'
+      required:
+      - locationId
+      - photos
+    PlaceInfoType:
+      type: object
+      properties:
+        placeId:
+          type: string
+        placeName:
+          type: string
+      required:
+      - placeId
+    ArchiveLocationsPayload:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        archivedCount:
+          type: integer
+          format: int32
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationSummaryType'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationErrorType'
+      required:
+      - archivedCount
+    LocationMediaInputType:
+      type: object
+      properties:
+        photo:
+          type: string
+        type:
+          $ref: '#/components/schemas/LocationMediaType'
+        starred:
+          type: boolean
+        source:
+          type: string
+        publisherOverride:
+          type: string
+        partnerMediaId:
+          type: string
+      required:
+      - photo
+    StarUnstarLocationPhotosInputType:
+      type: object
+      properties:
+        locationId:
+          type: string
+        photoIds:
+          type: array
+          items:
+            type: string
+        starred:
+          type: boolean
+      required:
+      - starred
+    RemoveLocationPhotosMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationMedia'
+        clientMutationId:
+          type: string
+    CreateLocationInput:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        storeId:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        stateIso:
+          type: string
+        postalCode:
+          type: string
+        countryIso:
+          type: string
+        subCategoryId:
+          type: integer
+          format: int32
+        phone:
+          type: string
+        businessHours:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessHoursDayInput'
+        serviceArea:
+          $ref: '#/components/schemas/ServiceAreaInput'
+        enabledSiteIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        placeActionLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlaceActionLinkInputType'
+        bizUrl:
+          type: string
+        primaryGbpSiteCategoryId:
+          type: string
+        additionalGbpSiteCategoryIds:
+          type: array
+          items:
+            type: string
+        offeringsUrl:
+          type: string
+        bookingUrl:
+          type: string
+        reservationUrl:
+          type: string
+        street1:
+          type: string
+        latitude:
+          type: string
+        longitude:
+          type: string
+        ownerEmail:
+          type: string
+        ownerName:
+          type: string
+        facebookUrl:
+          type: string
+        twitterUrl:
+          type: string
+        linkedinUrl:
+          type: string
+        instagramUrl:
+          type: string
+        youtubeUrl:
+          type: string
+        tiktokUrl:
+          type: string
+        pinterestUrl:
+          type: string
+        tagline:
+          type: string
+        yearOfIncorporation:
+          type: string
+        googleAdsPhone:
+          type: string
+        additionalPhones:
+          type: array
+          items:
+            type: string
+        videos:
+          type: array
+          items:
+            type: string
+        additionalCategoryIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        submissionDisabledSiteIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        hideAddress:
+          type: boolean
+        temporarilyClosed:
+          type: boolean
+        serviceItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceItemInputType'
+        customAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomAttributeInputType'
+        paymentMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethodType'
+      required:
+      - name
+      - description
+      - countryIso
+      - subCategoryId
+      - stateIso
+      - phone
+      - bizUrl
+      if:
+        properties:
+          hideAddress:
+            const: true
+        required:
+        - hideAddress
+      else:
+        required:
+        - street
+        - postalCode
+        - city
+    PageInfoType:
+      type: object
+      properties:
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+        startCursor:
+          type: string
+        endCursor:
+          type: string
+      required:
+      - hasNextPage
+      - hasPreviousPage
+    AddLocationPhotosMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationMedia'
+        request:
+          $ref: '#/components/schemas/RequestType'
+        clientMutationId:
+          type: string
+    MutationErrorType:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: array
+          items:
+            type: string
+      required:
+      - message
+    PlaceActionTypeEnum:
+      type: string
+      enum:
+      - APPOINTMENT
+      - ONLINE_APPOINTMENT
+      - DINING_RESERVATION
+      - FOOD_ORDERING
+      - FOOD_DELIVERY
+      - FOOD_TAKEOUT
+      - SHOP_ONLINE
+      description: Google place action types.
+    ServiceItemInputType:
+      type: object
+      properties:
+        name:
+          type: string
+        categoryId:
+          type: string
+        price:
+          type: number
+          format: float
+        description:
+          type: string
+        currencyCode:
+          type: string
+      required:
+      - name
     PlaceActionLinkInputType:
       type: object
       description: Write payload for a Google place action link (append/upsert model).
@@ -1246,98 +2282,51 @@ components:
       required:
       - placeActionType
       - uri
-    ArchiveLocationsInput:
+    LocationMedia:
       type: object
       properties:
-        clientMutationId:
-          type: string
-        locationIds:
-          type: array
-          items:
-            type: string
-      required:
-      - locationIds
-    AddLocationPhotosInput:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        locationId:
-          type: string
-        photos:
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationPhotoInput'
-      required:
-      - locationId
-      - photos
-    CancelLocationsArchivePayload:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        cancelledCount:
+        databaseId:
           type: integer
           format: int32
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationErrorType'
-    BusinessHoursDayInput:
+        fileSize:
+          type: integer
+          format: int32
+        id:
+          type: string
+        name:
+          type: string
+        starred:
+          type: boolean
+        thumbnailUrl:
+          type: string
+        type:
+          $ref: '#/components/schemas/LocationMediaType'
+        url:
+          type: string
+        publisherOverride:
+          type: string
+        partnerMediaId:
+          type: string
+        originalUrl:
+          type: string
+    CustomAttributeInputType:
       type: object
       properties:
-        day:
-          $ref: '#/components/schemas/DayOfTheWeekType'
-        slots:
-          type: array
-          items:
-            $ref: '#/components/schemas/BusinessHoursSlotInput'
+        name:
+          type: string
+        value:
+          type: string
         type:
-          $ref: '#/components/schemas/BusinessHours'
+          $ref: '#/components/schemas/CustomAttributeInputTypeEnum'
+        levelType:
+          $ref: '#/components/schemas/CustomAttributeLevelTypeEnum'
       required:
-      - day
-      - type
-    PlaceActionTypeEnum:
+      - name
+    BusinessHours:
       type: string
       enum:
-      - APPOINTMENT
-      - ONLINE_APPOINTMENT
-      - DINING_RESERVATION
-      - FOOD_ORDERING
-      - FOOD_DELIVERY
-      - FOOD_TAKEOUT
-      - SHOP_ONLINE
-      description: Google place action types.
-    LocationSummaryEdgeType:
-      type: object
-      properties:
-        cursor:
-          type: string
-        node:
-          $ref: '#/components/schemas/LocationSummaryType'
-      required:
-      - cursor
-    MoreHourInput:
-      type: object
-      properties:
-        type:
-          type: string
-        days:
-          type: array
-          items:
-            $ref: '#/components/schemas/MoreHourDayInput'
-      required:
-      - type
-    DayOfTheWeekType:
-      type: string
-      enum:
-      - MONDAY
-      - TUESDAY
-      - WEDNESDAY
-      - THURSDAY
-      - FRIDAY
-      - SATURDAY
-      - SUNDAY
+      - OPEN
+      - CLOSED
     LocationSummaryType:
       type: object
       description: Summary view of a business location.
@@ -1394,82 +2383,224 @@ components:
       required:
       - id
       - name
-    BusinessHoursSlotInput:
-      type: object
-      properties:
-        start:
-          type: string
-        end:
-          type: string
-      required:
-      - start
-      - end
-    CustomAttributeInputTypeEnum:
+    CustomAttributeLevelTypeEnum:
       type: string
       enum:
-      - STRING
-      - NUMBER
-      - BOOLEAN
-      - DATE
-      - ENUM
-      - URL
-    ServiceAreaInput:
-      type: object
-      properties:
-        businessType:
-          type: string
-        regionCode:
-          type: string
-        placeInfos:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlaceInfoInput'
-    CreateLocationInput:
+      - ACCOUNT
+      - LOCATION
+    CancelLocationsArchiveInput:
       type: object
       properties:
         clientMutationId:
           type: string
-        name:
+        locationIds:
+          type: array
+          items:
+            type: string
+      required:
+      - locationIds
+    CancelLocationsArchivePayload:
+      type: object
+      properties:
+        clientMutationId:
           type: string
-        description:
-          type: string
-        storeId:
-          type: string
-        street:
-          type: string
-        city:
-          type: string
-        stateIso:
-          type: string
-        postalCode:
-          type: string
-        countryIso:
-          type: string
-        subCategoryId:
+        cancelledCount:
           type: integer
           format: int32
-        phone:
-          type: string
-        businessHours:
+        errors:
           type: array
           items:
-            $ref: '#/components/schemas/BusinessHoursDayInput'
-        serviceArea:
-          $ref: '#/components/schemas/ServiceAreaInput'
-        enabledSiteIds:
-          type: array
-          items:
-            type: integer
-            format: int32
-        placeActionLinks:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlaceActionLinkInputType'
-      required:
-      - name
-      - description
-      - countryIso
-      - subCategoryId
+            $ref: '#/components/schemas/MutationErrorType'
+    LanguageEnumType:
+      type: string
+      enum:
+      - ENGLISH
+      - SPANISH
+      - PORTUGUESE
+      - FRENCH
+      - GERMAN
+      - JAPANESE
+      - ABKHAZIAN
+      - AFAR
+      - AFRIKAANS
+      - AKAN
+      - ALBANIAN
+      - AMHARIC
+      - ARABIC
+      - ARAGONESE
+      - ARMENIAN
+      - ASSAMESE
+      - AVARIC
+      - AVESTAN
+      - AYMARA
+      - AZERBAIJANI
+      - BAMBARA
+      - BASHKIR
+      - BASQUE
+      - BELARUSIAN
+      - BENGALI
+      - BISLAMA
+      - BOSNIAN
+      - BRETON
+      - BULGARIAN
+      - BURMESE
+      - CATALAN
+      - CHAMORRO
+      - CHECHEN
+      - CHICHEWA
+      - CHINESE
+      - CHUVASH
+      - CORNISH
+      - CORSICAN
+      - CREE
+      - CROATIAN
+      - CZECH
+      - DANISH
+      - DIVEHI
+      - DUTCH
+      - DZONGKHA
+      - ESPERANTO
+      - ESTONIAN
+      - EWE
+      - FAROESE
+      - FIJIAN
+      - FINNISH
+      - FULAH
+      - GALICIAN
+      - GEORGIAN
+      - GREEK
+      - GUARANI
+      - GUJARATI
+      - HAITIAN
+      - HAUSA
+      - HEBREW
+      - HERERO
+      - HINDI
+      - HIRI_MOTU
+      - HUNGARIAN
+      - ICELANDIC
+      - IGBO
+      - INDONESIAN
+      - INTERLINGUA
+      - INTERLINGUE
+      - INUKTITUT
+      - INUPIAQ
+      - IRISH
+      - ITALIAN
+      - JAVANESE
+      - KANNADA
+      - KANURI
+      - KASHMIRI
+      - KAZAKH
+      - KHMER
+      - KIKUYU
+      - KINYARWANDA
+      - KIRGHIZ
+      - KOMI
+      - KOREAN
+      - KURDISH
+      - LAO
+      - LATIN
+      - LATVIAN
+      - LIMBURGAN
+      - LINGALA
+      - LITHUANIAN
+      - LUBA_KATANGA
+      - LUXEMBOURGISH
+      - MACEDONIAN
+      - MALAGASY
+      - MALAY
+      - MALAYALAM
+      - MALTESE
+      - MANX
+      - MAORI
+      - MARATHI
+      - MARSHALLESE
+      - MONGOLIAN
+      - NAURU
+      - NAVAJO
+      - NDONGA
+      - NEPALI
+      - NORTHERN_SAMI
+      - NORWEGIAN
+      - NORWEGIAN_BOKMAL
+      - NORWEGIAN_NYNORSK
+      - OCCITAN
+      - OJIBWA
+      - ORIYA
+      - OROMO
+      - OSSETIAN
+      - PASHTO
+      - PERSIAN
+      - POLISH
+      - PUNJABI
+      - QUECHUA
+      - ROMANIAN
+      - ROMANSH
+      - RUSSIAN
+      - SAMOAN
+      - SANGO
+      - SANSKRIT
+      - SCOTTISH_GAELIC
+      - SERBIAN
+      - SHONA
+      - SINDHI
+      - SINHALA
+      - SLOVAK
+      - SLOVENIAN
+      - SOMALI
+      - SOUTHERN_SOTHO
+      - SUNDANESE
+      - SWAHILI
+      - SWEDISH
+      - TAGALOG
+      - TAJIK
+      - TAMIL
+      - TATAR
+      - TELUGU
+      - THAI
+      - TIBETAN
+      - TIGRINYA
+      - TONGA
+      - TSONGA
+      - TSWANA
+      - TURKISH
+      - TURKMEN
+      - TWI
+      - UIGHUR
+      - UKRAINIAN
+      - URDU
+      - UZBEK
+      - VENDA
+      - VIETNAMESE
+      - VOLAPUK
+      - WALLOON
+      - WELSH
+      - WESTERN_FRISIAN
+      - WOLOF
+      - XHOSA
+      - YIDDISH
+      - YORUBA
+      - ZULU
+    PaymentMethodType:
+      type: string
+      enum:
+      - VISA
+      - MASTERCARD
+      - AMEX
+      - CASH
+      - CHEQUE
+      - CRYPTO
+      - DINERS_CLUB
+      - DISCOVER
+      - FINANCING
+      - INVOICE
+      - TRAVELERS_CHECK
+      - APPLE_PAY
+      - SAMSUNG_PAY
+      - PAYPAL
+      - ANDROID_PAY
+      description: Payment methods a location accepts.
     LocationSummaryConnectionType:
       type: object
       description: A Relay connection over LocationSummary.
@@ -1516,137 +2647,6 @@ components:
       required:
       - placeActionType
       - uri
-    LocationPhotoUploadItem:
-      type: object
-      properties:
-        mediaId:
-          type: string
-        locationId:
-          type: string
-        status:
-          type: string
-        errorMessage:
-          type: string
-    PlaceInfoInput:
-      type: object
-      properties:
-        placeId:
-          type: string
-        placeName:
-          type: string
-      required:
-      - placeId
-    CreateLocationPayload:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        location:
-          $ref: '#/components/schemas/LocationSummaryType'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationErrorType'
-        success:
-          type: boolean
-    LocationStatusType:
-      type: string
-      enum:
-      - ACTIVE
-      - ARCHIVED
-      - PENDING
-      - TEMPORARILY_CLOSED
-      - SCHEDULED_FOR_ARCHIVE
-      description: Lifecycle states of a location.
-    RemoveLocationPhotosPayload:
-      type: object
-      description: (also defined by media-manager)
-      properties:
-        clientMutationId:
-          type: string
-        removedCount:
-          type: integer
-          format: int32
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationErrorType'
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
-    LocationPhotoInput:
-      type: object
-      properties:
-        url:
-          type: string
-        caption:
-          type: string
-        type:
-          type: string
-      required:
-      - url
-    RemoveLocationPhotosInput:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        locationId:
-          type: string
-        photoIds:
-          type: array
-          items:
-            type: string
-      required:
-      - locationId
-      - photoIds
-    UpdateLocationInput:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        street:
-          type: string
-        city:
-          type: string
-        stateIso:
-          type: string
-        postalCode:
-          type: string
-        countryIso:
-          type: string
-        phone:
-          type: string
-        businessHours:
-          type: array
-          items:
-            $ref: '#/components/schemas/BusinessHoursDayInput'
-        moreHours:
-          type: array
-          items:
-            $ref: '#/components/schemas/MoreHourInput'
-        serviceArea:
-          $ref: '#/components/schemas/ServiceAreaInput'
-        customAttributes:
-          type: array
-          items:
-            $ref: '#/components/schemas/CustomAttributeInputType'
-        placeActionLinks:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlaceActionLinkInputType'
-      required:
-      - id
     ServiceAreaType:
       type: object
       properties:
@@ -1658,119 +2658,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PlaceInfoType'
-    PhotoType:
-      type: object
-      properties:
-        id:
-          type: string
-        url:
-          type: string
-        caption:
-          type: string
-        starred:
-          type: boolean
-      required:
-      - id
-      - url
-    CustomAttributeInputType:
-      type: object
-      properties:
-        name:
-          type: string
-        value:
-          type: string
-        type:
-          $ref: '#/components/schemas/CustomAttributeInputTypeEnum'
-        levelType:
-          $ref: '#/components/schemas/CustomAttributeLevelTypeEnum'
-      required:
-      - name
-    PageInfoType:
-      type: object
-      description: (also defined by notifications) (also defined by reviewfunnel) (also defined by contests) (also defined by social-media)
-      properties:
-        hasNextPage:
-          type: boolean
-        hasPreviousPage:
-          type: boolean
-        startCursor:
-          type: string
-        endCursor:
-          type: string
-      required:
-      - hasNextPage
-      - hasPreviousPage
-    StarLocationPhotosPayload:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        photos:
-          type: array
-          items:
-            $ref: '#/components/schemas/PhotoType'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationErrorType'
-    BusinessHours:
-      type: string
-      enum:
-      - OPEN
-      - CLOSED
-    MediaFileOfLocationType:
-      type: object
-      properties:
-        id:
-          type: string
-        url:
-          type: string
-        thumbnailUrl:
-          type: string
-        categoryName:
-          type: string
-        categoryId:
-          type: string
-        fileType:
-          type: string
-        starred:
-          type: boolean
-        viewsCount:
-          type: integer
-          format: int32
-      required:
-      - id
-    CustomAttributeLevelTypeEnum:
-      type: string
-      enum:
-      - ACCOUNT
-      - LOCATION
-    StarLocationPhotosInput:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        locationId:
-          type: string
-        photoIds:
-          type: array
-          items:
-            type: string
-        starred:
-          type: boolean
-      required:
-      - locationId
-      - photoIds
-      - starred
-    PlaceInfoType:
-      type: object
-      properties:
-        placeId:
-          type: string
-        placeName:
-          type: string
-      required:
-      - placeId
     UpdateLocationPayload:
       type: object
       properties:
@@ -1784,46 +2671,7 @@ components:
             $ref: '#/components/schemas/MutationErrorType'
         success:
           type: boolean
-    MutationErrorType:
-      type: object
-      description: (also defined by notifications) (also defined by reviewfunnel) (also defined by crawler)
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        path:
-          type: array
-          items:
-            type: string
-      required:
-      - message
-    AddLocationPhotosPayload:
-      type: object
-      description: (also defined by media-manager)
-      properties:
-        clientMutationId:
-          type: string
-        photos:
-          type: array
-          items:
-            $ref: '#/components/schemas/PhotoType'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationErrorType'
-    LocationPhotosUploadStatusType:
-      type: object
-      properties:
-        requestId:
-          type: string
-        status:
-          type: string
-        photos:
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationPhotoUploadItem'
-    CancelLocationsArchiveInput:
+    ArchiveLocationsInput:
       type: object
       properties:
         clientMutationId:
@@ -1834,24 +2682,56 @@ components:
             type: string
       required:
       - locationIds
-    ArchiveLocationsPayload:
+    RequestType:
       type: object
       properties:
-        clientMutationId:
+        requestId:
           type: string
-        archivedCount:
-          type: integer
-          format: int32
-        locations:
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationSummaryType'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationErrorType'
+        status:
+          type: string
+    PlaceInfoInput:
+      type: object
+      properties:
+        placeId:
+          type: string
+        placeName:
+          type: string
       required:
-      - archivedCount
+      - placeId
+    MoreHourInput:
+      type: object
+      properties:
+        type:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/MoreHourDayInput'
+      required:
+      - type
+    LocationPhotoUploadItem:
+      type: object
+      properties:
+        mediaId:
+          type: string
+        locationId:
+          type: string
+        status:
+          type: string
+        errorMessage:
+          type: string
+    RemoveLocationMediaItemsInputType:
+      type: object
+      properties:
+        locationId:
+          type: string
+        photoIds:
+          type: array
+          items:
+            type: string
+      required:
+      - locationId
+      - photoIds
   securitySchemes:
     apiKey:
       type: apiKey
@@ -1870,4 +2750,4 @@ components:
       description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
 externalDocs:
   description: Developer documentation
-  url: https://docs.listingsapi.com
+  url: https://listingsapi.com/docs

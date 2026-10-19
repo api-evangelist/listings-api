@@ -1,8 +1,11 @@
 openapi: 3.2.0
 info:
   title: Listings Posts API
-  version: 2026-08-27
-  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  version: 2026-09-09
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.
+
+
+    Try the sandbox day pass, no card required, when it is offered: sign up at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. It covers the locations and listings endpoints and syncs only to listingsAPI demo directories. Agents can use the Day pass operations, which need no key; see https://listingsapi.com/docs/day-pass.'
   contact:
     name: Listings API support
     email: support@listingsapi.com
@@ -43,7 +46,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SocialPostView'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      socialPostView:
+                        $ref: '#/components/schemas/SocialPostView'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   socialPostView:
@@ -108,23 +124,37 @@ paths:
                         shares: 0
                         comments: 1
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns a single social post campaign with its content, per-site publish status, and engagement analytics.
     delete:
       operationId: deleteSocialPost
@@ -144,30 +174,57 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteSocialPostMutation'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      deleteSocialPost:
+                        $ref: '#/components/schemas/DeleteSocialPostMutation'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   deleteSocialPost:
                     success: true
                     socialPostId: U29jaWFsUG9zdDo0NDEyMg==
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: false
         content:
@@ -193,7 +250,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SocialPostMutation'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      createSocialPost:
+                        $ref: '#/components/schemas/SocialPostMutation'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   createSocialPost:
@@ -232,23 +302,37 @@ paths:
                       locationIds:
                       - 1800289
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -293,7 +377,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SocialPostMutation'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      createSocialPost:
+                        $ref: '#/components/schemas/SocialPostMutation'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   createSocialPost:
@@ -315,23 +412,37 @@ paths:
                       - 1800289
                       - 1800290
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -385,10 +496,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SocialPostView'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      socialPostView:
+                        $ref: '#/components/schemas/SocialPostView'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
-                  socialPostViewBulk:
+                  socialPostView:
                     socialPostId: U29jaWFsUG9zdDo1MTA4OA==
                     socialPostInfo:
                       id: U29jaWFsUG9zdDo1MTA4OA==
@@ -480,28 +604,42 @@ paths:
                         shares: 4
                         comments: 1
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns a single bulk (multi-location) post campaign with its content, per-location publish status, and engagement analytics.
   /api/v4/locations/{locationId}/posts:
     get:
       operationId: rollupSocialPostsByLocation
-      summary: List of post campaigns for tags/locations
+      summary: Paginated list of posts for a single location, used by the V4 REST…
       tags:
       - Posts
       parameters:
@@ -509,22 +647,13 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-        description: Base64-encoded location cursor / global ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`). Pass it verbatim, do not URL-encode it. The base64 cursor always resolves; the raw numeric database ID also works on this endpoint, but the base64 form is the portable choice across the API.
-      - name: locationIds
-        in: query
-        required: false
-        schema:
-          type: string
-          description: JSON-encoded filter object
-        description: JSON-encoded array of location IDs to include alongside the path location.
-      - name: filters
-        in: query
-        required: false
-        schema:
-          type: string
-          description: JSON-encoded filter object
-        description: JSON-encoded SocialPostFiltersInput (e.g. by `type`, `status`, `creationDateRange`, `siteUrls`).
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: 'Location ID: the base64 Relay id returned in a location record''s `id` (e.g. TG9jYXRpb246MTgwMDI4OQ==), or the raw numeric id.'
       - name: page
         in: query
         required: false
@@ -538,30 +667,30 @@ paths:
         schema:
           type: integer
           format: int32
-        description: Number of records per page.
-      - name: sortFields
-        in: query
-        required: false
-        schema:
-          type: string
-          description: JSON-encoded filter object
-        description: 'JSON-encoded sort object `{ "field": "created_at", "order": "Descending" }`. `field` is one of name, type, status, created_at, schedule_start_date, schedule_end_date, client_name, clicks, views, shares.'
-      - name: componentIdentifier
-        in: query
-        required: false
-        schema:
-          type: string
-        description: Filter to posts created by a specific component/integration.
+        description: Number of records per page. Must not exceed 50.
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SocialPostPaginated'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      postsByLocation:
+                        $ref: '#/components/schemas/SocialPostPaginated'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
-                  rollupSocialPosts:
+                  postsByLocation:
                     records:
                     - id: U29jaWFsUG9zdDo0NDEyMg==
                       name: Summer Hours Update
@@ -620,23 +749,37 @@ paths:
                       hasPreviousPage: false
                       totalRecords: 1
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns a page of social post campaigns (announcements, events, offers) that target a single location.
   /api/v4/locations/{locationId}/bulk-posts:
     get:
@@ -650,7 +793,7 @@ paths:
         required: true
         schema:
           type: string
-        description: Base64-encoded location cursor / global ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`). Pass it verbatim, do not URL-encode it. The base64 cursor always resolves; the raw numeric database ID also works on this endpoint, but the base64 form is the portable choice across the API.
+        description: Base64-encoded location cursor / global ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`). Pass it unchanged, do not URL-encode it. The base64 cursor always resolves; the raw numeric database ID also works on this endpoint, but the base64 form is the portable choice across the API.
       - name: locationIds
         in: query
         required: false
@@ -698,7 +841,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SocialPostPaginated'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      rollupSocialPosts:
+                        $ref: '#/components/schemas/SocialPostPaginated'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   rollupSocialPosts:
@@ -777,54 +933,118 @@ paths:
                       hasPreviousPage: false
                       totalRecords: 1
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns a page of bulk (multi-location) post campaigns that include a single location.
 components:
   schemas:
-    SocialPostMediaInput:
+    SocialPostAnalyticsLocationwise:
       type: object
       properties:
-        site:
-          $ref: '#/components/schemas/SitesType'
-        url:
-          type: string
-        type:
-          $ref: '#/components/schemas/MediaTypeEnum'
-      required:
-      - site
-      - url
-    PostScheduledDatesInput:
-      type: object
-      properties:
-        startDatetime:
-          type: string
-          description: Custom scalar Datetime
-        endDatetime:
-          type: string
-          description: Custom scalar Datetime
-        removalSites:
+        locationId:
+          type: integer
+          format: int32
+        siteStats:
           type: array
           items:
-            $ref: '#/components/schemas/SitesType'
+            $ref: '#/components/schemas/StatsAndStatus'
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
       required:
-      - startDatetime
-      - endDatetime
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    PostMessage:
+      type: object
+      properties:
+        message:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+    DeleteSocialPostMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        socialPostId:
+          type: string
+      required:
+      - success
+      - socialPostId
+    SocialPostAnalyticsSitewise:
+      type: object
+      properties:
+        clicks:
+          type: integer
+          format: int32
+        views:
+          type: integer
+          format: int32
+        reactions:
+          type: integer
+          format: int32
+        shares:
+          type: integer
+          format: int32
+        comments:
+          type: integer
+          format: int32
+        site:
+          $ref: '#/components/schemas/SitesType'
+    SocialPostMutation:
+      type: object
+      description: Result of a social post create/edit mutation.
+      properties:
+        clientMutationId:
+          type: string
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationError'
+        socialPost:
+          $ref: '#/components/schemas/SocialPost'
+      required:
+      - success
     SocialPostEs:
       type: object
       description: Elasticsearch-indexed social post record used in rollup listings.
@@ -908,6 +1128,346 @@ components:
       - createdAt
       - sites
       - locationIds
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    SitesType:
+      type: string
+      enum:
+      - GOOGLE
+      - FACEBOOK
+      description: Sites a post can be published to.
+    SiteCtaTypes:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    PublishStatusEnum:
+      type: string
+      enum:
+      - PUBLISHING
+      - PUBLISHED
+      - DELETED
+      - EXPIRED
+      - ERROR
+      description: Publish statuses per site.
+    SocialPostPaginated:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostEs'
+        locationDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationDetails'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfo'
+      required:
+      - pageInfo
+    MutationError:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextError'
+    PostCta:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/SiteCtaTypes'
+        url:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+        tinyUrl:
+          type: string
+    ProductInfoInput:
+      type: object
+      properties:
+        productId:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        price:
+          type: string
+        minPrice:
+          type: string
+        maxPrice:
+          type: string
+        description:
+          type: string
+        photo:
+          type: string
+        cta:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostCtaInput'
+        sites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SitesType'
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    SocialPostPublishedLink:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        link:
+          type: string
+    StatsAndStatus:
+      type: object
+      properties:
+        clicks:
+          type: integer
+          format: int32
+        views:
+          type: integer
+          format: int32
+        reactions:
+          type: integer
+          format: int32
+        shares:
+          type: integer
+          format: int32
+        comments:
+          type: integer
+          format: int32
+        status:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+    SocialPostMedia:
+      type: object
+      properties:
+        url:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+        type:
+          $ref: '#/components/schemas/MediaTypeEnum'
+    ContextError:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    SocialPostTypeEnum:
+      type: string
+      enum:
+      - EVENT
+      - OFFER
+      - ANNOUNCEMENT
+      - COVID19
+      - PRODUCT
+      description: Social Post types.
+    SocialPostView:
+      type: object
+      properties:
+        socialPostId:
+          type: string
+        socialPostInfo:
+          $ref: '#/components/schemas/SocialPost'
+        publishedLocationsCount:
+          type: integer
+          format: int32
+        socialPostAnalyticsBySite:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostAnalyticsSitewise'
+        socialPostAnalyticsByLocationId:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostAnalyticsLocationwise'
+    SocialPostPublishDetail:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        status:
+          $ref: '#/components/schemas/PublishStatusEnum'
+        createdDate:
+          type: string
+          format: date
+        publishedDate:
+          type: string
+          format: date
+        deletedDate:
+          type: string
+          format: date
+        expiredDate:
+          type: string
+          format: date
+        submissionError:
+          type: string
+    OffsetBasedPageInfo:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+        totalRecords:
+          type: integer
+          format: int32
+      required:
+      - totalPages
+      - totalRecords
+    SocialPostMediaInput:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        url:
+          type: string
+        type:
+          $ref: '#/components/schemas/MediaTypeEnum'
+      required:
+      - site
+      - url
+    PostContextInfo:
+      type: object
+      properties:
+        couponCode:
+          type: string
+        redeemUrl:
+          type: string
+        termsConditions:
+          type: string
+        title:
+          type: string
+        discount:
+          type: string
+        locationType:
+          type: string
+        startDay:
+          type: string
+          format: date
+        startTime:
+          type: string
+        endDay:
+          type: string
+          format: date
+        endTime:
+          type: string
+    LocationDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        street:
+          type: string
+        street2:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        countryIso:
+          type: string
+        stateIso:
+          type: string
+        stateName:
+          type: string
+        storeId:
+          type: string
+      required:
+      - id
+    PostMessageInput:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        message:
+          type: string
+      required:
+      - site
+      - message
     SocialPost:
       type: object
       description: A newer multi-site/multi-location post campaign.
@@ -989,6 +1549,12 @@ components:
       - createdAt
       - sites
       - locationIds
+    MediaTypeEnum:
+      type: string
+      enum:
+      - IMAGE
+      - VIDEO
+      description: Media type for social posts.
     PostContextInfoInput:
       type: object
       description: Additional details for post based on post_type.
@@ -1015,23 +1581,35 @@ components:
           format: date
         endTime:
           type: string
-    SocialPostPublishedLink:
+    PostCtaInput:
       type: object
       properties:
         site:
           $ref: '#/components/schemas/SitesType'
-        link:
+        type:
           type: string
-    SocialPostAnalyticsLocationwise:
+        url:
+          type: string
+      required:
+      - site
+      - type
+      - url
+    PostScheduledDatesInput:
       type: object
       properties:
-        locationId:
-          type: integer
-          format: int32
-        siteStats:
+        startDatetime:
+          type: string
+          description: Custom scalar Datetime
+        endDatetime:
+          type: string
+          description: Custom scalar Datetime
+        removalSites:
           type: array
           items:
-            $ref: '#/components/schemas/StatsAndStatus'
+            $ref: '#/components/schemas/SitesType'
+      required:
+      - startDatetime
+      - endDatetime
     CreateSocialPostMutationInput:
       type: object
       properties:
@@ -1078,232 +1656,6 @@ components:
       - locationIds
       - postType
       - postSites
-    SocialPostMutation:
-      type: object
-      description: Result of a social post create/edit mutation.
-      properties:
-        clientMutationId:
-          type: string
-        success:
-          type: boolean
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationError'
-        socialPost:
-          $ref: '#/components/schemas/SocialPost'
-      required:
-      - success
-    PostContextInfo:
-      type: object
-      properties:
-        couponCode:
-          type: string
-        redeemUrl:
-          type: string
-        termsConditions:
-          type: string
-        title:
-          type: string
-        discount:
-          type: string
-        locationType:
-          type: string
-        startDay:
-          type: string
-          format: date
-        startTime:
-          type: string
-        endDay:
-          type: string
-          format: date
-        endTime:
-          type: string
-    SocialPostTypeEnum:
-      type: string
-      enum:
-      - EVENT
-      - OFFER
-      - ANNOUNCEMENT
-      - COVID19
-      - PRODUCT
-      description: Social Post types.
-    MutationError:
-      type: object
-      description: (also defined by insights) (also defined by v2app)
-      properties:
-        message:
-          type: string
-        code:
-          type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContextError'
-    PostMessage:
-      type: object
-      properties:
-        message:
-          type: string
-        site:
-          $ref: '#/components/schemas/SitesType'
-    SocialPostAnalyticsSitewise:
-      type: object
-      properties:
-        clicks:
-          type: integer
-          format: int32
-        views:
-          type: integer
-          format: int32
-        reactions:
-          type: integer
-          format: int32
-        shares:
-          type: integer
-          format: int32
-        comments:
-          type: integer
-          format: int32
-        site:
-          $ref: '#/components/schemas/SitesType'
-    SocialPostView:
-      type: object
-      properties:
-        socialPostId:
-          type: string
-        socialPostInfo:
-          $ref: '#/components/schemas/SocialPost'
-        publishedLocationsCount:
-          type: integer
-          format: int32
-        socialPostAnalyticsBySite:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostAnalyticsSitewise'
-        socialPostAnalyticsByLocationId:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostAnalyticsLocationwise'
-    StatsAndStatus:
-      type: object
-      properties:
-        clicks:
-          type: integer
-          format: int32
-        views:
-          type: integer
-          format: int32
-        reactions:
-          type: integer
-          format: int32
-        shares:
-          type: integer
-          format: int32
-        comments:
-          type: integer
-          format: int32
-        status:
-          type: string
-        site:
-          $ref: '#/components/schemas/SitesType'
-    LocationDetails:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        street:
-          type: string
-        street2:
-          type: string
-        city:
-          type: string
-        postalCode:
-          type: string
-        countryIso:
-          type: string
-        stateIso:
-          type: string
-        stateName:
-          type: string
-        storeId:
-          type: string
-      required:
-      - id
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
-    PostCta:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/SiteCtaTypes'
-        url:
-          type: string
-        site:
-          $ref: '#/components/schemas/SitesType'
-        tinyUrl:
-          type: string
-    MediaTypeEnum:
-      type: string
-      enum:
-      - IMAGE
-      - VIDEO
-      description: Media type for social posts.
-    SocialPostPaginated:
-      type: object
-      properties:
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostEs'
-        locationDetails:
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationDetails'
-        pageInfo:
-          $ref: '#/components/schemas/OffsetBasedPageInfo'
-      required:
-      - pageInfo
-    SocialPostPublishDetail:
-      type: object
-      properties:
-        site:
-          $ref: '#/components/schemas/SitesType'
-        status:
-          $ref: '#/components/schemas/PublishStatusEnum'
-        createdDate:
-          type: string
-          format: date
-        publishedDate:
-          type: string
-          format: date
-        deletedDate:
-          type: string
-          format: date
-        expiredDate:
-          type: string
-          format: date
-        submissionError:
-          type: string
-    SocialPostMedia:
-      type: object
-      properties:
-        url:
-          type: string
-        site:
-          $ref: '#/components/schemas/SitesType'
-        type:
-          $ref: '#/components/schemas/MediaTypeEnum'
     SocialPostStatusEnum:
       type: string
       enum:
@@ -1314,111 +1666,6 @@ components:
       - DELETED
       - EXPIRED
       description: Social Post lifecycle statuses.
-    ContextError:
-      type: object
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    PostMessageInput:
-      type: object
-      properties:
-        site:
-          $ref: '#/components/schemas/SitesType'
-        message:
-          type: string
-      required:
-      - site
-      - message
-    ProductInfoInput:
-      type: object
-      properties:
-        productId:
-          type: string
-        name:
-          type: string
-        category:
-          type: string
-        price:
-          type: string
-        minPrice:
-          type: string
-        maxPrice:
-          type: string
-        description:
-          type: string
-        photo:
-          type: string
-        cta:
-          type: array
-          items:
-            $ref: '#/components/schemas/PostCtaInput'
-        sites:
-          type: array
-          items:
-            $ref: '#/components/schemas/SitesType'
-    PublishStatusEnum:
-      type: string
-      enum:
-      - PUBLISHING
-      - PUBLISHED
-      - DELETED
-      - EXPIRED
-      - ERROR
-      description: Publish statuses per site.
-    PostCtaInput:
-      type: object
-      properties:
-        site:
-          $ref: '#/components/schemas/SitesType'
-        type:
-          type: string
-        url:
-          type: string
-      required:
-      - site
-      - type
-      - url
-    OffsetBasedPageInfo:
-      type: object
-      properties:
-        totalPages:
-          type: integer
-          format: int32
-        hasNextPage:
-          type: boolean
-        hasPreviousPage:
-          type: boolean
-        totalRecords:
-          type: integer
-          format: int32
-      required:
-      - totalPages
-      - totalRecords
-    SitesType:
-      type: string
-      enum:
-      - GOOGLE
-      - FACEBOOK
-      description: Sites a post can be published to.
-    SiteCtaTypes:
-      type: object
-      properties:
-        value:
-          type: string
-        label:
-          type: string
-    DeleteSocialPostMutation:
-      type: object
-      properties:
-        success:
-          type: boolean
-        socialPostId:
-          type: string
-      required:
-      - success
-      - socialPostId
   securitySchemes:
     apiKey:
       type: apiKey
@@ -1437,4 +1684,4 @@ components:
       description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
 externalDocs:
   description: Developer documentation
-  url: https://docs.listingsapi.com
+  url: https://listingsapi.com/docs

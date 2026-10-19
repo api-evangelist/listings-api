@@ -340,6 +340,32 @@ apis:
     url: https://docs.listingsapi.com/docs
   - type: GettingStarted
     url: https://docs.listingsapi.com/docs/getting-started
+- aid: listings-api:listings-api-day-pass-api
+  name: Listings API Day pass API
+  description: >-
+    A free 24-hour sandbox day pass, offered for limited periods. These calls need no API key: request
+    the pass, then start it with the emailed 6-digit code, or poll until the owner presses Start in the
+    email. Both return an API key limited to the locations and listings endpoints, 2 locations, and listingsAPI
+    demo directories.
+  humanURL: https://docs.listingsapi.com
+  baseURL: https://listingsapi.com/api/v4
+  tags:
+  - Day pass
+  properties:
+  - type: OpenAPI
+    url: openapi/listings-api-day-pass-api-openapi.yml
+- aid: listings-api:listings-api-social-api
+  name: Listings API Social API
+  description: >-
+    Brand-level social publishing across Facebook, Instagram, X, LinkedIn and Pinterest — connect channels,
+    schedule posts, and read engagement.
+  humanURL: https://docs.listingsapi.com
+  baseURL: https://listingsapi.com/api/v4
+  tags:
+  - Social
+  properties:
+  - type: OpenAPI
+    url: openapi/listings-api-social-api-openapi.yml
 maintainers:
 - FN: Listings API Support
   email: support@listingsapi.com

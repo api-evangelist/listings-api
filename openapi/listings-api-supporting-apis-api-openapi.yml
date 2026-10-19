@@ -1,8 +1,11 @@
 openapi: 3.2.0
 info:
   title: Listings Supporting APIs API
-  version: 2026-08-27
-  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  version: 2026-09-09
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.
+
+
+    Try the sandbox day pass, no card required, when it is offered: sign up at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. It covers the locations and listings endpoints and syncs only to listingsAPI demo directories. Agents can use the Day pass operations, which need no key; see https://listingsapi.com/docs/day-pass.'
   contact:
     name: Listings API support
     email: support@listingsapi.com
@@ -37,55 +40,78 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CountryType'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      supportedCountries:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CountryType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   supportedCountries:
-                  - databaseId: 13
+                  - databaseId: 233
                     hasCity: true
-                    id: Q291bnRyeToxMw==
-                    iso: AU
-                    name: Australia
+                    id: Q291bnRyeToyMzM=
+                    iso: US
+                    name: United States
+                    hasPostalCode: true
+                    stateRequired: true
                     states:
-                    - countryId: 13
-                      id: '139'
-                      iso: VIC
-                      name: Victoria
-                    - countryId: 13
-                      id: '142'
-                      iso: NSW
-                      name: New South Wales
-                    - countryId: 13
-                      id: '141'
-                      iso: QLD
-                      name: Queensland
-                  - databaseId: 17
-                    hasCity: true
-                    id: Q291bnRyeToxNw==
-                    iso: BE
-                    name: Belgium
-                    states: []
+                    - countryId: 233
+                      id: '3542'
+                      iso: CA
+                      name: California
+                    - countryId: 233
+                      id: '3537'
+                      iso: NY
+                      name: New York
+                    - countryId: 233
+                      id: '3524'
+                      iso: TX
+                      name: Texas
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-      description: Returns every country Listings API supports along with its states/provinces and the ISO codes used when creating or updating locations.
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns every country Listings API supports, with its states/provinces, the ISO codes used when creating or updating locations, and which address fields each country requires or checks.
   /api/v4/sub-categories:
     get:
       operationId: subcategories
@@ -99,9 +125,22 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SubCategoryType'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      subcategories:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SubCategoryType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   subcategories:
@@ -121,28 +160,42 @@ paths:
                     name: Aadhaar center
                     primary: true
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns the full catalog of subcategories used to classify locations when creating or updating them.
   /api/v4/plan-sites:
     get:
       operationId: planSites
-      summary: planSites
+      summary: Account plan site details
       tags:
       - Supporting APIs
       parameters: []
@@ -152,9 +205,22 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PlanSite'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      planSites:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PlanSite'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   planSites:
@@ -203,43 +269,200 @@ paths:
                     - FR
                     url: yelp.com
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns every publisher directory site included in the account's plan, with each site's ID, URL, and supported countries.
 components:
   schemas:
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    PlanSite:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        supportedCountries:
+          type: array
+          items:
+            type: string
+        url:
+          type: string
+        hideAddressSupportedCountries:
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - name
+      - supportedCountries
+      - url
+      - hideAddressSupportedCountries
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
     CountryType:
       type: object
-      description: A country supported by Listings API.
+      description: A country the API supports.
       properties:
+        id:
+          type: string
+        databaseId:
+          type: integer
+          format: int32
         iso:
           type: string
         name:
           type: string
-        dialCode:
-          type: string
+        hasCity:
+          type: boolean
+        stateRequired:
+          type: boolean
+        hasPostalCode:
+          type: boolean
         states:
           type: array
           items:
             $ref: '#/components/schemas/StateType'
       required:
+      - id
+      - databaseId
       - iso
       - name
+      - hasCity
+      - stateRequired
+      - hasPostalCode
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    StateType:
+      type: object
+      properties:
+        id:
+          type: string
+        iso:
+          type: string
+        name:
+          type: string
+        countryId:
+          type: integer
+          format: int32
+      required:
+      - id
+      - iso
+      - name
+      - countryId
     SubCategoryType:
       type: object
       properties:
@@ -252,33 +475,6 @@ components:
       required:
       - id
       - name
-    PlanSite:
-      type: object
-      properties:
-        site:
-          type: string
-        enabled:
-          type: boolean
-    StateType:
-      type: object
-      properties:
-        iso:
-          type: string
-        name:
-          type: string
-      required:
-      - iso
-      - name
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
   securitySchemes:
     apiKey:
       type: apiKey
@@ -297,4 +493,4 @@ components:
       description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
 externalDocs:
   description: Developer documentation
-  url: https://docs.listingsapi.com
+  url: https://listingsapi.com/docs

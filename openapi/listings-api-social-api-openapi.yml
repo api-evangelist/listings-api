@@ -1,0 +1,2502 @@
+openapi: 3.2.0
+info:
+  title: Listings Social API
+  version: 2026-09-09
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.
+
+
+    Try the sandbox day pass, no card required, when it is offered: sign up at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. It covers the locations and listings endpoints and syncs only to listingsAPI demo directories. Agents can use the Day pass operations, which need no key; see https://listingsapi.com/docs/day-pass.'
+  contact:
+    name: Listings API support
+    email: support@listingsapi.com
+    url: https://www.listingsapi.com/contact
+  termsOfService: https://www.listingsapi.com/terms
+  license:
+    name: Proprietary (Listings API Terms of Service)
+    url: https://www.listingsapi.com/terms
+  x-logo:
+    url: https://www.listingsapi.com/favicon.svg
+servers:
+- url: https://listingsapi.com
+  description: Production
+security:
+- apiKey: []
+- rapidApiKey: []
+  rapidApiHost: []
+tags:
+- name: Social
+  description: Brand-level social publishing across Facebook, Instagram, X, LinkedIn and Pinterest — connect channels, schedule posts, and read engagement.
+paths:
+  /api/v4/social/brands:
+    get:
+      operationId: listSocialProfiles
+      summary: List social profiles with optional filter and pagination
+      tags:
+      - Social
+      parameters:
+      - name: filters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'JSON-encoded filter object with two fields. `statuses` (array of strings, **required inside the object**) selects which brand states to return: `ACTIVE` or `ARCHIVED`. `profileName` (string, optional) is a case-insensitive substring match on the brand name. Omit the parameter entirely to return active brands.'
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: 1-based page number. Defaults to 1.
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Rows per page. Defaults to 20.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      listSocialProfiles:
+                        $ref: '#/components/schemas/ProfileType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  listSocialProfiles:
+                    profiles:
+                    - id: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                      profileName: Jenny Home
+                      archived: false
+                      logo: null
+                      profileLogo: null
+                      siteUrl: https://jennyhome.example
+                      countryIso: US
+                      bio: Handmade furniture for real homes.
+                      businessIntent: A family-run home furnishings store selling handmade furniture and textiles.
+                      categories:
+                      - Furniture Store
+                      - Home Goods
+                      brandHashtags:
+                      - jennyhome
+                      - handmadefurniture
+                      competitorHashtags: []
+                      connectedChannelCount: 3
+                      timezone:
+                        label: (GMT-05:00) Eastern Time
+                        tzCode: America/New_York
+                        name: Eastern Standard Time
+                        utc: -05:00
+                      contentPreferredLanguage: en
+                    - id: a90f7c22-5db1-4e83-9f40-2b7c6a1e5d33
+                      profileName: Jenny Home Eastside
+                      archived: false
+                      logo: null
+                      profileLogo: null
+                      siteUrl: null
+                      countryIso: US
+                      bio: null
+                      businessIntent: general
+                      categories: []
+                      brandHashtags: []
+                      competitorHashtags: []
+                      connectedChannelCount: 0
+                      timezone:
+                        label: (GMT-06:00) Central Time
+                        tzCode: America/Chicago
+                        name: Central Standard Time
+                        utc: -06:00
+                      contentPreferredLanguage: en
+                    pageInfo:
+                      total: 11
+                      hasNextPage: true
+                      totalEngagementPosts: 0
+                      totalPublishedPosts: 0
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns a paginated list of the social brands on your account, with each brand's profile, timezone and connected-channel count.
+    post:
+      operationId: createSocialProfile
+      summary: createSocialProfile
+      tags:
+      - Social
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      createSocialProfile:
+                        $ref: '#/components/schemas/CreateSocialProfileMutation'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  createSocialProfile:
+                    success: true
+                    error: null
+                    socialProfile:
+                      id: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                      profileName: Jenny Home
+                      archived: false
+                      logo: null
+                      profileLogo: null
+                      siteUrl: https://jennyhome.example
+                      countryIso: US
+                      bio: Handmade furniture for real homes.
+                      businessIntent: A family-run home furnishings store selling handmade furniture and textiles.
+                      categories:
+                      - Furniture Store
+                      - Home Goods
+                      brandHashtags:
+                      - jennyhome
+                      - handmadefurniture
+                      competitorHashtags: []
+                      connectedChannelCount: 0
+                      timezone:
+                        label: (GMT-05:00) Eastern Time
+                        tzCode: America/New_York
+                        name: Eastern Standard Time
+                        utc: -05:00
+                      contentPreferredLanguage: en
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/CreateSocialProfileInputType'
+              required:
+              - input
+            example:
+              input:
+                profileName: Jenny Home
+                timezone:
+                  label: (GMT-05:00) Eastern Time
+                  tzCode: America/New_York
+                  name: Eastern Standard Time
+                  utc: -05:00
+                businessIntent: A family-run home furnishings store selling handmade furniture and textiles.
+                categories:
+                - Furniture Store
+                - Home Goods
+                siteUrl: https://jennyhome.example
+                countryIso: US
+                bio: Handmade furniture for real homes.
+                brandHashtags:
+                - jennyhome
+                - handmadefurniture
+      description: Creates a social brand, the container that owns connected social accounts and the posts published from them. Brands are unlimited on API plans.
+  /api/v4/social/brands/{brandId}:
+    get:
+      operationId: getSocialProfileDetails
+      summary: Fetch summary details for a single social profile
+      tags:
+      - Social
+      parameters:
+      - name: brandId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Brand UUID, the `socialProfile.id` returned by POST /social/brands or the `id` of a row from GET /social/brands.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      getSocialProfileDetails:
+                        $ref: '#/components/schemas/SocialProfileSummaryType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  getSocialProfileDetails:
+                    id: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                    profileName: Jenny Home
+                    archived: false
+                    logo: https://cdn.listingsapi.com/social/brands/6f2c9a41/logo.png
+                    profileLogo: https://cdn.listingsapi.com/social/brands/6f2c9a41/logo.png
+                    siteUrl: https://jennyhome.example
+                    countryIso: US
+                    bio: Handmade furniture for real homes.
+                    businessIntent: A family-run home furnishings store selling handmade furniture and textiles.
+                    categories:
+                    - Furniture Store
+                    - Home Goods
+                    brandHashtags:
+                    - jennyhome
+                    - handmadefurniture
+                    competitorHashtags:
+                    - localfurniture
+                    connectedChannelCount: 3
+                    timezone:
+                      label: (GMT-05:00) Eastern Time
+                      tzCode: America/New_York
+                      name: Eastern Standard Time
+                      utc: -05:00
+                    contentPreferredLanguage: en
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns one social brand with its profile details, timezone, archival state and connected-channel count.
+  /api/v4/social/brands/{brandId}/connections/link:
+    post:
+      operationId: connectSocialAccount
+      summary: Return OAuth connect URLs for a given social profile + channel
+      tags:
+      - Social
+      parameters:
+      - name: brandId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Brand UUID the connection will be attached to.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      connectSocialAccount:
+                        $ref: '#/components/schemas/ConnectInfoType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  connectSocialAccount:
+                    status: success
+                    url: https://social.listingsapi.com/connect/start?token=bfac8e06-8d72-4810-9c50-ae7ee12a7b52
+                    title: null
+                    token: null
+                    expiresIn: 900
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel:
+                  $ref: '#/components/schemas/PlatformEnum'
+                redirectUrl:
+                  type: string
+                errorUrl:
+                  type: string
+                state:
+                  type: string
+              required:
+              - channel
+              - redirectUrl
+            example:
+              channel: INSTAGRAM
+              redirectUrl: https://app.example.com/social/connected
+              errorUrl: https://app.example.com/social/connect-failed
+              state: sess_9f2c1e64
+      description: Returns a short-lived hosted URL that walks an end user through connecting one social platform to a brand.
+  /api/v4/social/brands/{brandId}/connections:
+    get:
+      operationId: listConnectedChannelWithSocialProfile
+      summary: listConnectedChannelWithSocialProfile
+      tags:
+      - Social
+      parameters:
+      - name: brandId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Brand UUID whose connections should be listed.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      listConnectedChannelWithSocialProfile:
+                        $ref: '#/components/schemas/SocialConnectInfoType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  listConnectedChannelWithSocialProfile:
+                    socialConnected:
+                    - id: b81d5b3c-4a90-4f6a-9c11-71e0dd2fa4a7
+                      socialProfileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                      vendorProfileId: null
+                      platform: INSTAGRAM
+                      displayName: Jenny Home
+                      userName: jennyhome
+                      userImage: https://cdn.listingsapi.com/social/channels/b81d5b3c/avatar.jpg
+                      archived: false
+                      archivedAt: null
+                      listingConnectedAccountId: null
+                      referenceId: '17841400000000001'
+                    - id: 2d4e6f80-1c33-4b7a-8e05-9a1b2c3d4e5f
+                      socialProfileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                      vendorProfileId: null
+                      platform: FACEBOOK
+                      displayName: Jenny Home & Co.
+                      userName: jennyhomeco
+                      userImage: https://cdn.listingsapi.com/social/channels/2d4e6f80/avatar.jpg
+                      archived: false
+                      archivedAt: null
+                      listingConnectedAccountId: cf12de77-2211-4a09-b7c1-0a6f3b2e91aa
+                      referenceId: '102938475601234'
+                    profileCount: 1
+                    channelCount: 2
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns the social accounts connected to a brand, with the platform, display name and archival state of each.
+  /api/v4/social/brands/{brandId}/posts:
+    get:
+      operationId: getSocialMediaPostByList
+      summary: getSocialMediaPostByList
+      tags:
+      - Social
+      parameters:
+      - name: brandId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Brand UUID whose posts should be listed.
+      - name: filters
+        in: query
+        required: false
+        schema:
+          type: string
+          description: JSON-encoded filter object
+        description: 'JSON-encoded filter object. Fields: `name` (substring match on the post''s internal name), `platforms` (array of the platform enum), `status` (array of `DRAFT`, `PENDING`, `SCHEDULED`, `PUBLISHED`, `FAILED`, `ARCHIVED`, `REJECTED`), `startDate` and `endDate` (`YYYY-MM-DD`, filtering on the post''s schedule in the brand''s timezone), `socialConnectedChannelId` (one connection), `approvalState` (array of workflow states), `viewMode` (string) and `filterByUser` (boolean, defaults to false).'
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: 1-based page number. Defaults to 1.
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Rows per page. Defaults to 20.
+      - name: fetchPostContent
+        in: query
+        required: false
+        schema:
+          type: boolean
+        description: When `true`, each row carries its full `content` object. Leave it off for a lighter list.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      getSocialMediaPostByList:
+                        $ref: '#/components/schemas/SocialPostMetaType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  getSocialMediaPostByList:
+                    socialPosts:
+                    - socialPostId: c47a1e58-2b93-4f10-a6d7-58e0c9b12345
+                      name: Autumn collection launch
+                      status: PUBLISHED
+                      platforms:
+                      - INSTAGRAM
+                      - FACEBOOK
+                      - LINKEDIN
+                      socialPlatformIds:
+                      - 2
+                      - 1
+                      - 4
+                      socialProfileDetailsId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                      createdAt: 2026-09-28 14:02:11+00:00
+                      createdBy: 40122
+                      author: Dana Reyes
+                      approver: null
+                      approvalState: null
+                      actionOn: null
+                      actionBy: null
+                      publishedOn: 2026-10-02 13:30:04+00:00
+                      postAutomationId: null
+                      content:
+                        message: Our autumn collection lands today. Solid oak, hand-finished, made two blocks from the shop.
+                        images:
+                        - https://cdn.example.com/social/autumn-collection.jpg
+                        video: []
+                        liveLink: https://www.instagram.com/p/CxYz1234abc/
+                        boosted: false
+                      connectedChannels:
+                      - id: b81d5b3c-4a90-4f6a-9c11-71e0dd2fa4a7
+                        platform: INSTAGRAM
+                        displayName: Jenny Home
+                        status: SUCCESS
+                        liveLink: https://www.instagram.com/p/CxYz1234abc/
+                        error: null
+                    pageInfo:
+                      total: 64
+                      hasNextPage: true
+                      totalEngagementPosts: 41
+                      totalPublishedPosts: 47
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns a paginated list of a brand's social posts with their content, schedule, platforms and per-channel status.
+  /api/v4/social/posts/{postId}:
+    get:
+      operationId: getSocialMediaPost
+      summary: getSocialMediaPost
+      tags:
+      - Social
+      parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Post UUID, the `socialPostId` returned by POST /social/posts or the `socialPostId` of a row from the brand's post list.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      getSocialMediaPost:
+                        $ref: '#/components/schemas/SocialMediaPostDetailsType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  getSocialMediaPost:
+                    name: Autumn collection launch
+                    status: PUBLISHED
+                    initialContent: Our autumn collection lands today. Solid oak, hand-finished, made two blocks from the shop. Come see it in person this weekend.
+                    initialMedia:
+                    - https://cdn.example.com/social/autumn-collection.jpg
+                    initialVideo: []
+                    globalPostSchedule: 2026-10-02 13:30:00+00:00
+                    customDataFlag: false
+                    approvalState: null
+                    actionOn: null
+                    comment: null
+                    postAutomationId: null
+                    connectedChannels:
+                    - id: b81d5b3c-4a90-4f6a-9c11-71e0dd2fa4a7
+                      platform: INSTAGRAM
+                      socialPlatformId: 2
+                      displayName: Jenny Home
+                      userName: jennyhome
+                      userImage: https://cdn.listingsapi.com/social/channels/b81d5b3c/avatar.jpg
+                      status: SUCCESS
+                      liveLink: https://www.instagram.com/p/CxYz1234abc/
+                      reason: null
+                      error: null
+                      archived: false
+                    - id: 2d4e6f80-1c33-4b7a-8e05-9a1b2c3d4e5f
+                      platform: FACEBOOK
+                      socialPlatformId: 1
+                      displayName: Jenny Home & Co.
+                      userName: jennyhomeco
+                      userImage: https://cdn.listingsapi.com/social/channels/2d4e6f80/avatar.jpg
+                      status: SUCCESS
+                      liveLink: https://www.facebook.com/jennyhomeco/posts/1029384756
+                      reason: null
+                      error: null
+                      archived: false
+                    - id: 7c5b9a12-8de4-4a31-b0f2-6e3d4c5b8a90
+                      platform: LINKEDIN
+                      socialPlatformId: 4
+                      displayName: Jenny Home
+                      userName: jenny-home
+                      userImage: null
+                      status: ERROR
+                      liveLink: null
+                      reason: Authorization expired
+                      error: The LinkedIn authorization for this channel is no longer valid. Reconnect the channel and post again.
+                      archived: false
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns one social post with its content, schedule and the live per-channel publish status, link and error.
+  /api/v4/social/bulk-posts/{bulkJobId}:
+    get:
+      operationId: getBulkSocialPostJob
+      summary: Status and per-row results of one bulk social post job
+      tags:
+      - Social
+      parameters:
+      - name: bulkJobId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Job UUID, the `job.id` returned by POST /social/bulk-posts.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      getBulkSocialPostJob:
+                        $ref: '#/components/schemas/BulkSocialPostJobType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  getBulkSocialPostJob:
+                    id: 9b3f18d0-7a26-4c51-8e94-1f0d5c6b7a82
+                    status: COMPLETED_WITH_ERRORS
+                    totalCount: 3
+                    processedCount: 3
+                    successCount: 2
+                    failureCount: 1
+                    createdAt: 2026-09-28 14:04:52+00:00
+                    updatedAt: 2026-09-28 14:05:31+00:00
+                    results:
+                    - index: 0
+                      clientReference: campaign-4471-slot-01
+                      socialProfileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                      platforms:
+                      - INSTAGRAM
+                      - FACEBOOK
+                      status: CREATED
+                      socialPostId: c47a1e58-2b93-4f10-a6d7-58e0c9b12345
+                      postStatus: SCHEDULED
+                      errors: []
+                    - index: 1
+                      clientReference: campaign-4471-slot-02
+                      socialProfileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                      platforms:
+                      - INSTAGRAM
+                      - FACEBOOK
+                      - LINKEDIN
+                      status: CREATED
+                      socialPostId: e08b2d97-6f14-4c22-b7a5-9d3e1f6c4a70
+                      postStatus: SCHEDULED
+                      errors: []
+                    - index: 2
+                      clientReference: campaign-4471-slot-03
+                      socialProfileId: a90f7c22-5db1-4e83-9f40-2b7c6a1e5d33
+                      platforms:
+                      - INSTAGRAM
+                      status: FAILED
+                      socialPostId: null
+                      postStatus: null
+                      errors:
+                      - message: 'SY95045: No connected channel for INSTAGRAM on this brand'
+                        code: SY95045
+                        contextInfo:
+                        - key: platform
+                          value: INSTAGRAM
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns the status, counts and per-row results of a bulk social post job.
+  /api/v4/social/posts/{postId}/insights:
+    get:
+      operationId: getPostInsightsAndCommentsForSocialChannel
+      summary: getPostInsightsAndCommentsForSocialChannel
+      tags:
+      - Social
+      parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Post UUID, the `socialPostId` returned by POST /social/posts.
+      - name: socialConnectedChannelId
+        in: query
+        required: true
+        schema:
+          type: string
+        description: 'UUID of the connection to read insights for, the `id` of a row from the brand''s connections list. Insights are per channel, so this is required even when the post targeted one platform. Note the name: this endpoint takes `socialConnectedChannelId`, while disconnect takes `socialProfileConnectedChannelId` for the same ID.'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      getPostInsightsAndCommentsForSocialChannel:
+                        $ref: '#/components/schemas/PostInsightsCommentsType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  getPostInsightsAndCommentsForSocialChannel:
+                    insights: '{"impressions": 4820, "reach": 3915, "likes": 212, "comments": 18, "saved": 44, "shares": 9, "profile_visits": 61}'
+                    comments: '[{"id": "17912345678901234", "username": "marta.builds", "text": "That oak finish is beautiful. Do you ship?", "like_count": 3, "timestamp": "2026-10-02T15:12:44+0000"}, {"id": "17912345678905678", "username": "eastsidehome", "text": "Stopping by Saturday!", "like_count": 0, "timestamp": "2026-10-02T18:40:02+0000"}]'
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns the platform's own engagement payload and comments for one published post on one connected channel.
+  /api/v4/social/limits:
+    get:
+      operationId: fetchAccountLimits
+      summary: fetchAccountLimits
+      tags:
+      - Social
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      fetchAccountLimits:
+                        $ref: '#/components/schemas/AccountLimitsType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  fetchAccountLimits:
+                    brands: null
+                    connections: 135
+                    maxConnections: 135
+                    users: 10
+                    aiCredits: 500
+                    usage:
+                      brands: 31
+                      connections: 118
+                      connectionsActive: 112
+                      connectionsReleased: 6
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns the account's Social connection cap alongside its billable, active and released connection usage for the current billing period.
+  /api/v4/social/brands/update:
+    post:
+      operationId: updateSocialProfile
+      summary: updateSocialProfile
+      tags:
+      - Social
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      updateSocialProfile:
+                        $ref: '#/components/schemas/UpdateSocialProfileMutation'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  updateSocialProfile:
+                    success: true
+                    error: null
+                    socialProfile:
+                      id: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                      profileName: Jenny Home & Co.
+                      archived: false
+                      logo: null
+                      profileLogo: null
+                      siteUrl: https://jennyhomeandco.example
+                      countryIso: US
+                      bio: Handmade furniture for real homes.
+                      businessIntent: A family-run home furnishings store selling handmade furniture and textiles.
+                      categories:
+                      - Furniture Store
+                      - Home Goods
+                      brandHashtags:
+                      - jennyhome
+                      - handmadefurniture
+                      - shoplocal
+                      competitorHashtags: []
+                      connectedChannelCount: 3
+                      timezone:
+                        label: (GMT-05:00) Eastern Time
+                        tzCode: America/New_York
+                        name: Eastern Standard Time
+                        utc: -05:00
+                      contentPreferredLanguage: en
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/UpdateSocialProfileInputType'
+              required:
+              - input
+            example:
+              input:
+                profileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                profileName: Jenny Home & Co.
+                siteUrl: https://jennyhomeandco.example
+                brandHashtags:
+                - jennyhome
+                - handmadefurniture
+                - shoplocal
+      description: Updates a social brand's name, timezone, website, categories, hashtags or bio.
+  /api/v4/social/posts:
+    post:
+      operationId: createSimpleSocialMediaPost
+      summary: Publish, schedule or draft one post for a brand across its connected channels
+      tags:
+      - Social
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      createSimpleSocialMediaPost:
+                        $ref: '#/components/schemas/CreateSimpleSocialMediaPost'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  createSimpleSocialMediaPost:
+                    success: true
+                    error: []
+                    socialPostId: c47a1e58-2b93-4f10-a6d7-58e0c9b12345
+                    status: SCHEDULED
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/BulkSocialPostRowInput'
+              required:
+              - input
+            example:
+              input:
+                socialProfileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                name: Autumn collection launch
+                platforms:
+                - INSTAGRAM
+                - FACEBOOK
+                - LINKEDIN
+                content: Our autumn collection lands today. Solid oak, hand-finished, made two blocks from the shop. Come see it in person this weekend.
+                mediaUrls:
+                - https://cdn.example.com/social/autumn-collection.jpg
+                link: https://jennyhome.example/autumn
+                action: SCHEDULE
+                scheduleDate: 2026-10-02
+                scheduleTime: 09:30
+                clientReference: campaign-4471-slot-01
+      description: Creates a draft, scheduled or immediately published post on a brand's connected Facebook, Instagram, X, LinkedIn and Pinterest accounts.
+  /api/v4/social/bulk-posts:
+    post:
+      operationId: createBulkSocialMediaPosts
+      summary: Queue many posts across brands as a single asynchronous job
+      tags:
+      - Social
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      createBulkSocialMediaPosts:
+                        $ref: '#/components/schemas/CreateBulkSocialMediaPosts'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  createBulkSocialMediaPosts:
+                    success: true
+                    error: []
+                    job:
+                      id: 9b3f18d0-7a26-4c51-8e94-1f0d5c6b7a82
+                      status: QUEUED
+                      totalCount: 3
+                      processedCount: 0
+                      successCount: 0
+                      failureCount: 0
+                      createdAt: 2026-09-28 14:04:52+00:00
+                      updatedAt: 2026-09-28 14:04:52+00:00
+                      results: []
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/CreateBulkSocialMediaPostsInput'
+              required:
+              - input
+            example:
+              input:
+                name: Autumn campaign load
+                posts:
+                - socialProfileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                  name: Autumn week 1
+                  platforms:
+                  - INSTAGRAM
+                  - FACEBOOK
+                  content: 'Week one of the autumn collection: the Fairfield oak sideboard, finished by hand in the workshop.'
+                  mediaUrls:
+                  - https://cdn.example.com/social/autumn-w1.jpg
+                  action: SCHEDULE
+                  scheduleDate: 2026-10-02
+                  scheduleTime: 09:30
+                  clientReference: campaign-4471-slot-01
+                - socialProfileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                  name: Autumn week 2
+                  platforms:
+                  - INSTAGRAM
+                  - FACEBOOK
+                  - LINKEDIN
+                  content: 'Week two: the Halcyon armchair. Sixty hours of work, one chair.'
+                  mediaUrls:
+                  - https://cdn.example.com/social/autumn-w2.jpg
+                  action: SCHEDULE
+                  scheduleDate: 2026-10-09
+                  scheduleTime: 09:30
+                  clientReference: campaign-4471-slot-02
+                - socialProfileId: a90f7c22-5db1-4e83-9f40-2b7c6a1e5d33
+                  name: Eastside autumn teaser
+                  platforms:
+                  - INSTAGRAM
+                  content: Something solid is arriving next week. Stay tuned.
+                  mediaUrls:
+                  - https://cdn.example.com/social/eastside-teaser.jpg
+                  action: SCHEDULE
+                  scheduledAt: 2026-10-01 08:00:00-04:00
+                  clientReference: campaign-4471-slot-03
+      description: Validates and queues up to 500 social posts in one request, returning a job to poll for per-row results.
+  /api/v4/social/brands/archive:
+    post:
+      operationId: archiveSocialProfile
+      summary: archiveSocialProfile
+      tags:
+      - Social
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      archiveSocialProfile:
+                        $ref: '#/components/schemas/ArchiveSocialProfile'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  archiveSocialProfile:
+                    success: true
+                    error: null
+                    socialProfileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+                    status: ARCHIVED
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/ArchiveSocialProfileInputType'
+              required:
+              - input
+            example:
+              input:
+                socialProfileId: 6f2c9a41-7b0e-4d55-9a2f-3c8e1d47b902
+      description: Archives a social brand and takes its connections offline immediately, once the brand has met the 90-day tenure rule; the connection slots are held until the end of the billing period.
+  /api/v4/social/connections/disconnect:
+    post:
+      operationId: disconnectSocialConnectedChannel
+      summary: disconnectSocialConnectedChannel
+      tags:
+      - Social
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      disconnectSocialConnectedChannel:
+                        $ref: '#/components/schemas/DisconnectSocialConnectedChannel'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  disconnectSocialConnectedChannel:
+                    success: true
+                    error: null
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/DisconnectSocialConnectedChannelInputType'
+              required:
+              - input
+            example:
+              input:
+                socialProfileConnectedChannelId: b81d5b3c-4a90-4f6a-9c11-71e0dd2fa4a7
+      description: Takes a connected social account offline immediately; its slot in the account-wide pool is held until the end of the billing period.
+  /api/v4/social/posts/cancel:
+    post:
+      operationId: archiveScheduledPost
+      summary: archiveScheduledPost
+      tags:
+      - Social
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      archiveScheduledPost:
+                        $ref: '#/components/schemas/ArchiveScheduledPost'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  archiveScheduledPost:
+                    success: true
+                    error: null
+                    socialPostId: c47a1e58-2b93-4f10-a6d7-58e0c9b12345
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/ArchiveSocialScheduledPostInputType'
+              required:
+              - input
+            example:
+              input:
+                socialPostId: c47a1e58-2b93-4f10-a6d7-58e0c9b12345
+      description: Cancels a scheduled social post before it publishes, leaving already-published posts untouched.
+components:
+  schemas:
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    SocialNetworkPageInfoType:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int32
+        hasNextPage:
+          type: boolean
+        totalEngagementPosts:
+          type: integer
+          format: int32
+        totalPublishedPosts:
+          type: integer
+          format: int32
+    UpdateSocialProfileInputType:
+      type: object
+      properties:
+        profileId:
+          type: string
+          format: uuid
+        profileName:
+          type: string
+        timezone:
+          $ref: '#/components/schemas/SocialTimezoneInputType'
+        logo:
+          type: string
+        siteUrl:
+          type: string
+        countryIso:
+          type: string
+        bio:
+          type: string
+        businessIntent:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        brandHashtags:
+          type: array
+          items:
+            type: string
+        competitorHashtags:
+          type: array
+          items:
+            type: string
+        contentPreferredLanguage:
+          type: string
+      required:
+      - profileId
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    ChannelExtraParamsType:
+      type: object
+      properties:
+        twitterThread:
+          type: boolean
+        threads:
+          type: array
+          items:
+            type: string
+        contentImageLink:
+          type: string
+    BulkSocialPostRowInput:
+      type: object
+      description: One post, for a single brand, fanned out to the platforms listed.
+      properties:
+        socialProfileId:
+          type: string
+        platforms:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformEnum'
+        name:
+          type: string
+        content:
+          type: string
+        link:
+          type: string
+        mediaUrls:
+          type: array
+          items:
+            type: string
+        videoUrls:
+          type: array
+          items:
+            type: string
+        scheduledAt:
+          type: string
+        scheduleDate:
+          type: string
+        scheduleTime:
+          type: string
+        action:
+          $ref: '#/components/schemas/BulkSocialPostActionEnum'
+        connectedChannelIds:
+          type: array
+          items:
+            type: string
+        clientReference:
+          type: string
+      required:
+      - socialProfileId
+      - platforms
+      - name
+      - content
+      - action
+    PlatformEnum:
+      type: string
+      enum:
+      - FACEBOOK
+      - INSTAGRAM
+      - TWITTER
+      - LINKEDIN
+      - PINTEREST
+      description: Supported social platforms.
+    ContextInfoType:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    SocialTimezoneType:
+      type: object
+      description: IANA timezone for the brand.
+      properties:
+        label:
+          type: string
+        tzCode:
+          type: string
+        name:
+          type: string
+        utc:
+          type: string
+    SocialMediaPostContentExtraParamsType:
+      type: object
+      properties:
+        contentImageLink:
+          type: string
+    ErrorType:
+      type: object
+      properties:
+        message:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextInfoType'
+        code:
+          type: string
+    DisconnectSocialConnectedChannelInputType:
+      type: object
+      properties:
+        socialProfileConnectedChannelId:
+          type: string
+      required:
+      - socialProfileConnectedChannelId
+    SocialPostConnectedChannelInfoType:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        userName:
+          type: string
+        userImage:
+          type: string
+        liveLink:
+          type: string
+        status:
+          $ref: '#/components/schemas/SocialPostItemStatusEnum'
+        reason:
+          type: string
+        error:
+          type: string
+        socialPlatformId:
+          type: integer
+          format: int32
+        platform:
+          $ref: '#/components/schemas/PlatformEnum'
+        archived:
+          type: boolean
+        payload:
+          type: string
+          description: Custom scalar JSONString
+        instagramBusinessAccountId:
+          $ref: '#/components/schemas/InstagramBusinessAccountIdType'
+    ArchiveScheduledPost:
+      type: object
+      properties:
+        success:
+          type: boolean
+        socialPostId:
+          type: string
+        error:
+          $ref: '#/components/schemas/ErrorType'
+    SocialMediaPostStatusEnum:
+      type: string
+      enum:
+      - DRAFT
+      - PENDING
+      - SCHEDULED
+      - PUBLISHED
+      - FAILED
+      - ARCHIVED
+      - REJECTED
+    SocialProfileSummaryType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileName:
+          type: string
+        archived:
+          type: boolean
+        profileLogo:
+          type: string
+        connectedChannelCount:
+          type: integer
+          format: int32
+        logo:
+          type: string
+        siteUrl:
+          type: string
+        countryIso:
+          type: string
+        bio:
+          type: string
+        businessIntent:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        brandHashtags:
+          type: array
+          items:
+            type: string
+        competitorHashtags:
+          type: array
+          items:
+            type: string
+        targetValue:
+          type: integer
+          format: int32
+        targetType:
+          type: string
+        connectedVendorProfiles:
+          type: array
+          items:
+            type: string
+        timezoneJson:
+          $ref: '#/components/schemas/SocialTimezoneType'
+        timezone:
+          $ref: '#/components/schemas/SocialTimezoneType'
+        contentPreferredLanguage:
+          type: string
+      required:
+      - id
+      - profileName
+      - archived
+    SocialPostItemStatusEnum:
+      type: string
+      enum:
+      - SCHEDULED
+      - SUCCESS
+      - ARCHIVED
+      - ERROR
+    AccountUsageType:
+      type: object
+      description: 'Usage for the current billing period. `connections` is the billable count that `maxConnections` is compared against: it is `connectionsActive` plus `connectionsReleased`, because a released connection slot is held until the end of the billing period. `connectionsActive` is what is connected right now; `connectionsReleased` is what was disconnected during this period, directly or by archiving its brand, and returns to the pool at renewal. A slot is held per brand-and-account pair: relinking the same account to the same brand reuses its slot and costs nothing, while attaching it to a different brand takes a separate slot. `brands` is informational, since brands are unlimited on every API plan.'
+      properties:
+        brands:
+          type: integer
+          format: int32
+        connections:
+          type: integer
+          format: int32
+        connectionsActive:
+          type: integer
+          format: int32
+        connectionsReleased:
+          type: integer
+          format: int32
+    SocialPostMetaType:
+      type: object
+      properties:
+        socialPosts:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostListSummaryType'
+        pageInfo:
+          $ref: '#/components/schemas/SocialNetworkPageInfoType'
+    BulkSocialPostRowResultType:
+      type: object
+      description: Outcome of one row of a bulk job, in submission order.
+      properties:
+        index:
+          type: integer
+          format: int32
+        clientReference:
+          type: string
+        socialProfileId:
+          type: string
+        platforms:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        socialPostId:
+          type: string
+        postStatus:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+    DisconnectSocialConnectedChannel:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          $ref: '#/components/schemas/ErrorType'
+    BulkSocialPostJobType:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        totalCount:
+          type: integer
+          format: int32
+        processedCount:
+          type: integer
+          format: int32
+        successCount:
+          type: integer
+          format: int32
+        failureCount:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSocialPostRowResultType'
+    SocialProfileArchivalStatusEnum:
+      type: string
+      enum:
+      - ARCHIVED
+      - TENURE_NOT_MET
+      description: Outcome of an archive request. Brands must be at least 90 days old before they can be archived; once that tenure is met the brand and its connections are archived immediately.
+    InstagramBusinessAccountIdType:
+      type: object
+      properties:
+        idType:
+          type: string
+        id:
+          type: string
+    ConnectedChannelInfoType:
+      type: object
+      properties:
+        id:
+          type: string
+        socialProfileId:
+          type: string
+          format: uuid
+        vendorProfileId:
+          type: string
+          format: uuid
+        platform:
+          type: string
+        userImage:
+          type: string
+        displayName:
+          type: string
+        userName:
+          type: string
+        archived:
+          type: boolean
+        archivedAt:
+          type: string
+        listingConnectedAccountId:
+          type: string
+        referenceId:
+          type: string
+    ArchiveSocialProfile:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          $ref: '#/components/schemas/ErrorType'
+        socialProfileId:
+          type: string
+        status:
+          $ref: '#/components/schemas/SocialProfileArchivalStatusEnum'
+    CreateSocialProfileInputType:
+      type: object
+      properties:
+        profileName:
+          type: string
+        timezone:
+          $ref: '#/components/schemas/SocialTimezoneInputType'
+        logo:
+          type: string
+        siteUrl:
+          type: string
+        countryIso:
+          type: string
+        bio:
+          type: string
+        businessIntent:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        brandHashtags:
+          type: array
+          items:
+            type: string
+        competitorHashtags:
+          type: array
+          items:
+            type: string
+        contentPreferredLanguage:
+          type: string
+      required:
+      - profileName
+      - timezone
+    ConnectInfoType:
+      type: object
+      description: The publisher OAuth hand-off for one brand + channel.
+      properties:
+        status:
+          type: string
+        url:
+          type: string
+        title:
+          type: string
+        token:
+          type: string
+        expiresIn:
+          type: integer
+          format: int32
+    CreateBulkSocialMediaPosts:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+        job:
+          $ref: '#/components/schemas/BulkSocialPostJobType'
+    SocialMediaPlatformType:
+      type: object
+      properties:
+        twitter:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+        instagram:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+        linkedin:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+        facebook:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+        pinterest:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+    SocialMediaPlatformDetailsType:
+      type: object
+      properties:
+        socialConnectedAccountIds:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        video:
+          type: array
+          items:
+            type: string
+        extraParams:
+          $ref: '#/components/schemas/ChannelExtraParamsType'
+        socialPostAiContentId:
+          type: string
+    CreateBulkSocialMediaPostsInput:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSocialPostRowInput'
+        name:
+          type: string
+      required:
+      - posts
+    AccountLimitsType:
+      type: object
+      description: Plan entitlements for the calling account, and how much of each is already used. `brands` is null when brands are unlimited, which is the case on every API plan; `maxConnections` is the cap enforced when a connection is linked, and linking past it fails with SY95042.
+      properties:
+        aiCredits:
+          type: integer
+          format: int32
+        brands:
+          type: integer
+          format: int32
+        connections:
+          type: integer
+          format: int32
+        maxConnections:
+          type: integer
+          format: int32
+        users:
+          type: integer
+          format: int32
+        usage:
+          $ref: '#/components/schemas/AccountUsageType'
+    SocialPostListSummaryType:
+      type: object
+      properties:
+        name:
+          type: string
+        socialPostId:
+          type: string
+        socialPlatformIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        platforms:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformEnum'
+        connectedChannels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostConnectedChannelInfoType'
+        status:
+          $ref: '#/components/schemas/SocialMediaPostStatusEnum'
+        createdAt:
+          type: string
+        createdBy:
+          type: integer
+          format: int32
+        author:
+          type: string
+        approver:
+          type: string
+        publishedOn:
+          type: string
+        socialProfileDetailsId:
+          type: string
+        postAutomationId:
+          type: string
+        content:
+          $ref: '#/components/schemas/SocialMediaPostContentType'
+        approvalState:
+          $ref: '#/components/schemas/SocialPostWorkflowStateEnum'
+        actionOn:
+          type: string
+        actionBy:
+          type: string
+        globalPostSchedule:
+          type: string
+      required:
+      - name
+      - socialPostId
+    PostInsightsCommentsType:
+      type: object
+      description: Raw publisher insight and comment payloads, passed through as JSON.
+      properties:
+        insights:
+          type: string
+          description: Custom scalar JSONString
+        comments:
+          type: string
+          description: Custom scalar JSONString
+    SocialMediaPostContentType:
+      type: object
+      properties:
+        message:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        video:
+          type: array
+          items:
+            type: string
+        liveLink:
+          type: string
+        boosted:
+          type: boolean
+        extraParams:
+          $ref: '#/components/schemas/SocialMediaPostContentExtraParamsType'
+    CreateSimpleSocialMediaPost:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+        socialPostId:
+          type: string
+        status:
+          type: string
+    UpdateSocialProfileMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        socialProfile:
+          $ref: '#/components/schemas/SocialProfileSummaryType'
+        error:
+          $ref: '#/components/schemas/ErrorType'
+    ProfileType:
+      type: object
+      description: A paginated list of social profiles.
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialProfileSummaryType'
+        pageInfo:
+          $ref: '#/components/schemas/SocialNetworkPageInfoType'
+    SocialPostWorkflowStateEnum:
+      type: string
+      enum:
+      - INIT
+      - SUBMITTED_FOR_REVIEW
+      - APPROVED
+      - REJECTED
+      - PUBLISHED
+      - SCHEDULED
+      - ARCHIVED
+    ArchiveSocialScheduledPostInputType:
+      type: object
+      properties:
+        socialPostId:
+          type: string
+      required:
+      - socialPostId
+    SocialConnectInfoType:
+      type: object
+      properties:
+        socialConnected:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedChannelInfoType'
+        profileCount:
+          type: integer
+          format: int32
+        channelCount:
+          type: integer
+          format: int32
+    CreateSocialProfileMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        socialProfile:
+          $ref: '#/components/schemas/SocialProfileSummaryType'
+        error:
+          $ref: '#/components/schemas/ErrorType'
+    ArchiveSocialProfileInputType:
+      type: object
+      properties:
+        socialProfileId:
+          type: string
+      required:
+      - socialProfileId
+    BulkSocialPostActionEnum:
+      type: string
+      enum:
+      - DRAFT
+      - SCHEDULE
+      - PUBLISH
+      description: What to do with a submitted post row.
+    SocialTimezoneInputType:
+      type: object
+      description: IANA timezone for the brand. Used to interpret scheduleDate / scheduleTime on posts.
+      properties:
+        tzCode:
+          type: string
+        label:
+          type: string
+        name:
+          type: string
+        utc:
+          type: string
+    SocialMediaPostDetailsType:
+      type: object
+      properties:
+        name:
+          type: string
+        customDataFlag:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/SocialMediaPostStatusEnum'
+        initialContent:
+          type: string
+        initialMedia:
+          type: array
+          items:
+            type: string
+        initialVideo:
+          type: array
+          items:
+            type: string
+        socialConnectedChannel:
+          $ref: '#/components/schemas/SocialMediaPlatformType'
+        connectedChannels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostConnectedChannelInfoType'
+        globalPostSchedule:
+          type: string
+        postAutomationId:
+          type: string
+        approvalState:
+          $ref: '#/components/schemas/SocialPostWorkflowStateEnum'
+        actionOn:
+          type: string
+        comment:
+          type: string
+        contentGeneratorId:
+          type: string
+        socialPostAiContentId:
+          type: string
+        requestId:
+          type: string
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Authenticate with `Authorization: API <your-key>`.'
+    rapidApiKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+    rapidApiHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+      description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
+externalDocs:
+  description: Developer documentation
+  url: https://listingsapi.com/docs

@@ -1,8 +1,11 @@
 openapi: 3.2.0
 info:
   title: Listings Analytics API
-  version: 2026-08-27
-  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  version: 2026-09-09
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.
+
+
+    Try the sandbox day pass, no card required, when it is offered: sign up at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. It covers the locations and listings endpoints and syncs only to listingsAPI demo directories. Agents can use the Day pass operations, which need no key; see https://listingsapi.com/docs/day-pass.'
   contact:
     name: Listings API support
     email: support@listingsapi.com
@@ -41,7 +44,7 @@ paths:
           - type: string
             description: Base64-encoded Relay ID
           format: base64-or-int
-        description: Base64-encoded location ID (Relay id, e.g. TG9jYXRpb246MTgwMDI4OQ==). The raw numeric id is not accepted here.
+        description: Location ID, either the Base64 Relay id (e.g. TG9jYXRpb246MTgwMDI4OQ==) or the raw numeric database id (e.g. 1800289). Both forms resolve to the same location.
       - name: fromDate
         in: query
         required: false
@@ -60,7 +63,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FacebookMetricV4'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      facebookInsights:
+                        $ref: '#/components/schemas/FacebookMetricV4'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   facebookInsights:
@@ -80,23 +96,37 @@ paths:
                     - startTime: 2025-06-01 00:00:00+00:00
                       value: 9
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns daily Facebook Page interaction metrics for a location over a date range.
   /api/v4/locations/{locationId}/google-analytics:
     get:
@@ -115,7 +145,7 @@ paths:
           - type: string
             description: Base64-encoded Relay ID
           format: base64-or-int
-        description: Base64-encoded location ID (Relay id, e.g. TG9jYXRpb246MTgwMDI4OQ==). The raw numeric id is not accepted here.
+        description: Location ID, either the Base64 Relay id (e.g. TG9jYXRpb246MTgwMDI4OQ==) or the raw numeric database id (e.g. 1800289). Both forms resolve to the same location.
       - name: fromDate
         in: query
         required: false
@@ -134,7 +164,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GoogleMetricV4'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      googleInsights:
+                        $ref: '#/components/schemas/GoogleMetricV4'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   googleInsights:
@@ -168,23 +211,37 @@ paths:
                     - startTime: 2025-06-01 00:00:00+00:00
                       value: 0
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns daily Google Business Profile interaction metrics for a location over a date range.
   /api/v4/locations/{locationId}/bing-analytics:
     get:
@@ -203,7 +260,7 @@ paths:
           - type: string
             description: Base64-encoded Relay ID
           format: base64-or-int
-        description: Base64-encoded location ID (Relay id, e.g. TG9jYXRpb246MTgwMDI4OQ==). The raw numeric id is not accepted here.
+        description: Location ID, either the Base64 Relay id (e.g. TG9jYXRpb246MTgwMDI4OQ==) or the raw numeric database id (e.g. 1800289). Both forms resolve to the same location.
       - name: fromDate
         in: query
         required: false
@@ -222,7 +279,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BingMetricV4'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      bingInsights:
+                        $ref: '#/components/schemas/BingMetricV4'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   bingInsights:
@@ -232,26 +302,166 @@ paths:
                     - startTime: 2025-06-09 00:00:00+00:00
                       value: 58
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns weekly Bing Places profile view metrics for a location over a date range.
 components:
   schemas:
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    FacebookMetricV4:
+      type: object
+      description: Facebook metrics with views and action breakdowns.
+      properties:
+        views:
+          $ref: '#/components/schemas/MetricDelta'
+        ctaAction:
+          $ref: '#/components/schemas/MetricDelta'
+        websiteAction:
+          $ref: '#/components/schemas/MetricDelta'
+        directionsAction:
+          $ref: '#/components/schemas/MetricDelta'
+        phoneAction:
+          $ref: '#/components/schemas/MetricDelta'
+    BingMetricV4:
+      type: object
+      description: Bing Places metrics.
+      properties:
+        views:
+          $ref: '#/components/schemas/MetricDelta'
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    MetricDelta:
+      type: object
+      description: Metric value with optional previous-period comparison.
+      properties:
+        current:
+          type: integer
+          format: int32
+        previous:
+          type: integer
+          format: int32
+        diff:
+          type: integer
+          format: int32
+        diffPercentage:
+          type: number
+          format: float
+        label:
+          type: string
     GoogleMetricV4:
       type: object
       description: Google My Business metrics including maps, search and actions.
@@ -278,54 +488,6 @@ components:
           $ref: '#/components/schemas/MetricDelta'
         foodMenuClicks:
           $ref: '#/components/schemas/MetricDelta'
-    BingMetricV4:
-      type: object
-      description: Bing Places metrics.
-      properties:
-        views:
-          $ref: '#/components/schemas/MetricDelta'
-    FacebookMetricV4:
-      type: object
-      description: Facebook metrics with views and action breakdowns.
-      properties:
-        views:
-          $ref: '#/components/schemas/MetricDelta'
-        ctaAction:
-          $ref: '#/components/schemas/MetricDelta'
-        websiteAction:
-          $ref: '#/components/schemas/MetricDelta'
-        directionsAction:
-          $ref: '#/components/schemas/MetricDelta'
-        phoneAction:
-          $ref: '#/components/schemas/MetricDelta'
-    MetricDelta:
-      type: object
-      description: Metric value with optional previous-period comparison.
-      properties:
-        current:
-          type: integer
-          format: int32
-        previous:
-          type: integer
-          format: int32
-        diff:
-          type: integer
-          format: int32
-        diffPercentage:
-          type: number
-          format: float
-        label:
-          type: string
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
   securitySchemes:
     apiKey:
       type: apiKey
@@ -344,4 +506,4 @@ components:
       description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
 externalDocs:
   description: Developer documentation
-  url: https://docs.listingsapi.com
+  url: https://listingsapi.com/docs

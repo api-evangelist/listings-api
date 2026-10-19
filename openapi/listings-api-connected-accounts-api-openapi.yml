@@ -1,8 +1,11 @@
 openapi: 3.2.0
 info:
   title: Listings Connected Accounts API
-  version: 2026-08-27
-  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.'
+  version: 2026-09-09
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.
+
+
+    Try the sandbox day pass, no card required, when it is offered: sign up at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. It covers the locations and listings endpoints and syncs only to listingsAPI demo directories. Agents can use the Day pass operations, which need no key; see https://listingsapi.com/docs/day-pass.'
   contact:
     name: Listings API support
     email: support@listingsapi.com
@@ -27,44 +30,58 @@ paths:
   /api/v4/connected-accounts:
     get:
       operationId: connectedAccountsInfo
-      summary: connectedAccountsInfo
+      summary: Lists all connected account info under users account
       tags:
       - Connected Accounts
       parameters:
-      - name: accountId
+      - name: page
         in: query
         required: false
         schema:
-          type: string
-        description: Listings API account ID to scope results to. Defaults to the account that owns the API key.
-      - name: filters
+          type: integer
+          format: int32
+          default: 1
+        description: 1-based page number. Defaults to 1.
+      - name: perPage
         in: query
         required: false
         schema:
-          type: string
-          description: JSON-encoded filter object
-        description: JSON-encoded object used to narrow the result set (for example by connection status or account type).
-      - name: sort
+          type: integer
+          format: int32
+          default: 20
+        description: Records per page. Defaults to 20.
+      - name: publisher
         in: query
         required: false
         schema:
-          type: string
-          description: JSON-encoded filter object
-        description: JSON-encoded object describing the sort order to apply to the records.
-      - name: pageInfo
+          $ref: '#/components/schemas/ConnectedAccountTypeEnum'
+        description: Filter by connected-account type.
+      - name: status
         in: query
         required: false
         schema:
-          type: string
-          description: JSON-encoded filter object
-        description: JSON-encoded pagination object, e.g. `{"page":1,"perPage":20}`.
+          $ref: '#/components/schemas/ConnectedAccountsInfoStatusEnum'
+        description: Filter by connection status.
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectedAccountsPaginated'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      connectedAccountsInfo:
+                        $ref: '#/components/schemas/ConnectedAccountsPaginated'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   connectedAccountsInfo:
@@ -87,28 +104,42 @@ paths:
                       requestMatchesStatus: MATCH_COMPLETED
                       status: CONNECTED
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns the Google and Facebook accounts connected to your Listings API account, with connection health and linked-location counts.
   /api/v4/connected-accounts/{connectedAccountId}/details:
     get:
       operationId: connectedAccountDetails
-      summary: connectedAccountDetails
+      summary: Details of a connected account
       tags:
       - Connected Accounts
       parameters:
@@ -124,7 +155,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectedAccountDetails'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      connectedAccountDetails:
+                        $ref: '#/components/schemas/ConnectedAccountDetails'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   connectedAccountDetails:
@@ -142,55 +186,65 @@ paths:
                       requestMatchesStatus: MATCH_COMPLETED
                       status: CONNECTED
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns the details of a single connected Google or Facebook account by its ID.
   /api/v4/connected-accounts/connected-account-listings:
     post:
       operationId: connectedAccountListings
-      summary: Listings belonging to a connected account
+      summary: Connected Account Listings
       tags:
       - Connected Accounts
-      parameters:
-      - name: connectedAccountId
-        in: query
-        required: true
-        schema:
-          type: string
-      - name: filters
-        in: query
-        required: false
-        schema:
-          type: string
-          description: JSON-encoded filter object
-      - name: pageInfo
-        in: query
-        required: false
-        schema:
-          type: string
-          description: JSON-encoded filter object
+      parameters: []
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectedAccountListingsPaginated'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      connectedAccountListings:
+                        $ref: '#/components/schemas/ConnectedAccountListingsPaginated'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   connectedAccountListings:
@@ -207,28 +261,70 @@ paths:
                       locationName: Trial
                       phone: (718) 667-7787
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - connectedAccountId
+              properties:
+                connectedAccountId:
+                  type: string
+                  description: 'Connected-account UUID, from `connectedAccountId` on a `GET /api/v4/connected-accounts` record. Required: omitting it returns listings for a different account.'
+                page:
+                  type: integer
+                  format: int32
+                  default: 1
+                  description: 1-based page number. Defaults to 1.
+                perPage:
+                  type: integer
+                  format: int32
+                  default: 500
+                  description: Records per page. Defaults to 500.
+                locationInfo:
+                  type: string
+                  description: Free-text search over the listing's name, address, or phone.
+            example:
+              connectedAccountId: 4f712c17-4f95-42dd-90f4-97171a2e67b5
+              perPage: 50
       description: Returns the Google Business Profile or Facebook listings accessible to a connected account, with optional filtering and pagination.
   /api/v4/connected-accounts/{connectedAccountId}/connection-suggestions:
     get:
       operationId: connectionSuggestionsForAccount
-      summary: connectionSuggestionsForAccount
+      summary: Returns all the connection suggestions
       tags:
       - Connected Accounts
       parameters:
@@ -238,40 +334,42 @@ paths:
         schema:
           type: string
         description: UUID of the connected account to list suggestions for.
-      - name: accountId
+      - name: page
         in: query
         required: false
         schema:
-          type: string
-        description: Listings API account ID to scope suggestions to. Defaults to the account the API key belongs to.
-      - name: filters
+          type: integer
+          format: int32
+          default: 1
+        description: 1-based page number. Defaults to 1.
+      - name: perPage
         in: query
         required: false
         schema:
-          type: string
-          description: JSON-encoded filter object
-        description: JSON-encoded filter object to narrow the suggestions.
-      - name: sortBy
-        in: query
-        required: false
-        schema:
-          type: string
-          description: JSON-encoded filter object
-        description: JSON-encoded sort object.
-      - name: pageInfo
-        in: query
-        required: false
-        schema:
-          type: string
-          description: JSON-encoded filter object
-        description: JSON-encoded pagination object (page / perPage).
+          type: integer
+          format: int32
+          default: 20
+        description: Records per page. Defaults to 20.
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectionSuggestionsForAccount'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      connectionSuggestionsForAccount:
+                        $ref: '#/components/schemas/ConnectionSuggestionsForAccount'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   connectionSuggestionsForAccount:
@@ -295,28 +393,42 @@ paths:
                           name: My Business
                           city: Lincoln
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns suggested matches between Listings API locations and Google Business Profile or Facebook listings for a connected account.
   /api/v4/connected-accounts/{connectedAccountId}/folders:
     get:
       operationId: getFoldersUnderGoogleAccount
-      summary: getFoldersUnderGoogleAccount
+      summary: Returns the list of folders in GMB for an email account
       tags:
       - Connected Accounts
       parameters:
@@ -325,16 +437,35 @@ paths:
         required: true
         schema:
           type: string
-        description: UUID of the connected Google account (from the list connected accounts endpoint).
+        description: Connected Account ID
+      - name: folderName
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Folder Name to search
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/GmbFolder'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      getFoldersUnderGoogleAccount:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GmbFolder'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   getFoldersUnderGoogleAccount:
@@ -342,28 +473,42 @@ paths:
                     folderName: Aniruddha Basu
                     locationCount: null
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       description: Returns the Google Business Profile folders (groups) accessible to a connected Google account.
   /api/v4/connected-accounts/connect-google:
     post:
       operationId: bulkConnectLinkForGoogle
-      summary: bulkConnectLinkForGoogle
+      summary: Get google oauth link for bulk connect
       tags:
       - Connected Accounts
       parameters: []
@@ -373,31 +518,58 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectUrl'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      bulkConnectLinkForGoogle:
+                        $ref: '#/components/schemas/GoogleOauthBulkPayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   bulkConnectLinkForGoogle:
                     errors: null
                     success: true
-                    url: https://claim.verifymybiz.com/locations/redirect_oauth_bulk/google_oauth2?onboarding=false&platform=local&token=9009dc92-2b18-421f-b856-d157f3f06d6b
+                    url: https://connect.example.com/oauth?token=8f3c1d92-...
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -411,13 +583,13 @@ paths:
               - input
             example:
               input:
-                successUrl: https://docs.listingsapi.com/docs/api/connected-accounts-trigger-matches
-                errorUrl: https://docs.listingsapi.com/docs/api/connected-accounts-connect
+                successUrl: https://listingsapi.com/docs/api/connected-accounts-trigger-matches
+                errorUrl: https://listingsapi.com/docs/api/connected-accounts-connect
       description: Returns an OAuth URL to link a Google Business Profile account to your Listings API account.
   /api/v4/connected-accounts/connect-facebook:
     post:
       operationId: bulkConnectLinkForFacebook
-      summary: bulkConnectLinkForFacebook
+      summary: Get facebook oauth link for bulk connect
       tags:
       - Connected Accounts
       parameters: []
@@ -427,31 +599,58 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectUrl'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      bulkConnectLinkForFacebook:
+                        $ref: '#/components/schemas/FacebookOauthBulkPayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   bulkConnectLinkForFacebook:
                     errors: null
                     success: true
-                    url: https://claim.verifymybiz.com/locations/redirect_oauth_bulk/facebook?onboarding=false&platform=local&token=bfac8e06-8d72-4810-9c50-ae7ee12a7b52
+                    url: https://connect.example.com/oauth?token=8f3c1d92-...
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -465,13 +664,13 @@ paths:
               - input
             example:
               input:
-                successUrl: https://docs.listingsapi.com/docs/api/connected-accounts-trigger-matches
-                errorUrl: https://docs.listingsapi.com/docs/api/connected-accounts-connect-facebook
+                successUrl: https://listingsapi.com/docs/api/connected-accounts-trigger-matches
+                errorUrl: https://listingsapi.com/docs/api/connected-accounts-connect-facebook
       description: Returns an OAuth URL to link a Facebook Pages account to your Listings API account.
-  /api/v4/connected-accounts/trigger-matches:
+  /api/v4/locations/oauth_connect_url:
     post:
-      operationId: connectedAccountsTriggerMatches
-      summary: connectedAccountsTriggerMatches
+      operationId: createConnectUrl
+      summary: Get google/facebook oauth link
       tags:
       - Connected Accounts
       parameters: []
@@ -481,30 +680,140 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectedAccountsTriggerMatchesResult'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      createConnectUrl:
+                        $ref: '#/components/schemas/ConnectUrl'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  createConnectUrl:
+                    success: true
+                    url: https://connect.example.com/oauth?token=8f3c1d92-...
+                    errors: null
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/CreateConnectUrlInput'
+              required:
+              - input
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                site: GOOGLE
+                successUrl: https://app.example.com/locations/1800289/connected
+                errorUrl: https://app.example.com/locations/1800289/connect-failed
+      description: Creates a publisher OAuth link that connects a single location, with your own success and error redirects.
+  /api/v4/connected-accounts/trigger-matches:
+    post:
+      operationId: connectedAccountsTriggerMatches
+      summary: Triggers match search between listings under connected accounts and platforms…
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      connectedAccountsTriggerMatches:
+                        $ref: '#/components/schemas/ConnectedAccountsTriggerMatchesResult'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   connectedAccountsTriggerMatches:
                     failedIds: null
                     success: true
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -524,7 +833,7 @@ paths:
   /api/v4/connected-accounts/confirm-matches:
     post:
       operationId: confirmConnectMatches
-      summary: confirmConnectMatches
+      summary: Connects locations with listings for the suggested match records
       tags:
       - Connected Accounts
       parameters: []
@@ -534,30 +843,57 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConfirmConnectMatchesResult'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      confirmConnectMatches:
+                        $ref: '#/components/schemas/ConfirmConnectMatchesResult'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   confirmConnectMatches:
                     failedIds: null
                     success: true
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -572,12 +908,12 @@ paths:
             example:
               input:
                 matchRecordIds:
-                - 0d5e306f-0da0-46e3-929f-fd3c67ccd8cc
+                - R21iTG9jYXRpb25NYXRjaGVkRGF0YTowZDVlMzA2Zi0wZGEwLTQ2ZTMtOTI5Zi1mZDNjNjdjY2Q4Y2M=
       description: Confirms suggested location-to-listing matches returned by the connection suggestions endpoint.
   /api/v4/connected-accounts/disconnect-google:
     post:
       operationId: gmbBulkDisconnect
-      summary: gmbBulkDisconnect
+      summary: Bulk disconnect locations
       tags:
       - Connected Accounts
       parameters: []
@@ -587,29 +923,56 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BulkDisconnectResult'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      gmbBulkDisconnect:
+                        $ref: '#/components/schemas/BulkDisconnectResult'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   gmbBulkDisconnect:
                     success: true
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -624,11 +987,11 @@ paths:
             example:
               input:
                 connectedAccountId: d2397854-52c2-41d7-95f1-b90cba16498d
-      description: Disconnects a connected Google Business Profile account (or specific locations under it) from your Listings API account.
+      description: Disconnects a whole connected Google Business Profile account from your Listings API account.
   /api/v4/connected-accounts/disconnect-facebook:
     post:
       operationId: fbBulkDisconnect
-      summary: fbBulkDisconnect
+      summary: Bulk disconnect fb locations
       tags:
       - Connected Accounts
       parameters: []
@@ -638,29 +1001,56 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BulkDisconnectResult'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      fbBulkDisconnect:
+                        $ref: '#/components/schemas/BulkDisconnectResult'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   fbBulkDisconnect:
                     success: true
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -679,7 +1069,7 @@ paths:
   /api/v4/connected-accounts/connect-listing:
     post:
       operationId: connectListing
-      summary: connectListing
+      summary: Connects listing to a location
       tags:
       - Connected Accounts
       parameters: []
@@ -689,30 +1079,57 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectListingResult'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      connectListing:
+                        $ref: '#/components/schemas/ConnectListingResult'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   connectListing:
                     message: null
                     success: true
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -733,7 +1150,7 @@ paths:
   /api/v4/connected-accounts/create-location-from-listing:
     post:
       operationId: createLocationFromConnectedAccountListing
-      summary: createLocationFromConnectedAccountListing
+      summary: Create location from connected account listing
       tags:
       - Connected Accounts
       parameters: []
@@ -743,7 +1160,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LocationResult'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      createLocationFromConnectedAccountListing:
+                        $ref: '#/components/schemas/CreateLocationFromConnectedAccountListingPayload'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   createLocationFromConnectedAccountListing:
@@ -751,23 +1181,37 @@ paths:
                     locationId: 88277
                     errors: null
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -776,7 +1220,7 @@ paths:
               type: object
               properties:
                 input:
-                  $ref: '#/components/schemas/CreateLocationFromListingInput'
+                  $ref: '#/components/schemas/CreateLocationFromConnectedAccountListingInput'
               required:
               - input
             example:
@@ -787,7 +1231,7 @@ paths:
   /api/v4/locations/create/gmb-listing:
     post:
       operationId: createGmbListingForLocation
-      summary: createGmbListingForLocation
+      summary: Create gmb listing for location
       tags:
       - Connected Accounts
       parameters: []
@@ -797,7 +1241,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MutationResult'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      createGmbListingForLocation:
+                        $ref: '#/components/schemas/GmbListingConnectForLocation'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
                   createGmbListingForLocation:
@@ -805,23 +1262,37 @@ paths:
                     success: true
                     errors: null
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
@@ -841,7 +1312,7 @@ paths:
   /api/v4/connected-accounts/disconnect-listing:
     post:
       operationId: disconnectConnectedAccountListing
-      summary: disconnectConnectedAccountListing
+      summary: Delete Connected Accounts Locations
       tags:
       - Connected Accounts
       parameters: []
@@ -851,211 +1322,207 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteConnectedAccountsLocationsResult'
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      disconnectConnectedAccountsLocations:
+                        $ref: '#/components/schemas/DeleteConnectedAccountsLocationsResult'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
               example:
                 data:
-                  disconnectConnectedAccountListing:
-                    deleted: 1
+                  disconnectConnectedAccountsLocations:
+                    clientMutationId: null
+                    success: true
+                    errors: null
         '400':
-          description: Bad request
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
         '401':
-          description: Unauthorized
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
-          description: Server error
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ApiErrorObject'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              properties:
-                locationIds:
-                  type: array
-                  items:
-                    type: string
               required:
-              - locationIds
-      description: Unlinks the connected Google or Facebook listing from one or more Listings API locations.
+              - input
+              properties:
+                input:
+                  type: object
+                  required:
+                  - locationId
+                  description: At least one of `site` or `providerId` must be present, otherwise the call fails with `SY10056`.
+                  properties:
+                    locationId:
+                      type: string
+                      description: Base64 Relay ID of the location to disconnect (e.g. `TG9jYXRpb246MTgwMDI4OQ==`).
+                    site:
+                      $ref: '#/components/schemas/ConnectionSite'
+                      description: Publisher to disconnect from.
+                    providerId:
+                      type: string
+                      description: Publisher-side listing id, as an alternative to `site` when a location has more than one connection.
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                site: GOOGLE
+      description: Unlinks the connected publisher listing from a single Listings API location.
+  /api/v4/locations/oauth-disconnect:
+    post:
+      operationId: locationsOauthDisconnect
+      summary: Delete Connected Accounts Locations
+      tags:
+      - Connected Accounts
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      disconnectConnectedAccountsLocations:
+                        $ref: '#/components/schemas/DeleteConnectedAccountsLocationsResult'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  disconnectConnectedAccountsLocations:
+                    clientMutationId: null
+                    success: true
+                    errors: null
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - input
+              properties:
+                input:
+                  type: object
+                  required:
+                  - locationId
+                  description: At least one of `site` or `providerId` must be present, otherwise the call fails with `SY10056`.
+                  properties:
+                    locationId:
+                      type: string
+                      description: Base64 Relay ID of the location to disconnect (e.g. `TG9jYXRpb246MTgwMDI4OQ==`).
+                    site:
+                      $ref: '#/components/schemas/ConnectionSite'
+                      description: Publisher to disconnect from.
+                    providerId:
+                      type: string
+                      description: Publisher-side listing id, as an alternative to `site` when a location has more than one connection.
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                site: GOOGLE
+      description: Severs a single location's connection to a publisher, the counterpart to the per-location OAuth connect URL.
 components:
   schemas:
-    BulkDisconnectLocationsInput:
+    ApiErrorResponse:
       type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
       properties:
-        connectedAccountId:
-          type: string
-        locationIds:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
           type: array
           items:
-            type: string
-      required:
-      - connectedAccountId
-    ConnectListingInput:
-      type: object
-      properties:
-        connectedAccountId:
-          type: string
-        connectedAccountListingId:
-          type: string
-      required:
-      - connectedAccountId
-      - connectedAccountListingId
-    ConnectUrl:
-      type: object
-      properties:
-        url:
-          type: string
-      required:
-      - url
-    ConnectedAccountStatus:
-      type: string
-      enum:
-      - ACTIVE
-      - DISCONNECTED
-      - EXPIRED
-      - ERROR
-    DeleteConnectedAccountsLocationsResult:
-      type: object
-      properties:
-        deleted:
-          type: integer
-          format: int32
-    FbBulkDisconnectLocationsInput:
-      type: object
-      properties:
-        connectedAccountId:
-          type: string
-        locationIds:
-          type: array
-          items:
-            type: string
-      required:
-      - connectedAccountId
-    ConnectedAccountInfo:
-      type: object
-      properties:
-        id:
-          type: string
-        email:
-          type: string
-        type:
-          $ref: '#/components/schemas/ConnectedSite'
-        status:
-          $ref: '#/components/schemas/ConnectedAccountStatus'
-      required:
-      - id
-    LocationResult:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        locationId:
-          type: string
-        success:
-          type: boolean
-    GoogleOauthBulkInput:
-      type: object
-      properties:
-        successUrl:
-          type: string
-        errorUrl:
-          type: string
-      required:
-      - successUrl
-      - errorUrl
-    BulkDisconnectResult:
-      type: object
-      properties:
-        disconnected:
-          type: integer
-          format: int32
-    ConnectedAccountsTriggerMatchesResult:
-      type: object
-      properties:
-        success:
-          type: boolean
-    MutationError:
-      type: object
-      description: (also defined by insights) (also defined by v2app)
-      properties:
-        message:
-          type: string
-        code:
-          type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContextError'
-    ConfirmConnectMatchesResult:
-      type: object
-      properties:
-        confirmed:
-          type: integer
-          format: int32
+            $ref: '#/components/schemas/ApiError'
     ConnectedSite:
       type: string
       enum:
-      - GOOGLE
-      - FACEBOOK
-      - YELP
-      - LINKEDIN
+      - GMB
+      - FB
       - APPLE
-      - PINTEREST
-      - TRIPADVISOR
-    ConfirmConnectMatchesInput:
-      type: object
-      properties:
-        connectedAccountId:
-          type: string
-        matchRecordIds:
-          type: array
-          items:
-            type: string
-      required:
-      - matchRecordIds
-    ConnectedAccountsTriggerMatchesInput:
-      type: object
-      properties:
-        connectedAccountIds:
-          type: array
-          items:
-            type: string
-    ConnectionSuggestionLocationInfo:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-    GmbFolder:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-    Error:
-      type: object
-      description: Listings API error envelope returned from mutations.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        field:
-          type: string
-    MutationResult:
+      - YELP
+      - ALL
+    DeleteConnectedAccountsLocationsResult:
       type: object
       properties:
         clientMutationId:
@@ -1065,91 +1532,457 @@ components:
         errors:
           type: array
           items:
-            $ref: '#/components/schemas/MutationError'
-    ConnectedAccountsPaginated:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+      required:
+      - success
+    FbBulkDisconnectLocationsInput:
       type: object
       properties:
-        nodes:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedAccountInfo'
-        totalCount:
-          type: integer
-          format: int32
-        pageInfo:
-          $ref: '#/components/schemas/PageInfo'
-    ConnectListingResult:
-      type: object
-      properties:
-        success:
-          type: boolean
-    FacebookOauthBulkInput:
-      type: object
-      properties:
-        successUrl:
-          type: string
-        errorUrl:
+        connectedAccountId:
           type: string
       required:
-      - successUrl
-      - errorUrl
-    ConnectedAccountDetails:
+      - connectedAccountId
+    RateLimitError:
       type: object
-      properties:
-        id:
-          type: string
-        email:
-          type: string
-        type:
-          $ref: '#/components/schemas/ConnectedSite'
-        listings:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedAccountListing'
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
       required:
-      - id
-    ContextError:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    ErrorContext:
       type: object
       properties:
         key:
           type: string
         value:
           type: string
-    ConnectedAccountLocationStatus:
+    GoogleOauthBulkPayload:
+      type: object
+      properties:
+        success:
+          type: boolean
+        url:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+      required:
+      - success
+    ConnectedAccountsInfoStatusEnum:
       type: string
       enum:
-      - CONNECTED
+      - Connected
+      - NotConnected
+      - ConnectionIssue
+    ConnectedAccountsMutationError:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorContext'
+    ConnectedAccountListing:
+      type: object
+      properties:
+        locationName:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        type:
+          type: string
+        id:
+          type: string
+        liveLink:
+          type: string
+        accountTypeName:
+          type: string
+        ownerRole:
+          type: string
+      required:
+      - id
+    ConnectedAccountIssueTypeEnum:
+      type: string
+      enum:
+      - CREDENTIALS_INVALIDATED
+      - EXPIRED
+      - CONNECTED_LOCATIONS_ISSUE
+    ConnectedAccountsPaginated:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountInfo'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfo'
+      required:
+      - pageInfo
+    ConnectListingInput:
+      type: object
+      properties:
+        locationId:
+          type: string
+        connectedAccountId:
+          type: string
+        connectedAccountListingId:
+          type: string
+      required:
+      - locationId
+      - connectedAccountId
+      - connectedAccountListingId
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    ConnectedAccountStatusTypeEnum:
+      type: string
+      enum:
+      - MATCH_IN_PROGRESS
       - DISCONNECTED
-      - PENDING
-      - ERROR
+      - CONNECTIVITY_ISSUE
+      - CONNECTED
+    CreateLocationFromConnectedAccountListingInput:
+      type: object
+      properties:
+        connectedAccountId:
+          type: string
+        connectedAccountListingId:
+          type: string
+        tenure:
+          type: string
+      required:
+      - connectedAccountId
+      - connectedAccountListingId
+    ConnectionSuggestionLocationInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        street:
+          type: string
+        street1:
+          type: string
+        city:
+          type: string
+        stateIso:
+          type: string
+        stateName:
+          type: string
+        countryIso:
+          type: string
+        countryName:
+          type: string
+        phone:
+          type: string
+        postalCode:
+          type: string
+        storeCode:
+          type: string
+      required:
+      - name
+    ConfirmConnectMatchesResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        failedIds:
+          type: array
+          items:
+            type: string
+      required:
+      - success
     ConnectionSuggestionsForAccount:
       type: object
       properties:
-        suggestions:
+        records:
           type: array
           items:
             $ref: '#/components/schemas/ConnectionSuggestion'
-        totalCount:
-          type: integer
-          format: int32
-    CreateLocationFromListingInput:
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfo'
+    ConnectedAccountsTriggerMatchesResult:
       type: object
       properties:
-        listingId:
+        success:
+          type: boolean
+        failedIds:
+          type: array
+          items:
+            type: string
+      required:
+      - success
+    CreateConnectUrlInput:
+      type: object
+      properties:
+        locationId:
+          type: string
+        site:
+          $ref: '#/components/schemas/ConnectionSite'
+        errorUrl:
+          type: string
+        successUrl:
           type: string
       required:
-      - listingId
+      - locationId
+      - site
+      - errorUrl
+      - successUrl
+    FacebookOauthBulkPayload:
+      type: object
+      properties:
+        success:
+          type: boolean
+        url:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+      required:
+      - success
+    GmbListingConnectForLocation:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+      required:
+      - success
+    ConnectedAccountInfo:
+      type: object
+      properties:
+        connectedAccountType:
+          $ref: '#/components/schemas/ConnectedAccountTypeEnum'
+        email:
+          type: string
+        connectedAccountId:
+          type: string
+        status:
+          $ref: '#/components/schemas/ConnectedAccountStatusTypeEnum'
+        connectivityIssue:
+          $ref: '#/components/schemas/ConnectedAccountIssue'
+        connectedLocationsCount:
+          type: integer
+          format: int32
+        requestMatches:
+          type: boolean
+        lastFetchMatchesRequestedAt:
+          type: string
+        requestMatchesStatus:
+          type: string
+        remarks:
+          type: string
+        clientName:
+          type: string
+        accountId:
+          type: string
+      required:
+      - connectedAccountType
+      - connectedAccountId
+      - status
+    ConnectListingResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+      - success
+    SuggestedLocationAddressInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        phone:
+          type: string
+        postalCode:
+          type: string
+    BulkDisconnectResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+      - success
     ConnectionSuggestion:
       type: object
       properties:
-        id:
+        matchedDataDatabaseId:
           type: string
-        location:
+        locationId:
+          type: string
+        connectedAccountId:
+          type: string
+        accountEmail:
+          type: string
+        accountType:
+          $ref: '#/components/schemas/ConnectedSite'
+        locationInfo:
           $ref: '#/components/schemas/ConnectionSuggestionLocationInfo'
-        listing:
-          $ref: '#/components/schemas/ConnectedAccountListing'
+        suggestedLocationInfo:
+          $ref: '#/components/schemas/SuggestedLocationInfo'
+        accountId:
+          type: string
+        publisherAccountId:
+          type: string
+        publisherAccountName:
+          type: string
+        clientName:
+          type: string
       required:
-      - id
+      - matchedDataDatabaseId
+      - locationId
+      - connectedAccountId
+      - accountEmail
+      - accountType
+      - locationInfo
+      - suggestedLocationInfo
+    ConnectionSite:
+      type: string
+      enum:
+      - GOOGLE
+      - FACEBOOK
+      - APPLE
+    ConnectedAccountListingsPaginated:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountListing'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfo'
+      required:
+      - pageInfo
+    ConfirmConnectMatchesInput:
+      type: object
+      properties:
+        matchRecordIds:
+          type: array
+          items:
+            type: string
+      required:
+      - matchRecordIds
+    OffsetBasedPageInfo:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+        totalRecords:
+          type: integer
+          format: int32
+      required:
+      - totalPages
+      - totalRecords
+    ConnectedAccountDetails:
+      type: object
+      properties:
+        details:
+          $ref: '#/components/schemas/ConnectedAccountInfo'
+    GoogleOauthBulkInput:
+      type: object
+      properties:
+        successUrl:
+          type: string
+        errorUrl:
+          type: string
+        platform:
+          type: string
+        entityId:
+          type: string
+        onboarding:
+          type: boolean
+      required:
+      - successUrl
+      - errorUrl
     CreateGmbListingForLocationInput:
       type: object
       properties:
@@ -1157,42 +1990,116 @@ components:
           type: string
         connectedAccountId:
           type: string
+        folderId:
+          type: string
       required:
       - locationId
       - connectedAccountId
-    ConnectedAccountListing:
+    CreateLocationFromConnectedAccountListingPayload:
       type: object
       properties:
-        id:
-          type: string
-        name:
-          type: string
-        address:
-          type: string
-        status:
-          $ref: '#/components/schemas/ConnectedAccountLocationStatus'
-      required:
-      - id
-    PageInfo:
-      type: object
-      description: (also defined by interactions) (also defined by v2app) (also defined by scantool) (also defined by thirdeye)
-      properties:
-        hasNextPage:
+        success:
           type: boolean
-        hasPreviousPage:
-          type: boolean
-    ConnectedAccountListingsPaginated:
-      type: object
-      properties:
-        nodes:
+        errors:
           type: array
           items:
-            $ref: '#/components/schemas/ConnectedAccountListing'
-        totalCount:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+        locationId:
           type: integer
           format: int32
-        pageInfo:
-          $ref: '#/components/schemas/PageInfo'
+      required:
+      - success
+    BulkDisconnectLocationsInput:
+      type: object
+      properties:
+        connectedAccountId:
+          type: string
+      required:
+      - connectedAccountId
+    ConnectedAccountTypeEnum:
+      type: string
+      enum:
+      - GoogleAccount
+      - FacebookAccount
+      - YelpAccount
+      - TripadvisorAccount
+      - LinkedinAccount
+      - PinterestAccount
+      - TwitterAccount
+      - AppleAccount
+    ConnectedAccountIssue:
+      type: object
+      properties:
+        issue:
+          $ref: '#/components/schemas/ConnectedAccountIssueTypeEnum'
+        impactedLocationsCount:
+          type: integer
+          format: int32
+    SuggestedLocationInfo:
+      type: object
+      properties:
+        mainAccount:
+          type: string
+        mainAccountId:
+          type: string
+        subAccount:
+          type: string
+        locationInfo:
+          $ref: '#/components/schemas/SuggestedLocationAddressInfo'
+        liveLink:
+          type: string
+        storeCode:
+          type: string
+        ownerRole:
+          type: string
+    FacebookOauthBulkInput:
+      type: object
+      properties:
+        successUrl:
+          type: string
+        errorUrl:
+          type: string
+        platform:
+          type: string
+        entityId:
+          type: string
+        onboarding:
+          type: boolean
+      required:
+      - successUrl
+      - errorUrl
+    GmbFolder:
+      type: object
+      properties:
+        folderName:
+          type: string
+        locationCount:
+          type: integer
+          format: int32
+        folderId:
+          type: string
+    ConnectedAccountsTriggerMatchesInput:
+      type: object
+      properties:
+        connectedAccountIds:
+          type: array
+          items:
+            type: string
+      required:
+      - connectedAccountIds
+    ConnectUrl:
+      type: object
+      properties:
+        success:
+          type: boolean
+        url:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+      required:
+      - success
   securitySchemes:
     apiKey:
       type: apiKey
@@ -1211,4 +2118,4 @@ components:
       description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
 externalDocs:
   description: Developer documentation
-  url: https://docs.listingsapi.com
+  url: https://listingsapi.com/docs
