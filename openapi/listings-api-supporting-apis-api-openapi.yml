@@ -494,3 +494,9 @@ components:
 externalDocs:
   description: Developer documentation
   url: https://listingsapi.com/docs
+x-provenance:
+  method: harvested
+  publisher: Listings API
+  source: https://listingsapi.com/openapi.yaml
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)
