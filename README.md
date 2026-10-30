@@ -1,4 +1,4 @@
-# listings-api
+# Listings API
 
 <!-- API-EVANGELIST-PROVENANCE:BEGIN -->
 > ### About this repository
@@ -64,4 +64,135 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-A local-marketing / local-SEO API providing white-label infrastructure: one write fans a business location out to major publishers (Google Business Profile, Apple Maps, Bing Places, Yelp, Facebook, Tripadvisor, etc.), plus review aggregation/response, multi-channel posting, and per-publisher analyti
+REST API and agent-native platform for managing business listings, citations, reviews, Google Business Profile posts, and local analytics across major publisher directories (Google, Facebook, Bing, Yelp, TripAdvisor). A facade over Synup's federated GraphQL backend, with first-party Python and Node SDKs, a hosted MCP server, and llms.txt.
+
+**Areas:** Business Listings · Local SEO · Location · Reviews · Google Business Profile · Analytics · citation-management · Local Marketing · social-publishing · MCP · Agent-Native
+
+## Listings API on APIs.io
+
+Everything profiled for Listings API is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/listings-api/](https://apis.io/providers/listings-api/)** — or go straight to one of the APIs or properties below.
+
+### APIs (7)
+
+- [Listings API Analytics API](https://apis.io/apis/listings-api/listings-api-analytics-api/) — Per-publisher insights (Google / Facebook / Bing) and indexing rate.
+- [Listings API Connected Accounts API](https://apis.io/apis/listings-api/listings-api-connected-accounts-api/) — Bulk Google / Facebook / Yelp / TripAdvisor account connection flows.
+- [Listings API Listings API](https://apis.io/apis/listings-api/listings-api-listings-api/) — Premium and additional directory listings, duplicates, and AI evaluation.
+- [Listings API Locations API](https://apis.io/apis/listings-api/listings-api-locations-api/) — Create, update, archive, and inspect business locations.
+- [Listings API Posts API](https://apis.io/apis/listings-api/listings-api-posts-api/) — Create and manage Google Business Profile posts — announcements, events, and offers — across locations.
+- [Listings API Reviews API](https://apis.io/apis/listings-api/listings-api-reviews-api/) — Reviews and review-response endpoints, including analytics.
+- [Listings API Supporting APIs API](https://apis.io/apis/listings-api/listings-api-supporting-apis-api/) — Supporting reference data — countries, sub-categories, and publisher site categories — plus the publisher sites included in your plan.
+
+### Published properties
+
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### AsyncAPI (1)
+
+Event-driven and webhook contracts.
+
+- [Listings Api Webhooks](https://apis.io/asyncapis/listings-api/listings-api-webhooks/)
+
+#### MCP servers (1)
+
+Model Context Protocol servers that expose the API to agents.
+
+- [mcp](https://apis.io/servers/listings-api/mcp/)
+
+#### Overlays (1)
+
+OpenAPI overlays, including conversational phrasing for each operation.
+
+- [Listings Api Openapi Overlay](https://apis.io/overlays/listings-api/listings-api-openapi-overlay/)
+
+#### Security (3)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Listings Api Authentication](https://apis.io/security/listings-api/listings-api-authentication/)
+- [Listings Api Domain Security](https://apis.io/security/listings-api/listings-api-domain-security/)
+- [Listings Api Vulnerability Disclosure](https://apis.io/security/listings-api/listings-api-vulnerability-disclosure/)
+
+#### OAuth scopes (1)
+
+The permissions the API asks for.
+
+- [Listings Api Scopes](https://apis.io/scopes/listings-api/listings-api-scopes/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Listings Api Plans Pricing](https://apis.io/plans/listings-api/listings-api-plans-pricing/)
+
+#### Rate limits (1)
+
+Published request limits.
+
+- [Listings Api Rate Limits](https://apis.io/rate-limits/listings-api/listings-api-rate-limits/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://listingsapi.com)
+- [Pricing](https://www.listingsapi.com/pricing)
+- [Sign up](https://listingsapi.com/signup)
+- [Support](https://www.listingsapi.com/contact)
+- [Terms of service](https://www.listingsapi.com/terms)
+- [Privacy policy](https://www.listingsapi.com/privacy)
+- [GitHub](https://github.com/listings-api)
+
+## API Evangelist rating
+
+**Kin Score 60.8** — strong · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 75.0 |
+| Contract quality | 63.0 |
+| Contract governance | 4.5 |
+| Operational transparency | 52.6 |
+| Developer ergonomics | 59.5 |
+| Access clarity | 76.3 |
+
+**Agent readiness 62.5** — agent-ready (gated down from agent-native)
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | — |
+| Reversibility Documented | documented (partial credit) |
+| MCP Server | verified |
+| Auth Clarity | served (partial credit) |
+| Idempotency | — |
+| Error Semantics | verified |
+| OpenAPI Examples | verified |
+| Rate Limit Signal | documented (partial credit) |
+| Event Surface Described | yes |
+| Agent Skills | yes |
+| Well Known Catalog | yes |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | served (partial credit) |
+| Protected Resource Metadata | verified |
+| Dynamic Client Registration | yes |
+| Agentic Commerce | — |
+| Pagination Ratio | — |
+| Operation Distinctiveness | — |
+
+**Regulatory alignment 40.2** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/listings-api/](https://apis.io/providers/listings-api/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Listings API: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/listings-api/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
