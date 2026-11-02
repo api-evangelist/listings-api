@@ -1,0 +1,969 @@
+openapi: 3.2.0
+info:
+  title: Listings API
+  version: 2026-09-09
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.
+
+
+    Try the sandbox day pass, no card required, when it is offered: sign up at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. It covers the locations and listings endpoints and syncs only to listingsAPI demo directories. Agents can use the Day pass operations, which need no key; see https://listingsapi.com/docs/day-pass.'
+  contact:
+    name: Listings API support
+    email: support@listingsapi.com
+    url: https://www.listingsapi.com/contact
+  termsOfService: https://www.listingsapi.com/terms
+  license:
+    name: Proprietary (Listings API Terms of Service)
+    url: https://www.listingsapi.com/terms
+  x-logo:
+    url: https://www.listingsapi.com/favicon.svg
+servers:
+- url: https://listingsapi.com
+  description: Production
+security:
+- apiKey: []
+- rapidApiKey: []
+  rapidApiHost: []
+tags:
+- name: Listings
+  description: Premium and additional directory listings, duplicates, and AI evaluation.
+paths:
+  /api/v4/locations/{locationId}/listings/duplicates:
+    get:
+      operationId: duplicateListingsForLocation
+      summary: Get duplicate listings for the given location
+      tags:
+      - Listings
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location to read. Accepts a base64-encoded Relay ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`) or a raw numeric location ID.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      duplicateListingsForLocation:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CustomSiteType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  duplicateListingsForLocation:
+                  - id: U2l0ZToxNTA=
+                    name: City Squares
+                    url: citysquares.com
+                    listings:
+                    - id: RHVwbGljYXRlOjIzNTk4NDUw
+                      listingItemId: TGlzdGluZ0l0ZW06MjM1OTg0NTA=
+                      name: Woodbury Train Station
+                      liveLink: http://citysquares.com/b/woodbury-train-station-23598450
+                      status: POTENTIAL
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns duplicate listing entries detected for a single location, grouped by publisher site.
+  /api/v4/locations/{locationId}/voice-assistants:
+    get:
+      operationId: voiceAssistantsForLocation
+      summary: Get voice assistants for a location
+      tags:
+      - Listings
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location ID. Accepts either the base64-encoded node ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`) or the raw numeric database ID (e.g. `1800289`).
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      voiceAssistantsForLocation:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/VoiceAssistantType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  voiceAssistantsForLocation:
+                  - databaseId: '104468723'
+                    voiceIdentifier: GOOGLE_ASSISTANT
+                    name: Google Assistant
+                    connectedAccountId: null
+                    syncStatus: REQUIRING_ACTION
+                    actionRequired: true
+                    syncIssue: null
+                    errors: []
+                  - databaseId: '104468711'
+                    voiceIdentifier: SIRI
+                    name: Siri
+                    connectedAccountId: null
+                    syncStatus: IN_PROGRESS
+                    actionRequired: false
+                    syncIssue: null
+                    errors: []
+                  - databaseId: '104468714'
+                    voiceIdentifier: ALEXA
+                    name: Alexa
+                    connectedAccountId: null
+                    syncStatus: IN_PROGRESS
+                    actionRequired: false
+                    syncIssue: null
+                    errors: []
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns the voice assistant listing sync status for a location across Google Assistant, Alexa, Siri, Cortana, and Bixby.
+  /api/v4/locations/listings/duplicates:
+    get:
+      operationId: duplicateListingsRollup
+      summary: Duplicate listing rollup for tag
+      tags:
+      - Listings
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/DuplicateListingStatusType'
+          default: POTENTIAL
+        description: Duplicate status to return. Defaults to POTENTIAL. Case-insensitive.
+      - name: siteId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Narrow to a single publisher by site ID. See the plan-sites endpoint for valid IDs.
+      - name: tag
+        in: query
+        required: false
+        schema:
+          type: string
+          default: all
+        description: Location tag to scope the rollup to. Defaults to `all`, every location the key can see.
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+        description: 1-based page number.
+      - name: perPage
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+        description: Records per page.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      duplicateListingsRollup:
+                        $ref: '#/components/schemas/DuplicateListingRollupType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  duplicateListingsRollup:
+                    pageInfo:
+                      hasNextPage: true
+                      hasPreviousPage: false
+                      totalPages: 34
+                      totalRecords: 1673
+                    records:
+                    - id: '3329229'
+                      name: Woodbury Train Station
+                      nameValid: false
+                      duplicateProcessingState: POTENTIAL
+                      liveLink: http://citysquares.com/b/woodbury-train-station-23598450
+                      locationId: '73451'
+                      siteName: City Squares
+                      siteUrl: citysquares.com
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns a paginated, account-wide rollup of potential duplicate listings across every location in the account.
+  /api/v4/locations/listings/mark-as-duplicate:
+    post:
+      operationId: markAsDuplicate
+      summary: Marking the duplicate listing item
+      tags:
+      - Listings
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      markAsDuplicate:
+                        $ref: '#/components/schemas/ListingsMutationResultType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  markAsDuplicate:
+                    success: true
+                    errors: null
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/MarkAsDuplicateInput'
+              required:
+              - input
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                listingItemIds:
+                - TGlzdGluZ0l0ZW06MjM1OTg0NTA=
+      description: Flags one or more detected listing items as confirmed duplicates so Listings API can suppress them.
+  /api/v4/locations/listings/mark-as-not-duplicate:
+    post:
+      operationId: markAsNotDuplicate
+      summary: Marking the non duplicate listing item
+      tags:
+      - Listings
+      parameters: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      markAsNotDuplicate:
+                        $ref: '#/components/schemas/ListingsMutationResultType'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  markAsNotDuplicate:
+                    success: true
+                    errors: null
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  $ref: '#/components/schemas/MarkAsNotDuplicateInput'
+              required:
+              - input
+            example:
+              input:
+                locationId: TG9jYXRpb246MTgwMDI4OQ==
+                listingItemIds:
+                - TGlzdGluZ0l0ZW06MjM1OTg0NTA=
+      description: Dismisses one or more potential duplicates as false positives so they stop appearing in the duplicates list.
+  /api/v4/locations/{locationId}/listings/premium:
+    get:
+      operationId: listingsForLocationPremium
+      summary: Get listings for a location
+      tags:
+      - Listings
+      parameters:
+      - name: locationId
+        in: path
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            description: Raw numeric ID
+          - type: string
+            description: Base64-encoded Relay ID
+          format: base64-or-int
+        description: Location to read. Accepts a base64-encoded Relay ID (e.g. `TG9jYXRpb246MTgwMDI4OQ==`) or a raw numeric location ID.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      listingsForLocation:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ListingUnion'
+                  errors:
+                    type: array
+                    description: Present when the operation reported a request-level failure. Writes can also report validation nested under `data.<field>.errors` on a 200.
+                    items:
+                      $ref: '#/components/schemas/ApiError'
+              example:
+                data:
+                  listingsForLocation:
+                  - id: TGlzdGluZzoxMDQ0Njg3MjM=
+                    databaseId: '104468723'
+                    site:
+                      id: U2l0ZTox
+                      databaseId: '1'
+                      name: Google Maps
+                      url: maps.google.com
+                      syScore: '100'
+                    syncStatus: REQUIRING_ACTION
+                    displayStatus: Connect your account to sync the listing
+                    actionRequired: true
+                    listingUrl: null
+                    connectedAccountId: null
+                    lastUpdate: 2026-07-06 18:33:28+00:00
+                    indexStatus: false
+                    syncIssue: null
+                    verified: false
+                  - id: TGlzdGluZzoxMDQ0Njg3MTQ=
+                    databaseId: '104468714'
+                    site:
+                      id: U2l0ZToxODA=
+                      databaseId: '180'
+                      name: Bing
+                      url: www.bing.com
+                      syScore: '97'
+                    syncStatus: IN_PROGRESS
+                    displayStatus: Information submitted to partner; awaiting response
+                    actionRequired: false
+                    listingUrl: null
+                    connectedAccountId: null
+                    lastUpdate: 2026-07-06 18:33:35+00:00
+                    indexStatus: false
+                    syncIssue: null
+                    verified: false
+                  - id: TGlzdGluZzoxMDQ0Njg3Mjc=
+                    databaseId: '104468727'
+                    site:
+                      id: U2l0ZTozODc=
+                      databaseId: '387'
+                      name: BeLocalFocussed
+                      url: belocalfocussed.com
+                      syScore: '80'
+                    syncStatus: SYNCED
+                    displayStatus: Synced
+                    actionRequired: false
+                    listingUrl: https://belocalfocussed.com/jenny-home-26x0ffkd0e
+                    connectedAccountId: null
+                    lastUpdate: 2026-07-06 18:33:30+00:00
+                    indexStatus: false
+                    syncIssue: null
+                    verified: false
+                  - id: TGlzdGluZzoxMDQ0Njg3MDk=
+                    databaseId: '104468709'
+                    site:
+                      id: U2l0ZTozMDE=
+                      databaseId: '301'
+                      name: Local Mint
+                      url: localmint.com
+                      syScore: '69'
+                    syncStatus: FAILED
+                    displayStatus: Partner experiencing issues; awaiting response
+                    actionRequired: false
+                    listingUrl: null
+                    connectedAccountId: null
+                    lastUpdate: 2026-07-06 18:34:03+00:00
+                    indexStatus: false
+                    syncIssue: Publisher requires website URL
+                    verified: false
+        '400':
+          description: 'Bad request: a malformed filter, an invalid enum value, or a malformed ID. The body carries an `errors` array, or a single `error` object when the request was rejected before it ran (e.g. `SY90001` on `reviewDetails` with no `interactionIds`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/ApiErrorResponse'
+                - $ref: '#/components/schemas/ApiErrorObject'
+        '401':
+          description: Unauthorized — the API key is missing, malformed, or revoked (`SY90005`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '403':
+          description: Forbidden — the key is valid but not permitted for this resource or operation (`SY90003`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Rate limit exceeded. Wait `retry_after_seconds` (or the `Retry-After` header) and retry with backoff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '500':
+          description: Server error. The body carries a single `error` object with code `INTERNAL_SERVER_ERROR`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorObject'
+      description: Returns the sync status of every publisher directory in a location's plan.
+components:
+  schemas:
+    ListingsErrorType:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+    DuplicateListingStatusType:
+      type: string
+      enum:
+      - POTENTIAL
+      - PROCESSING
+      - FIXED
+      - FAILED
+    ListingsMutationResultType:
+      type: object
+      properties:
+        success:
+          type: array
+          items:
+            type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingsMutationErrorType'
+    CustomSiteType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/DuplicateListingType'
+    SiteType:
+      type: object
+      description: Directory site metadata.
+      properties:
+        id:
+          type: string
+        databaseId:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        syScore:
+          type: string
+        addOn:
+          type: string
+      required:
+      - id
+      - databaseId
+      - url
+    VoiceListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        voiceIdentifier:
+          $ref: '#/components/schemas/VoiceIdentifierType'
+    ListingType:
+      type: object
+      description: A single listing on an external directory site.
+      properties:
+        id:
+          type: string
+        databaseId:
+          type: string
+        listingUrl:
+          type: string
+        syncStatus:
+          $ref: '#/components/schemas/ListingSyncStatusType'
+        displayStatus:
+          type: string
+        syncIssue:
+          type: string
+        actionRequired:
+          type: boolean
+        site:
+          $ref: '#/components/schemas/SiteType'
+        lastUpdate:
+          type: string
+        verified:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingsErrorType'
+        indexStatus:
+          type: boolean
+        httpStatus:
+          type: integer
+          format: int32
+        issueType:
+          type: string
+    DuplicateListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        listingItemId:
+          type: string
+        name:
+          type: string
+        liveLink:
+          type: string
+        status:
+          type: string
+    MarkAsNotDuplicateInput:
+      type: object
+      properties:
+        listingItemIds:
+          type: array
+          items:
+            type: string
+        locationId:
+          type: string
+      required:
+      - listingItemIds
+    AdditionalListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        site:
+          $ref: '#/components/schemas/SiteType'
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    DuplicateListingRollupType:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int32
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/DuplicateListingType'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfoType'
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    VoiceAssistantType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceListingType'
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    PremiumListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        site:
+          $ref: '#/components/schemas/SiteType'
+    MarkAsDuplicateInput:
+      type: object
+      properties:
+        listingItemIds:
+          type: array
+          items:
+            type: string
+        locationId:
+          type: string
+      required:
+      - listingItemIds
+    ListingUnion:
+      oneOf:
+      - $ref: '#/components/schemas/ListingType'
+      - $ref: '#/components/schemas/PremiumListingType'
+      - $ref: '#/components/schemas/AdditionalListingType'
+    OffsetBasedPageInfoType:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        perPage:
+          type: integer
+          format: int32
+        totalPages:
+          type: integer
+          format: int32
+    ListingsMutationErrorType:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextErrorType'
+      required:
+      - code
+    ListingSyncStatusType:
+      type: string
+      enum:
+      - IN_PROGRESS
+      - SYNCED
+      - FAILED
+      - REQUIRING_ACTION
+      - AVAILABLE
+      - COMPLETED
+      - PENDING_APPROVAL
+      - CANNOT_SUBMIT
+    VoiceIdentifierType:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    ContextErrorType:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Authenticate with `Authorization: API <your-key>`.'
+    rapidApiKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+    rapidApiHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+      description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
+externalDocs:
+  description: Developer documentation
+  url: https://listingsapi.com/docs

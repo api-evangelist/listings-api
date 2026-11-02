@@ -1,0 +1,706 @@
+openapi: 3.2.0
+info:
+  title: Listings Day pass API
+  version: 2026-09-09
+  description: 'REST API for managing business locations: sync listings across Google, Facebook, Bing and other publishers, respond to reviews, publish posts, and pull local search analytics. Authenticate with an API key from the developer dashboard.
+
+
+    Try the sandbox day pass, no card required, when it is offered: sign up at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. It covers the locations and listings endpoints and syncs only to listingsAPI demo directories. Agents can use the Day pass operations, which need no key; see https://listingsapi.com/docs/day-pass.'
+  contact:
+    name: Listings API support
+    email: support@listingsapi.com
+    url: https://www.listingsapi.com/contact
+  termsOfService: https://www.listingsapi.com/terms
+  license:
+    name: Proprietary (Listings API Terms of Service)
+    url: https://www.listingsapi.com/terms
+  x-logo:
+    url: https://www.listingsapi.com/favicon.svg
+servers:
+- url: https://listingsapi.com
+  description: Production
+security:
+- apiKey: []
+- rapidApiKey: []
+  rapidApiHost: []
+tags:
+- name: Day pass
+  description: 'A free 24-hour sandbox day pass, offered for limited periods. These calls need no API key: request the pass, then start it with the emailed 6-digit code, or poll until the owner presses Start in the email. Both return an API key limited to the locations and listings endpoints, 2 locations, and listingsAPI demo directories.'
+paths:
+  /api/day-pass:
+    get:
+      operationId: dayPassInfo
+      tags:
+      - Day pass
+      summary: Get day pass status and endpoints
+      description: Whether the day pass is open right now, its limits, and the URLs of the calls below.
+      security: []
+      responses:
+        '200':
+          description: Day pass status.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  open:
+                    type:
+                    - boolean
+                    - 'null'
+                  pass_hours:
+                    type:
+                    - integer
+                    - 'null'
+                  location_limit:
+                    type:
+                    - integer
+                    - 'null'
+                  includes:
+                    type: array
+                    items:
+                      type: string
+                  requires:
+                    type: array
+                    items:
+                      type: string
+                  docs:
+                    type: string
+                    format: uri
+  /api/day-pass/signup:
+    post:
+      operationId: dayPassSignup
+      tags:
+      - Day pass
+      summary: Request a day pass
+      description: 'Emails the person a link and a 6-digit code. Send accept_terms: true only once the person has agreed to the Terms of Service and Privacy Policy. One day pass per email address. Every allowed request gets the same 202: if the email cannot get a day pass, the owner is told by email instead.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - first_name
+              - last_name
+              - email
+              - company
+              - accept_terms
+              properties:
+                first_name:
+                  type: string
+                  maxLength: 100
+                last_name:
+                  type: string
+                  maxLength: 100
+                email:
+                  type: string
+                  format: email
+                company:
+                  type: string
+                  maxLength: 100
+                accept_terms:
+                  type: boolean
+                  const: true
+            example:
+              first_name: Ada
+              last_name: Lovelace
+              email: ada@example.com
+              company: Analytical Engines
+              accept_terms: true
+      responses:
+        '202':
+          description: The email with the link and code was sent.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - verification_sent
+                  email:
+                    type: string
+                  expires_in:
+                    type:
+                    - integer
+                    - 'null'
+                  poll_token:
+                    type: string
+                    description: Secret. Poll the status call with it.
+                  poll_interval_seconds:
+                    type: integer
+        '400':
+          description: Missing or invalid fields, listed in `issues`.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '403':
+          description: '`sandbox_closed`: the day pass is not open right now.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '422':
+          description: '`email_not_allowed`: throwaway email services are blocked.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '429':
+          description: '`rate_limit_exceeded`, `daily_limit_reached` or `domain_limit_reached`.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+  /api/day-pass/start:
+    post:
+      operationId: dayPassStart
+      tags:
+      - Day pass
+      summary: Start the day pass with the emailed code
+      description: Starts the 24 hours and returns the API key. The code only works with the poll_token of the request it was emailed for. A retry within 10 minutes returns the same key.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - poll_token
+              - code
+              properties:
+                poll_token:
+                  type: string
+                  description: The poll_token from the signup response.
+                code:
+                  type: string
+                  pattern: ^[0-9]{6}$
+            example:
+              poll_token: <poll_token from the signup response>
+              code: '482913'
+      responses:
+        '200':
+          description: The day pass is active.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - api_key
+                - api_base_url
+                - mcp_url
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - active
+                  api_key:
+                    type: string
+                    description: 'Send as `Authorization: API <api_key>`.'
+                  authorization_header:
+                    type: string
+                  api_base_url:
+                    type: string
+                    format: uri
+                  mcp_url:
+                    type: string
+                    format: uri
+                  expires_at:
+                    type:
+                    - string
+                    - 'null'
+                    format: date-time
+                  limits:
+                    type: object
+                    properties:
+                      locations:
+                        type:
+                        - integer
+                        - 'null'
+                      requests_per_minute:
+                        type:
+                        - integer
+                        - 'null'
+                      requests_per_day:
+                        type:
+                        - integer
+                        - 'null'
+                  includes:
+                    type: array
+                    items:
+                      type: string
+                  demo_directories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        sync:
+                          type: string
+                          enum:
+                          - instant
+                          - delayed
+                  dashboard_url:
+                    type: string
+                    format: uri
+                  docs:
+                    type: string
+                    format: uri
+                  next_steps:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Missing or invalid fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '409':
+          description: '`sandbox_already_used` or `email_in_use`.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '410':
+          description: '`code_expired` or `sandbox_expired`.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '422':
+          description: '`invalid_code`: the code is wrong or expired.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '429':
+          description: '`too_many_attempts` after five wrong codes, or `rate_limit_exceeded`.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '503':
+          description: '`pass_not_started`: retry the same call.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+  /api/day-pass/status:
+    post:
+      operationId: dayPassSignupStatus
+      tags:
+      - Day pass
+      summary: Poll until the owner starts the day pass
+      description: 'Answers `{"status": "pending"}` with a Retry-After header until the owner presses Start my day pass in the email, then returns the same credentials as the start call.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - poll_token
+              properties:
+                poll_token:
+                  type: string
+      responses:
+        '200':
+          description: Still pending, or the credentials.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                      - pending
+                    retry_after_seconds:
+                      type: integer
+                - type: object
+                  required:
+                  - status
+                  - api_key
+                  - api_base_url
+                  - mcp_url
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                      - active
+                    api_key:
+                      type: string
+                      description: 'Send as `Authorization: API <api_key>`.'
+                    authorization_header:
+                      type: string
+                    api_base_url:
+                      type: string
+                      format: uri
+                    mcp_url:
+                      type: string
+                      format: uri
+                    expires_at:
+                      type:
+                      - string
+                      - 'null'
+                      format: date-time
+                    limits:
+                      type: object
+                      properties:
+                        locations:
+                          type:
+                          - integer
+                          - 'null'
+                        requests_per_minute:
+                          type:
+                          - integer
+                          - 'null'
+                        requests_per_day:
+                          type:
+                          - integer
+                          - 'null'
+                    includes:
+                      type: array
+                      items:
+                        type: string
+                    demo_directories:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          sync:
+                            type: string
+                            enum:
+                            - instant
+                            - delayed
+                    dashboard_url:
+                      type: string
+                      format: uri
+                    docs:
+                      type: string
+                      format: uri
+                    next_steps:
+                      type: array
+                      items:
+                        type: string
+        '400':
+          description: Missing or malformed poll_token.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '410':
+          description: '`poll_token_expired` or `sandbox_expired`.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '429':
+          description: '`rate_limit_exceeded`.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '503':
+          description: '`pass_not_started`: retry the same call.'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - message
+                properties:
+                  error:
+                    type: string
+                    description: Machine-readable error code.
+                  message:
+                    type: string
+                    description: Human-readable explanation.
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Authenticate with `Authorization: API <your-key>`.'
+    rapidApiKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI marketplace key. Sent with `X-RapidAPI-Host` when calling via the RapidAPI proxy.
+    rapidApiHost:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Host
+      description: RapidAPI marketplace host header. Sent with `X-RapidAPI-Key` when calling via the RapidAPI proxy.
+externalDocs:
+  description: Developer documentation
+  url: https://listingsapi.com/docs

@@ -1,0 +1,156 @@
+# Pricing transcribed from the provider's own page — see provenance. Numbers are quoted, not derived.
+generated: '2026-10-28'
+method: searched
+source: https://www.listingsapi.com/pricing
+sources:
+- https://www.listingsapi.com/pricing
+provenance:
+  tool: engine/economics/harvest_pricing.py
+  run: 20261028T141238
+  grounding: every price_text was found verbatim in the fetched page text
+audience: developer-api
+pricing_basis: tiered-subscription
+delivery:
+  delivery: managed
+  method: page
+  read: '2026-10-28'
+published: true
+note: Pricing page with two product tracks (Listings and Social), each with Launch/Growth numeric monthly
+  prices and custom Enterprise, plus $25/mo add-ons.
+plan_count: 8
+currency: USD
+plans:
+- name: Listings Launch
+  price_text: $99 /mo
+  price: 99
+  currency: USD
+  period: month
+  unit: per location plan
+  included_quota: 4 locations, 10 req/min, self-serve signup, SDK & MCP access, email support, 14 days
+    free trial
+  overage: Extra location $25 /mo each
+- name: Listings Growth
+  price_text: $499 /mo
+  price: 499
+  currency: USD
+  period: month
+  unit: per location plan
+  included_quota: 25 locations, 50 req/min, everything in Launch
+  overage: Extra location $25 /mo each
+- name: Listings Enterprise
+  price_text: Custom
+  period: none
+  included_quota: Negotiated rate limits, dedicated capacity & SLA, solutions engineering
+- name: Social Launch
+  price_text: $69 /mo
+  price: 69
+  currency: USD
+  period: month
+  unit: per connection plan
+  included_quota: 20 connections, unlimited brands, scheduling & bulk posting, SDK & MCP access, email
+    support, 14 days free trial
+  overage: Connection pack $25 /mo each (5 connections)
+- name: Social Growth
+  price_text: $299 /mo
+  price: 299
+  currency: USD
+  period: month
+  unit: per connection plan
+  included_quota: 125 connections, post insights
+  overage: Connection pack $25 /mo each (5 connections)
+- name: Social Enterprise
+  price_text: Custom
+  period: none
+  included_quota: Beyond 250 connections, dedicated capacity & SLA, solutions engineering
+- name: Extra location add-on
+  price_text: $25 /mo each
+  price: 25
+  currency: USD
+  period: month
+  unit: per extra location
+  included_quota: One more business location on your Listings plan
+- name: Connection pack add-on
+  price_text: $25 /mo each
+  price: 25
+  currency: USD
+  period: month
+  unit: per pack of 5 connections
+  included_quota: 5 more social account connections
+rate_limit_statements:
+- 10 req/min
+- 50 req/min
+- Negotiated rate limits
+- Launch runs at 10 requests per minute, Growth at 50, and Enterprise is negotiated with dedicated capacity.
+- Over the limit returns HTTP 429 with retry_after_seconds
+- Self-serve tops out at 100 locations on Listings and 250 connections on Social, counted separately per
+  product.
+x-canonical:
+  generated: '2026-11-01'
+  vocabulary: engine/economics/plans-canonical.yml
+  models:
+  - hybrid
+  - subscription
+  units: []
+  plans:
+  - name: Listings Launch
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - other
+    periods:
+    - month
+  - name: Listings Growth
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - other
+    periods:
+    - month
+  - name: Listings Enterprise
+    access: other
+    model: unstated
+    model_how: derived
+    units: []
+    periods:
+    - none
+  - name: Social Launch
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - other
+    periods:
+    - month
+  - name: Social Growth
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - other
+    periods:
+    - month
+  - name: Social Enterprise
+    access: other
+    model: unstated
+    model_how: derived
+    units: []
+    periods:
+    - none
+  - name: Extra location add-on
+    access: other
+    model: subscription
+    model_how: derived
+    units:
+    - other
+    periods:
+    - month
+  - name: Connection pack add-on
+    access: other
+    model: subscription
+    model_how: derived
+    units:
+    - other
+    periods:
+    - month
