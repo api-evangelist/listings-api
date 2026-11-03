@@ -1579,20 +1579,180 @@ paths:
       description: Archives an existing owner response, removing it from the active responses tracked for an interaction.
 components:
   schemas:
-    InteractionStat:
+    NewReviewPhraseInfo:
       type: object
+      properties:
+        reviewPhrase:
+          type: string
+        phraseStats:
+          $ref: '#/components/schemas/InteractionsStats'
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    InteractionsDetail:
+      type: object
+      properties:
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interaction'
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    InteractionResponseStatus:
+      type: string
+      enum:
+      - CREATED
+      - FAILED
+      - COMPLETED
+      - CONFIRMED
+      description: Lifecycle state of a response item as it's posted out to the source site.
+    InteractionsSitesStats:
+      type: object
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SiteStat'
+    InteractionsChartData:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChartData'
+    ChartData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        interactionCount:
+          type: integer
+          format: int32
+        averageRating:
+          type: number
+          format: float
+    SiteStat:
+      type: object
+      properties:
+        key:
+          type: string
+        siteUrl:
+          type: string
+        averageRating:
+          $ref: '#/components/schemas/DeltaStat'
+        totalInteractions:
+          $ref: '#/components/schemas/DeltaStat'
+        newInteractions:
+          $ref: '#/components/schemas/DeltaStat'
+        baseRating:
+          type: number
+          format: float
+        baseInteractions:
+          type: integer
+          format: int32
+        recency:
+          type: string
+        humanizedRecency:
+          type: string
+    ArchiveInteractionPayload:
+      type: object
+      properties:
+        status:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+    SiteSettingInputType:
+      type: object
+      description: Input payload representing a single connected site entry on interactions settings.
       properties:
         name:
           type: string
-        value:
-          type: number
-          format: float
-        delta:
-          type: number
-          format: float
-        abs:
-          type: number
-          format: float
+        url:
+          type: string
+    EditResponsePayload:
+      type: object
+      properties:
+        status:
+          type: string
+        reviewId:
+          type: string
+        responseId:
+          type: string
+    InteractionResponse:
+      type: object
+      description: A response to an interaction (review reply, Q&A answer).
+      properties:
+        id:
+          type: string
+        interactionId:
+          type: string
+        content:
+          type: string
+        authorName:
+          type: string
+        date:
+          type: string
+        respondedWith:
+          type: string
+        respondedBy:
+          type: integer
+          format: int32
+        interactionStatus:
+          $ref: '#/components/schemas/InteractionResponseStatus'
+        editedResponse:
+          type: boolean
+        remarks:
+          type: string
     Interaction:
       type: object
       description: A single review, Q&A item, or social interaction collected from a source site.
@@ -1638,54 +1798,6 @@ components:
           format: int32
         flaggedReason:
           type: string
-    EditResponsePayload:
-      type: object
-      properties:
-        status:
-          type: string
-        reviewId:
-          type: string
-        responseId:
-          type: string
-    RespondToInteractionPayload:
-      type: object
-      properties:
-        interaction:
-          $ref: '#/components/schemas/InteractionResponse'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorType'
-    ChartData:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-        interactionCount:
-          type: integer
-          format: int32
-        averageRating:
-          type: number
-          format: float
-    NewReviewPhraseInfo:
-      type: object
-      properties:
-        reviewPhrase:
-          type: string
-        phraseStats:
-          $ref: '#/components/schemas/InteractionsStats'
-    ErrorType:
-      type: object
-      properties:
-        message:
-          type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContextInfoType'
-        code:
-          type: string
     InteractionsAnalyticsStats:
       type: object
       properties:
@@ -1693,29 +1805,61 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/InteractionStat'
-    SiteStat:
+    ApiErrorResponse:
       type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
       properties:
-        key:
-          type: string
-        siteUrl:
-          type: string
-        averageRating:
-          $ref: '#/components/schemas/DeltaStat'
-        totalInteractions:
-          $ref: '#/components/schemas/DeltaStat'
-        newInteractions:
-          $ref: '#/components/schemas/DeltaStat'
-        baseRating:
-          type: number
-          format: float
-        baseInteractions:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    InteractionConnection:
+      type: object
+      description: Relay-style paginated list of interactions with aggregate stats.
+      properties:
+        pageInfo:
+          $ref: '#/components/schemas/ReviewsPageInfo'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionEdge'
+        totalCount:
           type: integer
           format: int32
-        recency:
+        interactionStats:
+          $ref: '#/components/schemas/InteractionsCombinedStats'
+      required:
+      - pageInfo
+    ReviewsPageInfo:
+      type: object
+      properties:
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+        startCursor:
           type: string
-        humanizedRecency:
+        endCursor:
           type: string
+      required:
+      - hasNextPage
+      - hasPreviousPage
+    InteractionEdge:
+      type: object
+      properties:
+        node:
+          $ref: '#/components/schemas/Interaction'
+        cursor:
+          type: string
+      required:
+      - cursor
     SiteSetting:
       type: object
       properties:
@@ -1739,204 +1883,31 @@ components:
           type: string
         canRespond:
           type: boolean
-    InteractionEdge:
+    ErrorType:
       type: object
-      properties:
-        node:
-          $ref: '#/components/schemas/Interaction'
-        cursor:
-          type: string
-      required:
-      - cursor
-    InteractionsStats:
-      type: object
-      properties:
-        stats:
-          type: array
-          items:
-            $ref: '#/components/schemas/InteractionStat'
-    ReviewsPageInfo:
-      type: object
-      properties:
-        hasNextPage:
-          type: boolean
-        hasPreviousPage:
-          type: boolean
-        startCursor:
-          type: string
-        endCursor:
-          type: string
-      required:
-      - hasNextPage
-      - hasPreviousPage
-    InteractionsSetting:
-      type: object
-      properties:
-        id:
-          type: string
-        positiveInteractionThreshold:
-          type: integer
-          format: int32
-        siteSettings:
-          type: array
-          items:
-            $ref: '#/components/schemas/SiteSetting'
-        locationId:
-          type: string
-    InteractionsDetail:
-      type: object
-      properties:
-        interactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Interaction'
-    InteractionResponse:
-      type: object
-      description: A response to an interaction (review reply, Q&A answer).
-      properties:
-        id:
-          type: string
-        interactionId:
-          type: string
-        content:
-          type: string
-        authorName:
-          type: string
-        date:
-          type: string
-        respondedWith:
-          type: string
-        respondedBy:
-          type: integer
-          format: int32
-        interactionStatus:
-          $ref: '#/components/schemas/InteractionResponseStatus'
-        editedResponse:
-          type: boolean
-        remarks:
-          type: string
-    ApiError:
-      type: object
-      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
-      required:
-      - message
       properties:
         message:
           type: string
-          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
-        code:
-          type: string
-          description: The `SYxxxxx` error code on its own, when one applies.
         contextInfo:
           type: array
-          description: Key/value pairs naming the field or value that failed.
           items:
-            type: object
-            properties:
-              key:
-                type: string
-              value:
-                type: string
-    InteractionsChartData:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChartData'
-    ApiErrorObject:
-      type: object
-      description: Error response with a single `error` object, returned when a request is rejected before it runs.
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
-            message:
-              type: string
-            details:
-              type: object
-              additionalProperties: true
-              description: Extra context, e.g. the ambiguous query and its candidate categories.
-    RateLimitError:
-      type: object
-      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              enum:
-              - RATE_LIMITED
-            message:
-              type: string
-            retry_after_seconds:
-              type: integer
-              description: Seconds to wait before retrying. Never less than 1.
-            limiting_window:
-              type: string
-              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
-            correlation_id:
-              type: string
-              description: Request identifier to quote in support requests.
-            doc_url:
-              type: string
-              format: uri
-    EditInteractionsSetting:
-      type: object
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorType'
-        interactionSetting:
-          $ref: '#/components/schemas/InteractionsSetting'
-    InteractionsSitesStats:
-      type: object
-      properties:
-        stats:
-          type: array
-          items:
-            $ref: '#/components/schemas/SiteStat'
-    ArchiveInteractionPayload:
-      type: object
-      properties:
-        status:
+            $ref: '#/components/schemas/ContextInfoType'
+        code:
           type: string
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorType'
-    InteractionConnection:
+    InteractionStat:
       type: object
-      description: Relay-style paginated list of interactions with aggregate stats.
       properties:
-        pageInfo:
-          $ref: '#/components/schemas/ReviewsPageInfo'
-        edges:
-          type: array
-          items:
-            $ref: '#/components/schemas/InteractionEdge'
-        totalCount:
-          type: integer
-          format: int32
-        interactionStats:
-          $ref: '#/components/schemas/InteractionsCombinedStats'
-      required:
-      - pageInfo
+        name:
+          type: string
+        value:
+          type: number
+          format: float
+        delta:
+          type: number
+          format: float
+        abs:
+          type: number
+          format: float
     InteractionSiteConfig:
       type: object
       properties:
@@ -1958,6 +1929,15 @@ components:
           type: string
         supportedInPlan:
           type: boolean
+    EditInteractionsSetting:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+        interactionSetting:
+          $ref: '#/components/schemas/InteractionsSetting'
     ContextInfoType:
       type: object
       properties:
@@ -1973,37 +1953,29 @@ components:
         interactionCount:
           type: integer
           format: int32
-    SiteSettingInputType:
+    InteractionsSetting:
       type: object
-      description: Input payload representing a single connected site entry on interactions settings.
       properties:
-        name:
+        id:
           type: string
-        url:
-          type: string
-    InteractionResponseStatus:
-      type: string
-      enum:
-      - CREATED
-      - FAILED
-      - COMPLETED
-      - CONFIRMED
-      description: Lifecycle state of a response item as it's posted out to the source site.
-    ApiErrorResponse:
-      type: object
-      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
-      required:
-      - errors
-      properties:
-        data:
-          type:
-          - object
-          - 'null'
-          additionalProperties: true
-        errors:
+        positiveInteractionThreshold:
+          type: integer
+          format: int32
+        siteSettings:
           type: array
           items:
-            $ref: '#/components/schemas/ApiError'
+            $ref: '#/components/schemas/SiteSetting'
+        locationId:
+          type: string
+    DeltaStat:
+      type: object
+      properties:
+        value:
+          type: number
+          format: float
+        delta:
+          type: number
+          format: float
     InteractionsCombinedStats:
       type: object
       properties:
@@ -2015,15 +1987,43 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/InteractionStat'
-    DeltaStat:
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    InteractionsStats:
       type: object
       properties:
-        value:
-          type: number
-          format: float
-        delta:
-          type: number
-          format: float
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionStat'
+    RespondToInteractionPayload:
+      type: object
+      properties:
+        interaction:
+          $ref: '#/components/schemas/InteractionResponse'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
   securitySchemes:
     apiKey:
       type: apiKey

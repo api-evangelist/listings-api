@@ -336,42 +336,6 @@ paths:
       description: Returns weekly Bing Places profile view metrics for a location over a date range.
 components:
   schemas:
-    RateLimitError:
-      type: object
-      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              enum:
-              - RATE_LIMITED
-            message:
-              type: string
-            retry_after_seconds:
-              type: integer
-              description: Seconds to wait before retrying. Never less than 1.
-            limiting_window:
-              type: string
-              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
-            correlation_id:
-              type: string
-              description: Request identifier to quote in support requests.
-            doc_url:
-              type: string
-              format: uri
-    BingMetricV4:
-      type: object
-      description: Bing Places metrics.
-      properties:
-        views:
-          $ref: '#/components/schemas/MetricDelta'
     GoogleMetricV4:
       type: object
       description: Google My Business metrics including maps, search and actions.
@@ -435,6 +399,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ApiError'
+    MetricDelta:
+      type: object
+      description: Metric value with optional previous-period comparison.
+      properties:
+        current:
+          type: integer
+          format: int32
+        previous:
+          type: integer
+          format: int32
+        diff:
+          type: integer
+          format: int32
+        diffPercentage:
+          type: number
+          format: float
+        label:
+          type: string
     FacebookMetricV4:
       type: object
       description: Facebook metrics with views and action breakdowns.
@@ -448,6 +430,42 @@ components:
         directionsAction:
           $ref: '#/components/schemas/MetricDelta'
         phoneAction:
+          $ref: '#/components/schemas/MetricDelta'
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    BingMetricV4:
+      type: object
+      description: Bing Places metrics.
+      properties:
+        views:
           $ref: '#/components/schemas/MetricDelta'
     ApiErrorObject:
       type: object
@@ -470,24 +488,6 @@ components:
               type: object
               additionalProperties: true
               description: Extra context, e.g. the ambiguous query and its candidate categories.
-    MetricDelta:
-      type: object
-      description: Metric value with optional previous-period comparison.
-      properties:
-        current:
-          type: integer
-          format: int32
-        previous:
-          type: integer
-          format: int32
-        diff:
-          type: integer
-          format: int32
-        diffPercentage:
-          type: number
-          format: float
-        label:
-          type: string
   securitySchemes:
     apiKey:
       type: apiKey

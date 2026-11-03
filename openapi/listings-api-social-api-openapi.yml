@@ -1646,169 +1646,6 @@ paths:
       description: Cancels a scheduled social post before it publishes, leaving already-published posts untouched.
 components:
   schemas:
-    BulkSocialPostRowResultType:
-      type: object
-      description: Outcome of one row of a bulk job, in submission order.
-      properties:
-        index:
-          type: integer
-          format: int32
-        clientReference:
-          type: string
-        socialProfileId:
-          type: string
-        platforms:
-          type: array
-          items:
-            type: string
-        status:
-          type: string
-        socialPostId:
-          type: string
-        postStatus:
-          type: string
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorType'
-    PostInsightsCommentsType:
-      type: object
-      description: Raw publisher insight and comment payloads, passed through as JSON.
-      properties:
-        insights:
-          type: string
-          description: Custom scalar JSONString
-        comments:
-          type: string
-          description: Custom scalar JSONString
-    SocialProfileArchivalStatusEnum:
-      type: string
-      enum:
-      - ARCHIVED
-      - TENURE_NOT_MET
-      description: Outcome of an archive request. Brands must be at least 90 days old before they can be archived; once that tenure is met the brand and its connections are archived immediately.
-    SocialPostMetaType:
-      type: object
-      properties:
-        socialPosts:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostListSummaryType'
-        pageInfo:
-          $ref: '#/components/schemas/SocialNetworkPageInfoType'
-    ErrorType:
-      type: object
-      properties:
-        message:
-          type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContextInfoType'
-        code:
-          type: string
-    BulkSocialPostRowInput:
-      type: object
-      description: One post, for a single brand, fanned out to the platforms listed.
-      properties:
-        socialProfileId:
-          type: string
-        platforms:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlatformEnum'
-        name:
-          type: string
-        content:
-          type: string
-        link:
-          type: string
-        mediaUrls:
-          type: array
-          items:
-            type: string
-        videoUrls:
-          type: array
-          items:
-            type: string
-        scheduledAt:
-          type: string
-        scheduleDate:
-          type: string
-        scheduleTime:
-          type: string
-        action:
-          $ref: '#/components/schemas/BulkSocialPostActionEnum'
-        connectedChannelIds:
-          type: array
-          items:
-            type: string
-        clientReference:
-          type: string
-      required:
-      - socialProfileId
-      - platforms
-      - name
-      - content
-      - action
-    InstagramBusinessAccountIdType:
-      type: object
-      properties:
-        idType:
-          type: string
-        id:
-          type: string
-    CreateSocialProfileMutation:
-      type: object
-      properties:
-        success:
-          type: boolean
-        socialProfile:
-          $ref: '#/components/schemas/SocialProfileSummaryType'
-        error:
-          $ref: '#/components/schemas/ErrorType'
-    ChannelExtraParamsType:
-      type: object
-      properties:
-        twitterThread:
-          type: boolean
-        threads:
-          type: array
-          items:
-            type: string
-        contentImageLink:
-          type: string
-    SocialPostConnectedChannelInfoType:
-      type: object
-      properties:
-        id:
-          type: string
-        displayName:
-          type: string
-        userName:
-          type: string
-        userImage:
-          type: string
-        liveLink:
-          type: string
-        status:
-          $ref: '#/components/schemas/SocialPostItemStatusEnum'
-        reason:
-          type: string
-        error:
-          type: string
-        socialPlatformId:
-          type: integer
-          format: int32
-        platform:
-          $ref: '#/components/schemas/PlatformEnum'
-        archived:
-          type: boolean
-        payload:
-          type: string
-          description: Custom scalar JSONString
-        instagramBusinessAccountId:
-          $ref: '#/components/schemas/InstagramBusinessAccountIdType'
     ArchiveScheduledPost:
       type: object
       properties:
@@ -1818,40 +1655,6 @@ components:
           type: string
         error:
           $ref: '#/components/schemas/ErrorType'
-    CreateSimpleSocialMediaPost:
-      type: object
-      properties:
-        success:
-          type: boolean
-        error:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorType'
-        socialPostId:
-          type: string
-        status:
-          type: string
-    SocialMediaPlatformDetailsType:
-      type: object
-      properties:
-        socialConnectedAccountIds:
-          type: array
-          items:
-            type: string
-        message:
-          type: string
-        images:
-          type: array
-          items:
-            type: string
-        video:
-          type: array
-          items:
-            type: string
-        extraParams:
-          $ref: '#/components/schemas/ChannelExtraParamsType'
-        socialPostAiContentId:
-          type: string
     SocialPostListSummaryType:
       type: object
       properties:
@@ -1902,6 +1705,124 @@ components:
       required:
       - name
       - socialPostId
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    DisconnectSocialConnectedChannel:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          $ref: '#/components/schemas/ErrorType'
+    UpdateSocialProfileMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        socialProfile:
+          $ref: '#/components/schemas/SocialProfileSummaryType'
+        error:
+          $ref: '#/components/schemas/ErrorType'
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    ArchiveSocialScheduledPostInputType:
+      type: object
+      properties:
+        socialPostId:
+          type: string
+      required:
+      - socialPostId
+    PlatformEnum:
+      type: string
+      enum:
+      - FACEBOOK
+      - INSTAGRAM
+      - TWITTER
+      - LINKEDIN
+      - PINTEREST
+      description: Supported social platforms.
+    CreateSocialProfileInputType:
+      type: object
+      properties:
+        profileName:
+          type: string
+        timezone:
+          $ref: '#/components/schemas/SocialTimezoneInputType'
+        logo:
+          type: string
+        siteUrl:
+          type: string
+        countryIso:
+          type: string
+        bio:
+          type: string
+        businessIntent:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        brandHashtags:
+          type: array
+          items:
+            type: string
+        competitorHashtags:
+          type: array
+          items:
+            type: string
+        contentPreferredLanguage:
+          type: string
+      required:
+      - profileName
+      - timezone
     ConnectInfoType:
       type: object
       description: The publisher OAuth hand-off for one brand + channel.
@@ -1917,16 +1838,13 @@ components:
         expiresIn:
           type: integer
           format: int32
-    SocialPostWorkflowStateEnum:
+    SocialPostItemStatusEnum:
       type: string
       enum:
-      - INIT
-      - SUBMITTED_FOR_REVIEW
-      - APPROVED
-      - REJECTED
-      - PUBLISHED
       - SCHEDULED
+      - SUCCESS
       - ARCHIVED
+      - ERROR
     ArchiveSocialProfileInputType:
       type: object
       properties:
@@ -1934,6 +1852,315 @@ components:
           type: string
       required:
       - socialProfileId
+    DisconnectSocialConnectedChannelInputType:
+      type: object
+      properties:
+        socialProfileConnectedChannelId:
+          type: string
+      required:
+      - socialProfileConnectedChannelId
+    SocialPostMetaType:
+      type: object
+      properties:
+        socialPosts:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostListSummaryType'
+        pageInfo:
+          $ref: '#/components/schemas/SocialNetworkPageInfoType'
+    SocialMediaPostContentExtraParamsType:
+      type: object
+      properties:
+        contentImageLink:
+          type: string
+    AccountLimitsType:
+      type: object
+      description: Plan entitlements for the calling account, and how much of each is already used. `brands` is null when brands are unlimited, which is the case on every API plan; `maxConnections` is the cap enforced when a connection is linked, and linking past it fails with SY95042.
+      properties:
+        aiCredits:
+          type: integer
+          format: int32
+        brands:
+          type: integer
+          format: int32
+        connections:
+          type: integer
+          format: int32
+        maxConnections:
+          type: integer
+          format: int32
+        users:
+          type: integer
+          format: int32
+        usage:
+          $ref: '#/components/schemas/AccountUsageType'
+    SocialTimezoneType:
+      type: object
+      description: IANA timezone for the brand.
+      properties:
+        label:
+          type: string
+        tzCode:
+          type: string
+        name:
+          type: string
+        utc:
+          type: string
+    SocialTimezoneInputType:
+      type: object
+      description: IANA timezone for the brand. Used to interpret scheduleDate / scheduleTime on posts.
+      properties:
+        tzCode:
+          type: string
+        label:
+          type: string
+        name:
+          type: string
+        utc:
+          type: string
+    InstagramBusinessAccountIdType:
+      type: object
+      properties:
+        idType:
+          type: string
+        id:
+          type: string
+    SocialMediaPostDetailsType:
+      type: object
+      properties:
+        name:
+          type: string
+        customDataFlag:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/SocialMediaPostStatusEnum'
+        initialContent:
+          type: string
+        initialMedia:
+          type: array
+          items:
+            type: string
+        initialVideo:
+          type: array
+          items:
+            type: string
+        socialConnectedChannel:
+          $ref: '#/components/schemas/SocialMediaPlatformType'
+        connectedChannels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostConnectedChannelInfoType'
+        globalPostSchedule:
+          type: string
+        postAutomationId:
+          type: string
+        approvalState:
+          $ref: '#/components/schemas/SocialPostWorkflowStateEnum'
+        actionOn:
+          type: string
+        comment:
+          type: string
+        contentGeneratorId:
+          type: string
+        socialPostAiContentId:
+          type: string
+        requestId:
+          type: string
+    SocialPostConnectedChannelInfoType:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        userName:
+          type: string
+        userImage:
+          type: string
+        liveLink:
+          type: string
+        status:
+          $ref: '#/components/schemas/SocialPostItemStatusEnum'
+        reason:
+          type: string
+        error:
+          type: string
+        socialPlatformId:
+          type: integer
+          format: int32
+        platform:
+          $ref: '#/components/schemas/PlatformEnum'
+        archived:
+          type: boolean
+        payload:
+          type: string
+          description: Custom scalar JSONString
+        instagramBusinessAccountId:
+          $ref: '#/components/schemas/InstagramBusinessAccountIdType'
+    UpdateSocialProfileInputType:
+      type: object
+      properties:
+        profileId:
+          type: string
+          format: uuid
+        profileName:
+          type: string
+        timezone:
+          $ref: '#/components/schemas/SocialTimezoneInputType'
+        logo:
+          type: string
+        siteUrl:
+          type: string
+        countryIso:
+          type: string
+        bio:
+          type: string
+        businessIntent:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        brandHashtags:
+          type: array
+          items:
+            type: string
+        competitorHashtags:
+          type: array
+          items:
+            type: string
+        contentPreferredLanguage:
+          type: string
+      required:
+      - profileId
+    SocialMediaPlatformType:
+      type: object
+      properties:
+        twitter:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+        instagram:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+        linkedin:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+        facebook:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+        pinterest:
+          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
+    ProfileType:
+      type: object
+      description: A paginated list of social profiles.
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialProfileSummaryType'
+        pageInfo:
+          $ref: '#/components/schemas/SocialNetworkPageInfoType'
+    SocialMediaPostContentType:
+      type: object
+      properties:
+        message:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        video:
+          type: array
+          items:
+            type: string
+        liveLink:
+          type: string
+        boosted:
+          type: boolean
+        extraParams:
+          $ref: '#/components/schemas/SocialMediaPostContentExtraParamsType'
+    SocialMediaPostStatusEnum:
+      type: string
+      enum:
+      - DRAFT
+      - PENDING
+      - SCHEDULED
+      - PUBLISHED
+      - FAILED
+      - ARCHIVED
+      - REJECTED
+    ConnectedChannelInfoType:
+      type: object
+      properties:
+        id:
+          type: string
+        socialProfileId:
+          type: string
+          format: uuid
+        vendorProfileId:
+          type: string
+          format: uuid
+        platform:
+          type: string
+        userImage:
+          type: string
+        displayName:
+          type: string
+        userName:
+          type: string
+        archived:
+          type: boolean
+        archivedAt:
+          type: string
+        listingConnectedAccountId:
+          type: string
+        referenceId:
+          type: string
+    CreateSocialProfileMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        socialProfile:
+          $ref: '#/components/schemas/SocialProfileSummaryType'
+        error:
+          $ref: '#/components/schemas/ErrorType'
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    SocialNetworkPageInfoType:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int32
+        hasNextPage:
+          type: boolean
+        totalEngagementPosts:
+          type: integer
+          format: int32
+        totalPublishedPosts:
+          type: integer
+          format: int32
+    ArchiveSocialProfile:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          $ref: '#/components/schemas/ErrorType'
+        socialProfileId:
+          type: string
+        status:
+          $ref: '#/components/schemas/SocialProfileArchivalStatusEnum'
     SocialProfileSummaryType:
       type: object
       properties:
@@ -1990,114 +2217,199 @@ components:
       - id
       - profileName
       - archived
-    ApiError:
+    SocialPostWorkflowStateEnum:
+      type: string
+      enum:
+      - INIT
+      - SUBMITTED_FOR_REVIEW
+      - APPROVED
+      - REJECTED
+      - PUBLISHED
+      - SCHEDULED
+      - ARCHIVED
+    SocialProfileArchivalStatusEnum:
+      type: string
+      enum:
+      - ARCHIVED
+      - TENURE_NOT_MET
+      description: Outcome of an archive request. Brands must be at least 90 days old before they can be archived; once that tenure is met the brand and its connections are archived immediately.
+    BulkSocialPostRowResultType:
       type: object
-      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
-      required:
-      - message
+      description: Outcome of one row of a bulk job, in submission order.
+      properties:
+        index:
+          type: integer
+          format: int32
+        clientReference:
+          type: string
+        socialProfileId:
+          type: string
+        platforms:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        socialPostId:
+          type: string
+        postStatus:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+    AccountUsageType:
+      type: object
+      description: 'Usage for the current billing period. `connections` is the billable count that `maxConnections` is compared against: it is `connectionsActive` plus `connectionsReleased`, because a released connection slot is held until the end of the billing period. `connectionsActive` is what is connected right now; `connectionsReleased` is what was disconnected during this period, directly or by archiving its brand, and returns to the pool at renewal. A slot is held per brand-and-account pair: relinking the same account to the same brand reuses its slot and costs nothing, while attaching it to a different brand takes a separate slot. `brands` is informational, since brands are unlimited on every API plan.'
+      properties:
+        brands:
+          type: integer
+          format: int32
+        connections:
+          type: integer
+          format: int32
+        connectionsActive:
+          type: integer
+          format: int32
+        connectionsReleased:
+          type: integer
+          format: int32
+    ErrorType:
+      type: object
       properties:
         message:
           type: string
-          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
-        code:
-          type: string
-          description: The `SYxxxxx` error code on its own, when one applies.
         contextInfo:
           type: array
-          description: Key/value pairs naming the field or value that failed.
           items:
-            type: object
-            properties:
-              key:
-                type: string
-              value:
-                type: string
-    UpdateSocialProfileInputType:
+            $ref: '#/components/schemas/ContextInfoType'
+        code:
+          type: string
+    CreateBulkSocialMediaPostsInput:
       type: object
       properties:
-        profileId:
-          type: string
-          format: uuid
-        profileName:
-          type: string
-        timezone:
-          $ref: '#/components/schemas/SocialTimezoneInputType'
-        logo:
-          type: string
-        siteUrl:
-          type: string
-        countryIso:
-          type: string
-        bio:
-          type: string
-        businessIntent:
-          type: string
-        categories:
+        posts:
           type: array
           items:
-            type: string
-        brandHashtags:
-          type: array
-          items:
-            type: string
-        competitorHashtags:
-          type: array
-          items:
-            type: string
-        contentPreferredLanguage:
-          type: string
-      required:
-      - profileId
-    SocialMediaPostDetailsType:
-      type: object
-      properties:
+            $ref: '#/components/schemas/BulkSocialPostRowInput'
         name:
           type: string
-        customDataFlag:
+      required:
+      - posts
+    ChannelExtraParamsType:
+      type: object
+      properties:
+        twitterThread:
           type: boolean
-        status:
-          $ref: '#/components/schemas/SocialMediaPostStatusEnum'
-        initialContent:
-          type: string
-        initialMedia:
+        threads:
           type: array
           items:
             type: string
-        initialVideo:
-          type: array
-          items:
-            type: string
-        socialConnectedChannel:
-          $ref: '#/components/schemas/SocialMediaPlatformType'
-        connectedChannels:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostConnectedChannelInfoType'
-        globalPostSchedule:
+        contentImageLink:
           type: string
-        postAutomationId:
+    ContextInfoType:
+      type: object
+      properties:
+        key:
           type: string
-        approvalState:
-          $ref: '#/components/schemas/SocialPostWorkflowStateEnum'
-        actionOn:
+        value:
           type: string
-        comment:
-          type: string
-        contentGeneratorId:
-          type: string
-        socialPostAiContentId:
-          type: string
-        requestId:
-          type: string
-    PlatformEnum:
+    BulkSocialPostActionEnum:
       type: string
       enum:
-      - FACEBOOK
-      - INSTAGRAM
-      - TWITTER
-      - LINKEDIN
-      - PINTEREST
-      description: Supported social platforms.
+      - DRAFT
+      - SCHEDULE
+      - PUBLISH
+      description: What to do with a submitted post row.
+    CreateSimpleSocialMediaPost:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+        socialPostId:
+          type: string
+        status:
+          type: string
+    SocialConnectInfoType:
+      type: object
+      properties:
+        socialConnected:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedChannelInfoType'
+        profileCount:
+          type: integer
+          format: int32
+        channelCount:
+          type: integer
+          format: int32
+    SocialMediaPlatformDetailsType:
+      type: object
+      properties:
+        socialConnectedAccountIds:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        video:
+          type: array
+          items:
+            type: string
+        extraParams:
+          $ref: '#/components/schemas/ChannelExtraParamsType'
+        socialPostAiContentId:
+          type: string
+    PostInsightsCommentsType:
+      type: object
+      description: Raw publisher insight and comment payloads, passed through as JSON.
+      properties:
+        insights:
+          type: string
+          description: Custom scalar JSONString
+        comments:
+          type: string
+          description: Custom scalar JSONString
+    CreateBulkSocialMediaPosts:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorType'
+        job:
+          $ref: '#/components/schemas/BulkSocialPostJobType'
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
     BulkSocialPostJobType:
       type: object
       properties:
@@ -2125,362 +2437,50 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BulkSocialPostRowResultType'
-    ApiErrorObject:
+    BulkSocialPostRowInput:
       type: object
-      description: Error response with a single `error` object, returned when a request is rejected before it runs.
-      required:
-      - error
+      description: One post, for a single brand, fanned out to the platforms listed.
       properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
-            message:
-              type: string
-            details:
-              type: object
-              additionalProperties: true
-              description: Extra context, e.g. the ambiguous query and its candidate categories.
-    BulkSocialPostActionEnum:
-      type: string
-      enum:
-      - DRAFT
-      - SCHEDULE
-      - PUBLISH
-      description: What to do with a submitted post row.
-    RateLimitError:
-      type: object
-      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              enum:
-              - RATE_LIMITED
-            message:
-              type: string
-            retry_after_seconds:
-              type: integer
-              description: Seconds to wait before retrying. Never less than 1.
-            limiting_window:
-              type: string
-              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
-            correlation_id:
-              type: string
-              description: Request identifier to quote in support requests.
-            doc_url:
-              type: string
-              format: uri
-    ProfileType:
-      type: object
-      description: A paginated list of social profiles.
-      properties:
-        profiles:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialProfileSummaryType'
-        pageInfo:
-          $ref: '#/components/schemas/SocialNetworkPageInfoType'
-    CreateSocialProfileInputType:
-      type: object
-      properties:
-        profileName:
-          type: string
-        timezone:
-          $ref: '#/components/schemas/SocialTimezoneInputType'
-        logo:
-          type: string
-        siteUrl:
-          type: string
-        countryIso:
-          type: string
-        bio:
-          type: string
-        businessIntent:
-          type: string
-        categories:
-          type: array
-          items:
-            type: string
-        brandHashtags:
-          type: array
-          items:
-            type: string
-        competitorHashtags:
-          type: array
-          items:
-            type: string
-        contentPreferredLanguage:
-          type: string
-      required:
-      - profileName
-      - timezone
-    SocialNetworkPageInfoType:
-      type: object
-      properties:
-        total:
-          type: integer
-          format: int32
-        hasNextPage:
-          type: boolean
-        totalEngagementPosts:
-          type: integer
-          format: int32
-        totalPublishedPosts:
-          type: integer
-          format: int32
-    SocialPostItemStatusEnum:
-      type: string
-      enum:
-      - SCHEDULED
-      - SUCCESS
-      - ARCHIVED
-      - ERROR
-    ContextInfoType:
-      type: object
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    ArchiveSocialScheduledPostInputType:
-      type: object
-      properties:
-        socialPostId:
-          type: string
-      required:
-      - socialPostId
-    DisconnectSocialConnectedChannel:
-      type: object
-      properties:
-        success:
-          type: boolean
-        error:
-          $ref: '#/components/schemas/ErrorType'
-    SocialMediaPlatformType:
-      type: object
-      properties:
-        twitter:
-          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
-        instagram:
-          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
-        linkedin:
-          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
-        facebook:
-          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
-        pinterest:
-          $ref: '#/components/schemas/SocialMediaPlatformDetailsType'
-    ArchiveSocialProfile:
-      type: object
-      properties:
-        success:
-          type: boolean
-        error:
-          $ref: '#/components/schemas/ErrorType'
         socialProfileId:
           type: string
-        status:
-          $ref: '#/components/schemas/SocialProfileArchivalStatusEnum'
-    SocialTimezoneInputType:
-      type: object
-      description: IANA timezone for the brand. Used to interpret scheduleDate / scheduleTime on posts.
-      properties:
-        tzCode:
-          type: string
-        label:
-          type: string
-        name:
-          type: string
-        utc:
-          type: string
-    AccountLimitsType:
-      type: object
-      description: Plan entitlements for the calling account, and how much of each is already used. `brands` is null when brands are unlimited, which is the case on every API plan; `maxConnections` is the cap enforced when a connection is linked, and linking past it fails with SY95042.
-      properties:
-        aiCredits:
-          type: integer
-          format: int32
-        brands:
-          type: integer
-          format: int32
-        connections:
-          type: integer
-          format: int32
-        maxConnections:
-          type: integer
-          format: int32
-        users:
-          type: integer
-          format: int32
-        usage:
-          $ref: '#/components/schemas/AccountUsageType'
-    CreateBulkSocialMediaPosts:
-      type: object
-      properties:
-        success:
-          type: boolean
-        error:
+        platforms:
           type: array
           items:
-            $ref: '#/components/schemas/ErrorType'
-        job:
-          $ref: '#/components/schemas/BulkSocialPostJobType'
-    SocialMediaPostContentType:
-      type: object
-      properties:
-        message:
+            $ref: '#/components/schemas/PlatformEnum'
+        name:
           type: string
-        images:
+        content:
+          type: string
+        link:
+          type: string
+        mediaUrls:
           type: array
           items:
             type: string
-        video:
+        videoUrls:
           type: array
           items:
             type: string
-        liveLink:
+        scheduledAt:
           type: string
-        boosted:
-          type: boolean
-        extraParams:
-          $ref: '#/components/schemas/SocialMediaPostContentExtraParamsType'
-    ConnectedChannelInfoType:
-      type: object
-      properties:
-        id:
+        scheduleDate:
           type: string
-        socialProfileId:
+        scheduleTime:
           type: string
-          format: uuid
-        vendorProfileId:
-          type: string
-          format: uuid
-        platform:
-          type: string
-        userImage:
-          type: string
-        displayName:
-          type: string
-        userName:
-          type: string
-        archived:
-          type: boolean
-        archivedAt:
-          type: string
-        listingConnectedAccountId:
-          type: string
-        referenceId:
-          type: string
-    DisconnectSocialConnectedChannelInputType:
-      type: object
-      properties:
-        socialProfileConnectedChannelId:
-          type: string
-      required:
-      - socialProfileConnectedChannelId
-    CreateBulkSocialMediaPostsInput:
-      type: object
-      properties:
-        posts:
+        action:
+          $ref: '#/components/schemas/BulkSocialPostActionEnum'
+        connectedChannelIds:
           type: array
           items:
-            $ref: '#/components/schemas/BulkSocialPostRowInput'
-        name:
+            type: string
+        clientReference:
           type: string
       required:
-      - posts
-    AccountUsageType:
-      type: object
-      description: 'Usage for the current billing period. `connections` is the billable count that `maxConnections` is compared against: it is `connectionsActive` plus `connectionsReleased`, because a released connection slot is held until the end of the billing period. `connectionsActive` is what is connected right now; `connectionsReleased` is what was disconnected during this period, directly or by archiving its brand, and returns to the pool at renewal. A slot is held per brand-and-account pair: relinking the same account to the same brand reuses its slot and costs nothing, while attaching it to a different brand takes a separate slot. `brands` is informational, since brands are unlimited on every API plan.'
-      properties:
-        brands:
-          type: integer
-          format: int32
-        connections:
-          type: integer
-          format: int32
-        connectionsActive:
-          type: integer
-          format: int32
-        connectionsReleased:
-          type: integer
-          format: int32
-    SocialMediaPostStatusEnum:
-      type: string
-      enum:
-      - DRAFT
-      - PENDING
-      - SCHEDULED
-      - PUBLISHED
-      - FAILED
-      - ARCHIVED
-      - REJECTED
-    ApiErrorResponse:
-      type: object
-      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
-      required:
-      - errors
-      properties:
-        data:
-          type:
-          - object
-          - 'null'
-          additionalProperties: true
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ApiError'
-    SocialMediaPostContentExtraParamsType:
-      type: object
-      properties:
-        contentImageLink:
-          type: string
-    SocialTimezoneType:
-      type: object
-      description: IANA timezone for the brand.
-      properties:
-        label:
-          type: string
-        tzCode:
-          type: string
-        name:
-          type: string
-        utc:
-          type: string
-    UpdateSocialProfileMutation:
-      type: object
-      properties:
-        success:
-          type: boolean
-        socialProfile:
-          $ref: '#/components/schemas/SocialProfileSummaryType'
-        error:
-          $ref: '#/components/schemas/ErrorType'
-    SocialConnectInfoType:
-      type: object
-      properties:
-        socialConnected:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedChannelInfoType'
-        profileCount:
-          type: integer
-          format: int32
-        channelCount:
-          type: integer
-          format: int32
+      - socialProfileId
+      - platforms
+      - name
+      - content
+      - action
   securitySchemes:
     apiKey:
       type: apiKey

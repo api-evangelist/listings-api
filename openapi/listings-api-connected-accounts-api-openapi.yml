@@ -1499,48 +1499,52 @@ paths:
       description: Severs a single location's connection to a publisher, the counterpart to the per-location OAuth connect URL.
 components:
   schemas:
-    ConnectionSuggestionLocationInfo:
+    FacebookOauthBulkInput:
       type: object
       properties:
-        name:
+        successUrl:
           type: string
-        street:
+        errorUrl:
           type: string
-        street1:
+        platform:
           type: string
-        city:
+        entityId:
           type: string
-        stateIso:
-          type: string
-        stateName:
-          type: string
-        countryIso:
-          type: string
-        countryName:
-          type: string
-        phone:
-          type: string
-        postalCode:
-          type: string
-        storeCode:
-          type: string
+        onboarding:
+          type: boolean
       required:
-      - name
-    FbBulkDisconnectLocationsInput:
+      - successUrl
+      - errorUrl
+    ApiError:
       type: object
-      properties:
-        connectedAccountId:
-          type: string
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
       required:
-      - connectedAccountId
-    ConnectedAccountIssue:
-      type: object
+      - message
       properties:
-        issue:
-          $ref: '#/components/schemas/ConnectedAccountIssueTypeEnum'
-        impactedLocationsCount:
-          type: integer
-          format: int32
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    ConnectedSite:
+      type: string
+      enum:
+      - GMB
+      - FB
+      - APPLE
+      - YELP
+      - ALL
     ConnectListingInput:
       type: object
       properties:
@@ -1554,44 +1558,69 @@ components:
       - locationId
       - connectedAccountId
       - connectedAccountListingId
-    SuggestedLocationInfo:
+    ConnectedAccountStatusTypeEnum:
+      type: string
+      enum:
+      - MATCH_IN_PROGRESS
+      - DISCONNECTED
+      - CONNECTIVITY_ISSUE
+      - CONNECTED
+    FbBulkDisconnectLocationsInput:
       type: object
       properties:
-        mainAccount:
-          type: string
-        mainAccountId:
-          type: string
-        subAccount:
-          type: string
-        locationInfo:
-          $ref: '#/components/schemas/SuggestedLocationAddressInfo'
-        liveLink:
-          type: string
-        storeCode:
-          type: string
-        ownerRole:
-          type: string
-    ConnectListingResult:
-      type: object
-      properties:
-        success:
-          type: boolean
-        message:
+        connectedAccountId:
           type: string
       required:
-      - success
-    ConnectedAccountsPaginated:
+      - connectedAccountId
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    CreateLocationFromConnectedAccountListingInput:
       type: object
       properties:
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedAccountInfo'
-        pageInfo:
-          $ref: '#/components/schemas/OffsetBasedPageInfo'
+        connectedAccountId:
+          type: string
+        connectedAccountListingId:
+          type: string
+        tenure:
+          type: string
       required:
-      - pageInfo
-    ConnectUrl:
+      - connectedAccountId
+      - connectedAccountListingId
+    ConnectedAccountsInfoStatusEnum:
+      type: string
+      enum:
+      - Connected
+      - NotConnected
+      - ConnectionIssue
+    GoogleOauthBulkPayload:
       type: object
       properties:
         success:
@@ -1604,44 +1633,6 @@ components:
             $ref: '#/components/schemas/ConnectedAccountsMutationError'
       required:
       - success
-    ConnectionSite:
-      type: string
-      enum:
-      - GOOGLE
-      - FACEBOOK
-      - APPLE
-    ConnectedAccountStatusTypeEnum:
-      type: string
-      enum:
-      - MATCH_IN_PROGRESS
-      - DISCONNECTED
-      - CONNECTIVITY_ISSUE
-      - CONNECTED
-    ConnectedAccountDetails:
-      type: object
-      properties:
-        details:
-          $ref: '#/components/schemas/ConnectedAccountInfo'
-    ConfirmConnectMatchesInput:
-      type: object
-      properties:
-        matchRecordIds:
-          type: array
-          items:
-            type: string
-      required:
-      - matchRecordIds
-    ConnectedAccountTypeEnum:
-      type: string
-      enum:
-      - GoogleAccount
-      - FacebookAccount
-      - YelpAccount
-      - TripadvisorAccount
-      - LinkedinAccount
-      - PinterestAccount
-      - TwitterAccount
-      - AppleAccount
     ConnectedAccountsTriggerMatchesResult:
       type: object
       properties:
@@ -1666,112 +1657,24 @@ components:
             $ref: '#/components/schemas/ConnectedAccountsMutationError'
       required:
       - success
-    ConnectedAccountsMutationError:
+    ErrorContext:
       type: object
       properties:
-        message:
+        key:
           type: string
-        code:
+        value:
           type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorContext'
-    GoogleOauthBulkPayload:
-      type: object
-      properties:
-        success:
-          type: boolean
-        url:
-          type: string
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedAccountsMutationError'
-      required:
-      - success
-    GoogleOauthBulkInput:
-      type: object
-      properties:
-        successUrl:
-          type: string
-        errorUrl:
-          type: string
-        platform:
-          type: string
-        entityId:
-          type: string
-        onboarding:
-          type: boolean
-      required:
-      - successUrl
-      - errorUrl
-    ConnectedAccountListing:
-      type: object
-      properties:
-        locationName:
-          type: string
-        address:
-          type: string
-        phone:
-          type: string
-        type:
-          type: string
-        id:
-          type: string
-        liveLink:
-          type: string
-        accountTypeName:
-          type: string
-        ownerRole:
-          type: string
-      required:
-      - id
-    DeleteConnectedAccountsLocationsResult:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        success:
-          type: boolean
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedAccountsMutationError'
-      required:
-      - success
-    GmbFolder:
-      type: object
-      properties:
-        folderName:
-          type: string
-        locationCount:
-          type: integer
-          format: int32
-        folderId:
-          type: string
-    ApiError:
-      type: object
-      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
-      required:
-      - message
-      properties:
-        message:
-          type: string
-          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
-        code:
-          type: string
-          description: The `SYxxxxx` error code on its own, when one applies.
-        contextInfo:
-          type: array
-          description: Key/value pairs naming the field or value that failed.
-          items:
-            type: object
-            properties:
-              key:
-                type: string
-              value:
-                type: string
+    ConnectedAccountTypeEnum:
+      type: string
+      enum:
+      - GoogleAccount
+      - FacebookAccount
+      - YelpAccount
+      - TripadvisorAccount
+      - LinkedinAccount
+      - PinterestAccount
+      - TwitterAccount
+      - AppleAccount
     ConnectedAccountInfo:
       type: object
       properties:
@@ -1804,33 +1707,236 @@ components:
       - connectedAccountType
       - connectedAccountId
       - status
-    ApiErrorObject:
+    ConnectionSuggestionLocationInfo:
       type: object
-      description: Error response with a single `error` object, returned when a request is rejected before it runs.
-      required:
-      - error
       properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
-            message:
-              type: string
-            details:
-              type: object
-              additionalProperties: true
-              description: Extra context, e.g. the ambiguous query and its candidate categories.
+        name:
+          type: string
+        street:
+          type: string
+        street1:
+          type: string
+        city:
+          type: string
+        stateIso:
+          type: string
+        stateName:
+          type: string
+        countryIso:
+          type: string
+        countryName:
+          type: string
+        phone:
+          type: string
+        postalCode:
+          type: string
+        storeCode:
+          type: string
+      required:
+      - name
+    SuggestedLocationAddressInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        phone:
+          type: string
+        postalCode:
+          type: string
+    DeleteConnectedAccountsLocationsResult:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+      required:
+      - success
+    GoogleOauthBulkInput:
+      type: object
+      properties:
+        successUrl:
+          type: string
+        errorUrl:
+          type: string
+        platform:
+          type: string
+        entityId:
+          type: string
+        onboarding:
+          type: boolean
+      required:
+      - successUrl
+      - errorUrl
+    CreateLocationFromConnectedAccountListingPayload:
+      type: object
+      properties:
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+        locationId:
+          type: integer
+          format: int32
+      required:
+      - success
+    CreateConnectUrlInput:
+      type: object
+      properties:
+        locationId:
+          type: string
+        site:
+          $ref: '#/components/schemas/ConnectionSite'
+        errorUrl:
+          type: string
+        successUrl:
+          type: string
+      required:
+      - locationId
+      - site
+      - errorUrl
+      - successUrl
+    ConnectedAccountsMutationError:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorContext'
+    ConfirmConnectMatchesResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        failedIds:
+          type: array
+          items:
+            type: string
+      required:
+      - success
+    BulkDisconnectLocationsInput:
+      type: object
+      properties:
+        connectedAccountId:
+          type: string
+      required:
+      - connectedAccountId
+    ConnectedAccountDetails:
+      type: object
+      properties:
+        details:
+          $ref: '#/components/schemas/ConnectedAccountInfo'
+    GmbListingConnectForLocation:
+      type: object
+      properties:
+        clientMutationId:
+          type: string
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+      required:
+      - success
+    ConnectionSuggestionsForAccount:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionSuggestion'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfo'
+    GmbFolder:
+      type: object
+      properties:
+        folderName:
+          type: string
+        locationCount:
+          type: integer
+          format: int32
+        folderId:
+          type: string
     ConnectedAccountIssueTypeEnum:
       type: string
       enum:
       - CREDENTIALS_INVALIDATED
       - EXPIRED
       - CONNECTED_LOCATIONS_ISSUE
+    ConnectionSite:
+      type: string
+      enum:
+      - GOOGLE
+      - FACEBOOK
+      - APPLE
+    ConnectUrl:
+      type: object
+      properties:
+        success:
+          type: boolean
+        url:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountsMutationError'
+      required:
+      - success
+    ConnectedAccountListing:
+      type: object
+      properties:
+        locationName:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        type:
+          type: string
+        id:
+          type: string
+        liveLink:
+          type: string
+        accountTypeName:
+          type: string
+        ownerRole:
+          type: string
+      required:
+      - id
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
     ConnectionSuggestion:
       type: object
       properties:
@@ -1864,107 +1970,6 @@ components:
       - accountType
       - locationInfo
       - suggestedLocationInfo
-    BulkDisconnectResult:
-      type: object
-      properties:
-        success:
-          type: boolean
-      required:
-      - success
-    RateLimitError:
-      type: object
-      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              enum:
-              - RATE_LIMITED
-            message:
-              type: string
-            retry_after_seconds:
-              type: integer
-              description: Seconds to wait before retrying. Never less than 1.
-            limiting_window:
-              type: string
-              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
-            correlation_id:
-              type: string
-              description: Request identifier to quote in support requests.
-            doc_url:
-              type: string
-              format: uri
-    GmbListingConnectForLocation:
-      type: object
-      properties:
-        clientMutationId:
-          type: string
-        success:
-          type: boolean
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedAccountsMutationError'
-      required:
-      - success
-    ErrorContext:
-      type: object
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    ConnectedSite:
-      type: string
-      enum:
-      - GMB
-      - FB
-      - APPLE
-      - YELP
-      - ALL
-    ConnectionSuggestionsForAccount:
-      type: object
-      properties:
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectionSuggestion'
-        pageInfo:
-          $ref: '#/components/schemas/OffsetBasedPageInfo'
-    ConnectedAccountsTriggerMatchesInput:
-      type: object
-      properties:
-        connectedAccountIds:
-          type: array
-          items:
-            type: string
-      required:
-      - connectedAccountIds
-    BulkDisconnectLocationsInput:
-      type: object
-      properties:
-        connectedAccountId:
-          type: string
-      required:
-      - connectedAccountId
-    ConnectedAccountListingsPaginated:
-      type: object
-      properties:
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConnectedAccountListing'
-        pageInfo:
-          $ref: '#/components/schemas/OffsetBasedPageInfo'
-      required:
-      - pageInfo
     OffsetBasedPageInfo:
       type: object
       properties:
@@ -1981,51 +1986,15 @@ components:
       required:
       - totalPages
       - totalRecords
-    SuggestedLocationAddressInfo:
+    ConnectListingResult:
       type: object
       properties:
-        name:
-          type: string
-        street:
-          type: string
-        city:
-          type: string
-        state:
-          type: string
-        country:
-          type: string
-        phone:
-          type: string
-        postalCode:
-          type: string
-    CreateLocationFromConnectedAccountListingInput:
-      type: object
-      properties:
-        connectedAccountId:
-          type: string
-        connectedAccountListingId:
-          type: string
-        tenure:
-          type: string
-      required:
-      - connectedAccountId
-      - connectedAccountListingId
-    FacebookOauthBulkInput:
-      type: object
-      properties:
-        successUrl:
-          type: string
-        errorUrl:
-          type: string
-        platform:
-          type: string
-        entityId:
-          type: string
-        onboarding:
+        success:
           type: boolean
+        message:
+          type: string
       required:
-      - successUrl
-      - errorUrl
+      - success
     CreateGmbListingForLocationInput:
       type: object
       properties:
@@ -2038,68 +2007,99 @@ components:
       required:
       - locationId
       - connectedAccountId
-    ApiErrorResponse:
-      type: object
-      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
-      required:
-      - errors
-      properties:
-        data:
-          type:
-          - object
-          - 'null'
-          additionalProperties: true
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ApiError'
-    ConfirmConnectMatchesResult:
+    BulkDisconnectResult:
       type: object
       properties:
         success:
           type: boolean
-        failedIds:
+      required:
+      - success
+    ConnectedAccountsTriggerMatchesInput:
+      type: object
+      properties:
+        connectedAccountIds:
           type: array
           items:
             type: string
       required:
-      - success
-    CreateLocationFromConnectedAccountListingPayload:
+      - connectedAccountIds
+    ConfirmConnectMatchesInput:
       type: object
       properties:
-        success:
-          type: boolean
-        errors:
+        matchRecordIds:
           type: array
           items:
-            $ref: '#/components/schemas/ConnectedAccountsMutationError'
-        locationId:
-          type: integer
-          format: int32
+            type: string
       required:
-      - success
-    ConnectedAccountsInfoStatusEnum:
-      type: string
-      enum:
-      - Connected
-      - NotConnected
-      - ConnectionIssue
-    CreateConnectUrlInput:
+      - matchRecordIds
+    ConnectedAccountsPaginated:
       type: object
       properties:
-        locationId:
-          type: string
-        site:
-          $ref: '#/components/schemas/ConnectionSite'
-        errorUrl:
-          type: string
-        successUrl:
-          type: string
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountInfo'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfo'
       required:
-      - locationId
-      - site
-      - errorUrl
-      - successUrl
+      - pageInfo
+    ConnectedAccountListingsPaginated:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedAccountListing'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfo'
+      required:
+      - pageInfo
+    SuggestedLocationInfo:
+      type: object
+      properties:
+        mainAccount:
+          type: string
+        mainAccountId:
+          type: string
+        subAccount:
+          type: string
+        locationInfo:
+          $ref: '#/components/schemas/SuggestedLocationAddressInfo'
+        liveLink:
+          type: string
+        storeCode:
+          type: string
+        ownerRole:
+          type: string
+    ConnectedAccountIssue:
+      type: object
+      properties:
+        issue:
+          $ref: '#/components/schemas/ConnectedAccountIssueTypeEnum'
+        impactedLocationsCount:
+          type: integer
+          format: int32
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
   securitySchemes:
     apiKey:
       type: apiKey
