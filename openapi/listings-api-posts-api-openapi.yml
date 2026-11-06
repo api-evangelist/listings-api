@@ -967,194 +967,6 @@ paths:
       description: Returns a page of bulk (multi-location) post campaigns that include a single location.
 components:
   schemas:
-    ApiError:
-      type: object
-      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
-      required:
-      - message
-      properties:
-        message:
-          type: string
-          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
-        code:
-          type: string
-          description: The `SYxxxxx` error code on its own, when one applies.
-        contextInfo:
-          type: array
-          description: Key/value pairs naming the field or value that failed.
-          items:
-            type: object
-            properties:
-              key:
-                type: string
-              value:
-                type: string
-    PostMessageInput:
-      type: object
-      properties:
-        site:
-          $ref: '#/components/schemas/SitesType'
-        message:
-          type: string
-      required:
-      - site
-      - message
-    PostContextInfo:
-      type: object
-      properties:
-        couponCode:
-          type: string
-        redeemUrl:
-          type: string
-        termsConditions:
-          type: string
-        title:
-          type: string
-        discount:
-          type: string
-        locationType:
-          type: string
-        startDay:
-          type: string
-          format: date
-        startTime:
-          type: string
-        endDay:
-          type: string
-          format: date
-        endTime:
-          type: string
-    RateLimitError:
-      type: object
-      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              enum:
-              - RATE_LIMITED
-            message:
-              type: string
-            retry_after_seconds:
-              type: integer
-              description: Seconds to wait before retrying. Never less than 1.
-            limiting_window:
-              type: string
-              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
-            correlation_id:
-              type: string
-              description: Request identifier to quote in support requests.
-            doc_url:
-              type: string
-              format: uri
-    SocialPostTypeEnum:
-      type: string
-      enum:
-      - EVENT
-      - OFFER
-      - ANNOUNCEMENT
-      - COVID19
-      - PRODUCT
-      description: Social Post types.
-    SiteCtaTypes:
-      type: object
-      properties:
-        value:
-          type: string
-        label:
-          type: string
-    StatsAndStatus:
-      type: object
-      properties:
-        clicks:
-          type: integer
-          format: int32
-        views:
-          type: integer
-          format: int32
-        reactions:
-          type: integer
-          format: int32
-        shares:
-          type: integer
-          format: int32
-        comments:
-          type: integer
-          format: int32
-        status:
-          type: string
-        site:
-          $ref: '#/components/schemas/SitesType'
-    PostCtaInput:
-      type: object
-      properties:
-        site:
-          $ref: '#/components/schemas/SitesType'
-        type:
-          type: string
-        url:
-          type: string
-      required:
-      - site
-      - type
-      - url
-    PostCta:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/SiteCtaTypes'
-        url:
-          type: string
-        site:
-          $ref: '#/components/schemas/SitesType'
-        tinyUrl:
-          type: string
-    SocialPostMediaInput:
-      type: object
-      properties:
-        site:
-          $ref: '#/components/schemas/SitesType'
-        url:
-          type: string
-        type:
-          $ref: '#/components/schemas/MediaTypeEnum'
-      required:
-      - site
-      - url
-    ContextError:
-      type: object
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    DeleteSocialPostMutation:
-      type: object
-      properties:
-        success:
-          type: boolean
-        socialPostId:
-          type: string
-      required:
-      - success
-      - socialPostId
-    SocialPostAnalyticsLocationwise:
-      type: object
-      properties:
-        locationId:
-          type: integer
-          format: int32
-        siteStats:
-          type: array
-          items:
-            $ref: '#/components/schemas/StatsAndStatus'
     PostContextInfoInput:
       type: object
       description: Additional details for post based on post_type.
@@ -1181,87 +993,49 @@ components:
           format: date
         endTime:
           type: string
-    SocialPost:
+    MutationError:
       type: object
-      description: A newer multi-site/multi-location post campaign.
       properties:
-        id:
-          type: string
-        name:
-          type: string
-        status:
-          $ref: '#/components/schemas/SocialPostStatusEnum'
-        type:
-          $ref: '#/components/schemas/SocialPostTypeEnum'
-        createdAt:
-          type: string
-          format: date
-        deletedAt:
-          type: string
-          format: date
-        expiredAt:
-          type: string
-          format: date
-        scheduledStartDate:
-          type: string
-          format: date
-        scheduledEndDate:
-          type: string
-          format: date
-        views:
-          type: integer
-          format: int32
-        clicks:
-          type: integer
-          format: int32
-        shares:
-          type: integer
-          format: int32
-        reactions:
-          type: integer
-          format: int32
-        comments:
-          type: integer
-          format: int32
-        sites:
-          type: array
-          items:
-            $ref: '#/components/schemas/SitesType'
         message:
-          type: array
-          items:
-            $ref: '#/components/schemas/PostMessage'
-        cta:
-          type: array
-          items:
-            $ref: '#/components/schemas/PostCta'
+          type: string
+        code:
+          type: string
         contextInfo:
-          $ref: '#/components/schemas/PostContextInfo'
-        mediaUrl:
           type: array
           items:
-            $ref: '#/components/schemas/SocialPostMedia'
-        publishDetails:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostPublishDetail'
-        postLinks:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostPublishedLink'
-        locationIds:
-          type: array
-          items:
-            type: integer
-            format: int32
-      required:
-      - id
-      - name
-      - status
-      - type
-      - createdAt
-      - sites
-      - locationIds
+            $ref: '#/components/schemas/ContextError'
+    SiteCtaTypes:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+    PostContextInfo:
+      type: object
+      properties:
+        couponCode:
+          type: string
+        redeemUrl:
+          type: string
+        termsConditions:
+          type: string
+        title:
+          type: string
+        discount:
+          type: string
+        locationType:
+          type: string
+        startDay:
+          type: string
+          format: date
+        startTime:
+          type: string
+        endDay:
+          type: string
+          format: date
+        endTime:
+          type: string
     SocialPostEs:
       type: object
       description: Elasticsearch-indexed social post record used in rollup listings.
@@ -1345,12 +1119,396 @@ components:
       - createdAt
       - sites
       - locationIds
+    ContextError:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
     SitesType:
       type: string
       enum:
       - GOOGLE
       - FACEBOOK
       description: Sites a post can be published to.
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    SocialPostPublishDetail:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        status:
+          $ref: '#/components/schemas/PublishStatusEnum'
+        createdDate:
+          type: string
+          format: date
+        publishedDate:
+          type: string
+          format: date
+        deletedDate:
+          type: string
+          format: date
+        expiredDate:
+          type: string
+          format: date
+        submissionError:
+          type: string
+    PostMessage:
+      type: object
+      properties:
+        message:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+    ApiErrorResponse:
+      type: object
+      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      required:
+      - errors
+      properties:
+        data:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+    StatsAndStatus:
+      type: object
+      properties:
+        clicks:
+          type: integer
+          format: int32
+        views:
+          type: integer
+          format: int32
+        reactions:
+          type: integer
+          format: int32
+        shares:
+          type: integer
+          format: int32
+        comments:
+          type: integer
+          format: int32
+        status:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+    SocialPostView:
+      type: object
+      properties:
+        socialPostId:
+          type: string
+        socialPostInfo:
+          $ref: '#/components/schemas/SocialPost'
+        publishedLocationsCount:
+          type: integer
+          format: int32
+        socialPostAnalyticsBySite:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostAnalyticsSitewise'
+        socialPostAnalyticsByLocationId:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostAnalyticsLocationwise'
+    SocialPostTypeEnum:
+      type: string
+      enum:
+      - EVENT
+      - OFFER
+      - ANNOUNCEMENT
+      - COVID19
+      - PRODUCT
+      description: Social Post types.
+    SocialPost:
+      type: object
+      description: A newer multi-site/multi-location post campaign.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/SocialPostStatusEnum'
+        type:
+          $ref: '#/components/schemas/SocialPostTypeEnum'
+        createdAt:
+          type: string
+          format: date
+        deletedAt:
+          type: string
+          format: date
+        expiredAt:
+          type: string
+          format: date
+        scheduledStartDate:
+          type: string
+          format: date
+        scheduledEndDate:
+          type: string
+          format: date
+        views:
+          type: integer
+          format: int32
+        clicks:
+          type: integer
+          format: int32
+        shares:
+          type: integer
+          format: int32
+        reactions:
+          type: integer
+          format: int32
+        comments:
+          type: integer
+          format: int32
+        sites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SitesType'
+        message:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostMessage'
+        cta:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostCta'
+        contextInfo:
+          $ref: '#/components/schemas/PostContextInfo'
+        mediaUrl:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostMedia'
+        publishDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostPublishDetail'
+        postLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostPublishedLink'
+        locationIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+      required:
+      - id
+      - name
+      - status
+      - type
+      - createdAt
+      - sites
+      - locationIds
+    DeleteSocialPostMutation:
+      type: object
+      properties:
+        success:
+          type: boolean
+        socialPostId:
+          type: string
+      required:
+      - success
+      - socialPostId
+    PostCtaInput:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        type:
+          type: string
+        url:
+          type: string
+      required:
+      - site
+      - type
+      - url
+    SocialPostStatusEnum:
+      type: string
+      enum:
+      - INPROGRESS
+      - SCHEDULED
+      - SUCCESS
+      - ERROR
+      - DELETED
+      - EXPIRED
+      description: Social Post lifecycle statuses.
+    PostScheduledDatesInput:
+      type: object
+      properties:
+        startDatetime:
+          type: string
+          description: Custom scalar Datetime
+        endDatetime:
+          type: string
+          description: Custom scalar Datetime
+        removalSites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SitesType'
+      required:
+      - startDatetime
+      - endDatetime
+    ApiErrorObject:
+      type: object
+      description: Error response with a single `error` object, returned when a request is rejected before it runs.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+              description: Extra context, e.g. the ambiguous query and its candidate categories.
+    SocialPostMediaInput:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        url:
+          type: string
+        type:
+          $ref: '#/components/schemas/MediaTypeEnum'
+      required:
+      - site
+      - url
+    SocialPostMutation:
+      type: object
+      description: Result of a social post create/edit mutation.
+      properties:
+        clientMutationId:
+          type: string
+        success:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MutationError'
+        socialPost:
+          $ref: '#/components/schemas/SocialPost'
+      required:
+      - success
+    SocialPostPublishedLink:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        link:
+          type: string
+    MediaTypeEnum:
+      type: string
+      enum:
+      - IMAGE
+      - VIDEO
+      description: Media type for social posts.
+    PostMessageInput:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SitesType'
+        message:
+          type: string
+      required:
+      - site
+      - message
+    SocialPostAnalyticsSitewise:
+      type: object
+      properties:
+        clicks:
+          type: integer
+          format: int32
+        views:
+          type: integer
+          format: int32
+        reactions:
+          type: integer
+          format: int32
+        shares:
+          type: integer
+          format: int32
+        comments:
+          type: integer
+          format: int32
+        site:
+          $ref: '#/components/schemas/SitesType'
+    SocialPostAnalyticsLocationwise:
+      type: object
+      properties:
+        locationId:
+          type: integer
+          format: int32
+        siteStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatsAndStatus'
+    SocialPostPaginated:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialPostEs'
+        locationDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationDetails'
+        pageInfo:
+          $ref: '#/components/schemas/OffsetBasedPageInfo'
+      required:
+      - pageInfo
+    OffsetBasedPageInfo:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+        totalRecords:
+          type: integer
+          format: int32
+      required:
+      - totalPages
+      - totalRecords
     CreateSocialPostMutationInput:
       type: object
       properties:
@@ -1397,22 +1555,6 @@ components:
       - locationIds
       - postType
       - postSites
-    PostScheduledDatesInput:
-      type: object
-      properties:
-        startDatetime:
-          type: string
-          description: Custom scalar Datetime
-        endDatetime:
-          type: string
-          description: Custom scalar Datetime
-        removalSites:
-          type: array
-          items:
-            $ref: '#/components/schemas/SitesType'
-      required:
-      - startDatetime
-      - endDatetime
     LocationDetails:
       type: object
       properties:
@@ -1438,21 +1580,36 @@ components:
           type: string
       required:
       - id
-    ApiErrorResponse:
+    RateLimitError:
       type: object
-      description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
       required:
-      - errors
+      - error
       properties:
-        data:
-          type:
-          - object
-          - 'null'
-          additionalProperties: true
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ApiError'
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
     ProductInfoInput:
       type: object
       properties:
@@ -1480,128 +1637,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SitesType'
-    SocialPostPublishedLink:
-      type: object
-      properties:
-        site:
-          $ref: '#/components/schemas/SitesType'
-        link:
-          type: string
-    OffsetBasedPageInfo:
-      type: object
-      properties:
-        totalPages:
-          type: integer
-          format: int32
-        hasNextPage:
-          type: boolean
-        hasPreviousPage:
-          type: boolean
-        totalRecords:
-          type: integer
-          format: int32
-      required:
-      - totalPages
-      - totalRecords
-    SocialPostStatusEnum:
-      type: string
-      enum:
-      - INPROGRESS
-      - SCHEDULED
-      - SUCCESS
-      - ERROR
-      - DELETED
-      - EXPIRED
-      description: Social Post lifecycle statuses.
-    SocialPostView:
-      type: object
-      properties:
-        socialPostId:
-          type: string
-        socialPostInfo:
-          $ref: '#/components/schemas/SocialPost'
-        publishedLocationsCount:
-          type: integer
-          format: int32
-        socialPostAnalyticsBySite:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostAnalyticsSitewise'
-        socialPostAnalyticsByLocationId:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostAnalyticsLocationwise'
-    SocialPostPaginated:
-      type: object
-      properties:
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialPostEs'
-        locationDetails:
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationDetails'
-        pageInfo:
-          $ref: '#/components/schemas/OffsetBasedPageInfo'
-      required:
-      - pageInfo
-    PublishStatusEnum:
-      type: string
-      enum:
-      - PUBLISHING
-      - PUBLISHED
-      - DELETED
-      - EXPIRED
-      - ERROR
-      description: Publish statuses per site.
-    SocialPostMutation:
-      type: object
-      description: Result of a social post create/edit mutation.
-      properties:
-        clientMutationId:
-          type: string
-        success:
-          type: boolean
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/MutationError'
-        socialPost:
-          $ref: '#/components/schemas/SocialPost'
-      required:
-      - success
-    SocialPostAnalyticsSitewise:
-      type: object
-      properties:
-        clicks:
-          type: integer
-          format: int32
-        views:
-          type: integer
-          format: int32
-        reactions:
-          type: integer
-          format: int32
-        shares:
-          type: integer
-          format: int32
-        comments:
-          type: integer
-          format: int32
-        site:
-          $ref: '#/components/schemas/SitesType'
-    MutationError:
-      type: object
-      properties:
-        message:
-          type: string
-        code:
-          type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContextError'
     SocialPostMedia:
       type: object
       properties:
@@ -1611,61 +1646,26 @@ components:
           $ref: '#/components/schemas/SitesType'
         type:
           $ref: '#/components/schemas/MediaTypeEnum'
-    MediaTypeEnum:
+    PostCta:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/SiteCtaTypes'
+        url:
+          type: string
+        site:
+          $ref: '#/components/schemas/SitesType'
+        tinyUrl:
+          type: string
+    PublishStatusEnum:
       type: string
       enum:
-      - IMAGE
-      - VIDEO
-      description: Media type for social posts.
-    SocialPostPublishDetail:
-      type: object
-      properties:
-        site:
-          $ref: '#/components/schemas/SitesType'
-        status:
-          $ref: '#/components/schemas/PublishStatusEnum'
-        createdDate:
-          type: string
-          format: date
-        publishedDate:
-          type: string
-          format: date
-        deletedDate:
-          type: string
-          format: date
-        expiredDate:
-          type: string
-          format: date
-        submissionError:
-          type: string
-    PostMessage:
-      type: object
-      properties:
-        message:
-          type: string
-        site:
-          $ref: '#/components/schemas/SitesType'
-    ApiErrorObject:
-      type: object
-      description: Error response with a single `error` object, returned when a request is rejected before it runs.
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              description: Machine-readable code, e.g. `INTERNAL_SERVER_ERROR`, `ambiguous_sub_category`, `unknown_sub_category`, or an `SYxxxxx` code.
-            message:
-              type: string
-            details:
-              type: object
-              additionalProperties: true
-              description: Extra context, e.g. the ambiguous query and its candidate categories.
+      - PUBLISHING
+      - PUBLISHED
+      - DELETED
+      - EXPIRED
+      - ERROR
+      description: Publish statuses per site.
   securitySchemes:
     apiKey:
       type: apiKey

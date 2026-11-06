@@ -633,96 +633,29 @@ paths:
       description: Returns the sync status of every publisher directory in a location's plan.
 components:
   schemas:
-    MarkAsNotDuplicateInput:
+    ListingsMutationResultType:
       type: object
       properties:
-        listingItemIds:
+        success:
           type: array
           items:
             type: string
-        locationId:
-          type: string
-      required:
-      - listingItemIds
-    ListingsErrorType:
-      type: object
-      properties:
-        message:
-          type: string
-        code:
-          type: string
-    ApiError:
-      type: object
-      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
-      required:
-      - message
-      properties:
-        message:
-          type: string
-          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
-        code:
-          type: string
-          description: The `SYxxxxx` error code on its own, when one applies.
-        contextInfo:
-          type: array
-          description: Key/value pairs naming the field or value that failed.
-          items:
-            type: object
-            properties:
-              key:
-                type: string
-              value:
-                type: string
-    RateLimitError:
-      type: object
-      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              enum:
-              - RATE_LIMITED
-            message:
-              type: string
-            retry_after_seconds:
-              type: integer
-              description: Seconds to wait before retrying. Never less than 1.
-            limiting_window:
-              type: string
-              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
-            correlation_id:
-              type: string
-              description: Request identifier to quote in support requests.
-            doc_url:
-              type: string
-              format: uri
-    VoiceListingType:
-      type: object
-      properties:
-        id:
-          type: string
-        voiceIdentifier:
-          $ref: '#/components/schemas/VoiceIdentifierType'
-    CustomSiteType:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        url:
-          type: string
-        listings:
+        errors:
           type: array
           items:
-            $ref: '#/components/schemas/DuplicateListingType'
+            $ref: '#/components/schemas/ListingsMutationErrorType'
+    OffsetBasedPageInfoType:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        perPage:
+          type: integer
+          format: int32
+        totalPages:
+          type: integer
+          format: int32
     DuplicateListingRollupType:
       type: object
       properties:
@@ -735,50 +668,31 @@ components:
             $ref: '#/components/schemas/DuplicateListingType'
         pageInfo:
           $ref: '#/components/schemas/OffsetBasedPageInfoType'
-    DuplicateListingType:
+    SiteType:
       type: object
+      description: Directory site metadata.
       properties:
         id:
           type: string
-        listingItemId:
+        databaseId:
           type: string
         name:
           type: string
-        liveLink:
+        url:
           type: string
-        status:
+        syScore:
           type: string
-    ListingsMutationErrorType:
-      type: object
-      properties:
-        message:
-          type: string
-        code:
-          type: string
-        contextInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContextErrorType'
-      required:
-      - code
-    PremiumListingType:
-      type: object
-      properties:
-        id:
-          type: string
-        site:
-          $ref: '#/components/schemas/SiteType'
-    MarkAsDuplicateInput:
-      type: object
-      properties:
-        listingItemIds:
-          type: array
-          items:
-            type: string
-        locationId:
+        addOn:
           type: string
       required:
-      - listingItemIds
+      - id
+      - databaseId
+      - url
+    ListingUnion:
+      oneOf:
+      - $ref: '#/components/schemas/ListingType'
+      - $ref: '#/components/schemas/PremiumListingType'
+      - $ref: '#/components/schemas/AdditionalListingType'
     ListingType:
       type: object
       description: A single listing on an external directory site.
@@ -814,56 +728,66 @@ components:
           format: int32
         issueType:
           type: string
-    AdditionalListingType:
+    ApiError:
+      type: object
+      description: 'One entry of the `errors` array. `message` is always present and starts with the `SYxxxxx: reason` code prefix when the failure has an error code.'
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Human-readable reason, prefixed with the `SYxxxxx` code where one applies.
+        code:
+          type: string
+          description: The `SYxxxxx` error code on its own, when one applies.
+        contextInfo:
+          type: array
+          description: Key/value pairs naming the field or value that failed.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    ListingsErrorType:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+    PremiumListingType:
       type: object
       properties:
         id:
           type: string
         site:
           $ref: '#/components/schemas/SiteType'
-    ListingsMutationResultType:
+    ListingSyncStatusType:
+      type: string
+      enum:
+      - IN_PROGRESS
+      - SYNCED
+      - FAILED
+      - REQUIRING_ACTION
+      - AVAILABLE
+      - COMPLETED
+      - PENDING_APPROVAL
+      - CANNOT_SUBMIT
+    DuplicateListingType:
       type: object
-      properties:
-        success:
-          type: array
-          items:
-            type: string
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ListingsMutationErrorType'
-    VoiceIdentifierType:
-      type: object
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    SiteType:
-      type: object
-      description: Directory site metadata.
       properties:
         id:
           type: string
-        databaseId:
+        listingItemId:
           type: string
         name:
           type: string
-        url:
+        liveLink:
           type: string
-        syScore:
+        status:
           type: string
-        addOn:
-          type: string
-      required:
-      - id
-      - databaseId
-      - url
-    ListingUnion:
-      oneOf:
-      - $ref: '#/components/schemas/ListingType'
-      - $ref: '#/components/schemas/PremiumListingType'
-      - $ref: '#/components/schemas/AdditionalListingType'
     ApiErrorResponse:
       type: object
       description: Error response with an `errors` array, returned for most failures. The HTTP status is derived from the error codes, and `data` is present (usually with the operation key set to `null`).
@@ -879,6 +803,45 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ApiError'
+    VoiceIdentifierType:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    VoiceListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        voiceIdentifier:
+          $ref: '#/components/schemas/VoiceIdentifierType'
+    AdditionalListingType:
+      type: object
+      properties:
+        id:
+          type: string
+        site:
+          $ref: '#/components/schemas/SiteType'
+    MarkAsNotDuplicateInput:
+      type: object
+      properties:
+        listingItemIds:
+          type: array
+          items:
+            type: string
+        locationId:
+          type: string
+      required:
+      - listingItemIds
+    DuplicateListingStatusType:
+      type: string
+      enum:
+      - POTENTIAL
+      - PROCESSING
+      - FIXED
+      - FAILED
     VoiceAssistantType:
       type: object
       properties:
@@ -890,25 +853,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VoiceListingType'
-    ContextErrorType:
-      type: object
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    OffsetBasedPageInfoType:
-      type: object
-      properties:
-        page:
-          type: integer
-          format: int32
-        perPage:
-          type: integer
-          format: int32
-        totalPages:
-          type: integer
-          format: int32
     ApiErrorObject:
       type: object
       description: Error response with a single `error` object, returned when a request is rejected before it runs.
@@ -930,24 +874,80 @@ components:
               type: object
               additionalProperties: true
               description: Extra context, e.g. the ambiguous query and its candidate categories.
-    DuplicateListingStatusType:
-      type: string
-      enum:
-      - POTENTIAL
-      - PROCESSING
-      - FIXED
-      - FAILED
-    ListingSyncStatusType:
-      type: string
-      enum:
-      - IN_PROGRESS
-      - SYNCED
-      - FAILED
-      - REQUIRING_ACTION
-      - AVAILABLE
-      - COMPLETED
-      - PENDING_APPROVAL
-      - CANNOT_SUBMIT
+    ContextErrorType:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    CustomSiteType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/DuplicateListingType'
+    ListingsMutationErrorType:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        contextInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContextErrorType'
+      required:
+      - code
+    RateLimitError:
+      type: object
+      description: Rate-limit error response. Also carries the `Retry-After` header and the `RateLimit-*` headers.
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - RATE_LIMITED
+            message:
+              type: string
+            retry_after_seconds:
+              type: integer
+              description: Seconds to wait before retrying. Never less than 1.
+            limiting_window:
+              type: string
+              description: Which window was exhausted, e.g. `minute`, `hour`, `day`.
+            correlation_id:
+              type: string
+              description: Request identifier to quote in support requests.
+            doc_url:
+              type: string
+              format: uri
+    MarkAsDuplicateInput:
+      type: object
+      properties:
+        listingItemIds:
+          type: array
+          items:
+            type: string
+        locationId:
+          type: string
+      required:
+      - listingItemIds
   securitySchemes:
     apiKey:
       type: apiKey
